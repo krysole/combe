@@ -1,0 +1,9 @@
+# Backup files
+.*~
+*~
+
+# Textmate project
+*.tmproj
+
+# Mac thumbnail db/file
+.DS_Store
