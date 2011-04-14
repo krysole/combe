@@ -1,4 +1,4 @@
-CombeJS - A Pattern Language for JavaScript
+CombeJS - A Parsing Language for JavaScript
 ===========================================
 
 LICENSE
