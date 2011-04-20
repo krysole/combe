@@ -15,7 +15,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-  
-exports.BaseParser = require('./base_parser');
-exports.ParseError = exports.BaseParser.ParseError;
-exports.CombeParser = require('./combe_parser');
+
+var combe = require('./lib/combejs');
+var fs = require('fs');
+
+setTimeout(function () {
+  var CombeParser = combe.CombeParser;
+
+  var source = fs.readFileSync('./lib/combejs/combe_parser.combejs', 'utf8');
+
+  var ast = (new CombeParser).match('grammar', source);
+}, 0);
