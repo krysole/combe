@@ -7,3 +7,7 @@
 
 # Mac thumbnail db/file
 .DS_Store
+
+# Eclipse project
+.project
+.settings
