@@ -25,4 +25,6 @@ setTimeout(function () {
   var source = fs.readFileSync('./lib/combejs/combe_parser.combejs', 'utf8');
 
   var ast = (new CombeParser).match('grammar', source);
+  
+  fs.writeFileSync('./ast_from_combejs', JSON.stringify(ast), 'utf8');
 }, 0);
