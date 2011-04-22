@@ -24,7 +24,8 @@ setTimeout(function () {
   combeParserText = combeParserText.replace(/BaseParser/g, 'BaseTextParser');
   combeParserText = combeParserText.replace(/base_parser/g, 'base_text_parser');
   fs.writeFileSync('./lib/combejs/combe_parser.js', combeParserText, 'utf8');
-//  compileGrammarFile('./lib/combejs/combe_ast_idempotent.combejs', './combe_ast_idempotent.js');
-//  compileGrammarFile('./lib/combejs/combe_ast_choice_concat_optimizer.combejs', './combe_ast_choice_concat_optimizer.js');
-//  compileGrammarFile('./lib/combejs/combe_ast_translator.combejs', './combe_ast_translator.js');
+  
+  compileGrammarFile('./lib/combejs/combe_ast_idempotent.combejs', true);
+  compileGrammarFile('./lib/combejs/combe_ast_choice_concat_optimization.combejs', true);
+  compileGrammarFile('./lib/combejs/combe_ast_translator.combejs', true);
 }, 0);
