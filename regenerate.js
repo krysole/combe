@@ -20,11 +20,8 @@ var fs = require('fs');
 var compileGrammarFile = require('./lib/combejs').compileGrammarFile;
 
 setTimeout(function () {
-  var combeParserText = compileGrammarFile('./lib/combejs/combe_parser.combejs');
-  combeParserText = combeParserText.replace(/BaseParser/g, 'BaseTextParser');
-  combeParserText = combeParserText.replace(/base_parser/g, 'base_text_parser');
-  fs.writeFileSync('./lib/combejs/combe_parser.js.regen', combeParserText, 'utf8');
-  
+  compileGrammarFile('./lib/combejs/combe_parser.combejs',
+                     './lib/combejs/combe_parser.js.regen');
   compileGrammarFile('./lib/combejs/combe_ast_idempotent.combejs', 
                      './lib/combejs/combe_ast_idempotent.js.regen');
   compileGrammarFile('./lib/combejs/combe_ast_choice_concat_optimization.combejs',
