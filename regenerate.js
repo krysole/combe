@@ -23,9 +23,22 @@ setTimeout(function () {
   var combeParserText = compileGrammarFile('./lib/combejs/combe_parser.combejs');
   combeParserText = combeParserText.replace(/BaseParser/g, 'BaseTextParser');
   combeParserText = combeParserText.replace(/base_parser/g, 'base_text_parser');
-  fs.writeFileSync('./lib/combejs/combe_parser.js', combeParserText, 'utf8');
+  fs.writeFileSync('./lib/combejs/combe_parser.js.regen', combeParserText, 'utf8');
   
-  compileGrammarFile('./lib/combejs/combe_ast_idempotent.combejs', true);
-  compileGrammarFile('./lib/combejs/combe_ast_choice_concat_optimization.combejs', true);
-  compileGrammarFile('./lib/combejs/combe_ast_translator.combejs', true);
+  compileGrammarFile('./lib/combejs/combe_ast_idempotent.combejs', 
+                     './lib/combejs/combe_ast_idempotent.js.regen');
+  compileGrammarFile('./lib/combejs/combe_ast_choice_concat_optimization.combejs',
+                     './lib/combejs/combe_ast_choice_concat_optimization.js.regen');
+  compileGrammarFile('./lib/combejs/combe_ast_translator.combejs', 
+                     './lib/combejs/combe_ast_translator.js.regen');
+  
+  // Now that all the files have been generated successfully we can move them into place
+  fs.renameSync('./lib/combejs/combe_parser.js.regen', 
+                './lib/combejs/combe_parser.js');
+  fs.renameSync('./lib/combejs/combe_ast_idempotent.js.regen', 
+                './lib/combejs/combe_ast_idempotent.js');
+  fs.renameSync('./lib/combejs/combe_ast_choice_concat_optimization.js.regen', 
+                './lib/combejs/combe_ast_choice_concat_optimization.js');
+  fs.renameSync('./lib/combejs/combe_ast_translator.js.regen', 
+                './lib/combejs/combe_ast_translator.js');
 }, 0);
