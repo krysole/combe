@@ -20,16 +20,20 @@ var fs = require('fs');
 var compileGrammarFile = require('./lib/combejs').compileGrammarFile;
 
 setTimeout(function () {
+  console.log('- Regenerating combe_parser.combejs');
   compileGrammarFile('./lib/combejs/combe_parser.combejs',
                      './lib/combejs/combe_parser.js.regen');
+  console.log('- Regenerating combe_ast_idempotent.combejs');
   compileGrammarFile('./lib/combejs/combe_ast_idempotent.combejs', 
                      './lib/combejs/combe_ast_idempotent.js.regen');
+  console.log('- Regenerating combe_ast_choice_concat_optimization.combejs');
   compileGrammarFile('./lib/combejs/combe_ast_choice_concat_optimization.combejs',
                      './lib/combejs/combe_ast_choice_concat_optimization.js.regen');
+  console.log('- Regenerating combe_ast_translator.combejs');
   compileGrammarFile('./lib/combejs/combe_ast_translator.combejs', 
                      './lib/combejs/combe_ast_translator.js.regen');
   
-  // Now that all the files have been generated successfully we can move them into place
+  console.log('- Moving new .js files into place');
   fs.renameSync('./lib/combejs/combe_parser.js.regen', 
                 './lib/combejs/combe_parser.js');
   fs.renameSync('./lib/combejs/combe_ast_idempotent.js.regen', 
@@ -38,4 +42,5 @@ setTimeout(function () {
                 './lib/combejs/combe_ast_choice_concat_optimization.js');
   fs.renameSync('./lib/combejs/combe_ast_translator.js.regen', 
                 './lib/combejs/combe_ast_translator.js');
+  console.log('- Finished');
 }, 0);
