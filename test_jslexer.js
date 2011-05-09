@@ -16,22 +16,27 @@
 // limitations under the License.
 //
 
-var combe = require('./lib/combejs');
 var JSLexer = require('./lib/combejs/jslexer');
+var JSParser = require('./lib/combejs/jsparser');
+var LexerParsingStream = require('./lib/combejs/lexer_parsing_stream');
+var ParseError = require('./lib/combejs/base_parser').ParseError;
 var fs = require('fs');
 
 setTimeout(function () {
-  var CombeParser = combe.CombeParser;
-
   var source = fs.readFileSync('./example.js', 'utf8');
-
-  // Todo: I've changed how the lexer operates, so it is no longer possible
-  // to lex a .js file without also parsing it (this is because EcmaScripts's 
-  // lexical structure is ambiguous). It should be possible if anytime the lexer
-  // generates an unknown token, the programmer can disambiguate by hand perhaps,
-  // where the disambiguation could be cached possibly...
   
-  var tokens = (new JSLexer).match('allTokens', source);
+  var lexerParsingStream = new LexerParsingStream(new JSLexer, source);
+  
+  try {
+    var result = (new JSParser).match('script', lexerParsingStream);
+  } catch (error) {
+    if (error instanceof ParseError) {
+      console.log(lexerParsingStream.$array.last().toString());
+    }
+    throw error;
+  }
+  
+  var tokens = lexerParsingStream.$array;
 
   if (tokens.length === 0) {
     console.log('no tokens');

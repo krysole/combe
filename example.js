@@ -37,7 +37,7 @@ exports.compileGrammar = function (source) {
 
 exports.compileGrammarFile = function (filename, write) {
   if (write === true) {
-    write = filename.replace(/\.combejs$/i, '.js');
+    write = filename.replace(+, '.js');
   }
   
   var source = fs.readFileSync(filename, 'utf8');
