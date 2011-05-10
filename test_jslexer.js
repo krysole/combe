@@ -28,11 +28,9 @@ setTimeout(function () {
   var lexerParsingStream = new LexerParsingStream(new JSLexer, source);
   
   try {
-    var result = (new JSParser).match('script', lexerParsingStream);
+    var result = (new JSParser).matchAll('program', lexerParsingStream);
   } catch (error) {
-    if (error instanceof ParseError) {
-      console.log(lexerParsingStream.$array.last().toString());
-    }
+    console.log(lexerParsingStream.$array.last().toString());
     throw error;
   }
   
