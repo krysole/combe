@@ -18,7 +18,8 @@
 
 var CombeJSLexer = require('./lib/combejs/combejs_lexer');
 var CombeJSParser = require('./lib/combejs/combejs_parser');
-var JSAstAnalyseDeclare = require('./lib/combejs/js_ast_analyse_declare');
+var CombeJSAstAnalyseDeclare = require('./lib/combejs/combejs_ast_analyse_declare');
+var CombeJSAstToJSAst = require('./lib/combejs/combejs_ast_to_js_ast');
 var LexerParsingStream = require('./lib/combejs/lexer_parsing_stream');
 var ParseError = require('./lib/combejs/base_parser').ParseError;
 var fs = require('fs');
@@ -32,7 +33,8 @@ setTimeout(function () {
   
   try {
     ast = (new CombeJSParser).matchAll('program', lexerParsingStream);
-    (new JSAstAnalyseDeclare).visit(ast);
+    (new CombeJSAstAnalyseDeclare).visit(ast);
+    (new CombeJSAstToJSAst).visit(ast);
   } catch (error) {
     console.log(lexerParsingStream.$array.last().toString());
     throw error;
