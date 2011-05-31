@@ -27,6 +27,7 @@ var inspect = require('util').inspect;
 
 setTimeout(function () {
   var ast;
+  var json;
   var source = fs.readFileSync('./example.js', 'utf8');
   
   var lexerParsingStream = new LexerParsingStream(new CombeJSLexer, source);
@@ -35,12 +36,13 @@ setTimeout(function () {
     ast = (new CombeJSParser).matchAll('program', lexerParsingStream);
     (new CombeJSAstAnalyseDeclare).visit(ast);
     (new CombeJSAstToJSAst).visit(ast);
+    json = ast.toJSON();
   } catch (error) {
     console.log(lexerParsingStream.$array.last().toString());
     throw error;
   }
   
-  var output = inspect(ast, false, null);
+  var output = inspect(json, false, null);
   
   console.log(output);
   fs.writeFileSync('./example.ast', output, 'utf8');
