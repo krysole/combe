@@ -20,8 +20,10 @@ var CombeJSLexer = require('./lib/combejs/combejs_lexer');
 var CombeJSParser = require('./lib/combejs/combejs_parser');
 var CombeJSAstAnalyseDeclare = require('./lib/combejs/combejs_ast_analyse_declare');
 var CombeJSAstToJSAst = require('./lib/combejs/combejs_ast_to_js_ast');
+var JSAstTranslator = require('./lib/combejs/js_ast_translator');
 var LexerParsingStream = require('./lib/combejs/lexer_parsing_stream');
 var ParseError = require('./lib/combejs/base_parser').ParseError;
+var util = require('./lib/combejs/util');
 var fs = require('fs');
 var inspect = require('util').inspect;
 
@@ -33,9 +35,10 @@ setTimeout(function () {
   var lexerParsingStream = new LexerParsingStream(new CombeJSLexer, source);
   
   try {
-    ast = (new CombeJSParser).matchAll('program', lexerParsingStream);
+    ast = (new CombeJSParser).match('program', lexerParsingStream);
     (new CombeJSAstAnalyseDeclare).visit(ast);
     (new CombeJSAstToJSAst).visit(ast);
+    json = ast;
     json = ast.toJSON();
   } catch (error) {
     console.log(lexerParsingStream.$array.last().toString());
@@ -44,6 +47,11 @@ setTimeout(function () {
   
   var output = inspect(json, false, null);
   
-  console.log(output);
   fs.writeFileSync('./example.ast', output, 'utf8');
+  
+  
+  var iolist = (new JSAstTranslator).translate(ast);
+  var outjs = util.flattenIOList(iolist);
+  
+  fs.writeFileSync('./example.out.js', outjs, 'utf8');
 }, 0);
