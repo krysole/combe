@@ -51,8 +51,8 @@ var JSLexer = module.exports = class JSLexer (BaseTextParser) {
     return token;
   },
   
-  // nextToken: rule {
-  //   whitespace?
+  nextToken: rule {
+    whitespace?
   //   
   //   ( identifierName
   //   | number
@@ -61,8 +61,8 @@ var JSLexer = module.exports = class JSLexer (BaseTextParser) {
   //   | string
   //   | &'/' token('unknown') // Regex and division are ambiguous
   //   )
-  // },
-  // 
+  },
+  
   // resetToAfterToken: function (token) {
   //   this.lastToken = token;
   //   this.tokenStartPosition = this.input.position = token.endPosition;
