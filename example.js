@@ -1,5 +1,5 @@
 //
-// Combe - A Parsing Language for JavaScript
+// Combe/JS - A Parsing Language for JavaScript
 //
 // Copyright 2011 Lorenz Pretterhofer
 // 
@@ -16,40 +16,231 @@
 // limitations under the License.
 //
 
-var CombeParser = require('./combe_parser');
-var CombeASTChoiceConcatOptimization = require('./combe_ast_choice_concat_optimization');
-var CombeASTTranslator = require('./combe_ast_translator');
-var flattenIOList = require('./util').flattenIOList;
+var BaseTextParser = require('../combejs/base_text_parser');
+var Token = require('../combejs/token');
 
-exports.BaseParser = require('./base_parser');
-exports.BaseTextParser = require('./base_text_parser');
-exports.ParseError = exports.BaseParser.ParseError;
-
-exports.compileGrammar = function (source) {
-  // Todo: Make these catch any error that occurs... (what error handling strategy
-  // should I be using anyway?)
-  var ast = (new CombeParser).match('combeFile', source);
-  var ast1 = (new CombeASTChoiceConcatOptimization).translate(ast);
-  var resultIOList = (new CombeASTTranslator).match('transform', ast1);
-  var result = flattenIOList(resultIOList);
-  return result;
-};
-
-exports.compileGrammarFile = function (filename, write) {
-  if (write === true) {
-    write = filename.replace(/\.combejs$/i, '.js');
-  }
+var JSLexer = module.exports = class JSLexer (BaseTextParser) {
   
-  var source = fs.readFileSync(filename, 'utf8');
+  emitToken: function (type, tags, value) {
+    // var endPosition = this.input.position;
+    // var token = new Token({
+    //   type: type,
+    //   tags: tags,
+    //   value: value,
+    //   startPosition: this.tokenStartPosition,
+    //   endPosition: endPosition,
+    //   previousToken: this.lastToken
+    // });
+    // 
+    // if (!token.is('whitespace')) {
+    //   for (var t = this.lastToken; t.is('whitespace'); t = t.previousToken) {
+    //     if (t.is('newline')) {
+    //       token.precededByNewline = true;
+    //       break;
+    //     }
+    //   }
+    // }
+    // 
+    // if (this.lastToken != null) {
+    //   this.lastToken.nextToken = token;
+    // }
+    // this.lastToken = token;
+    // 
+    // this.tokenStartPosition = endPosition;
+    // 
+    return token;
+  },
   
-  var code = exports.compileGrammar(source);
-  if (code == null) {
-    return null;
-  }
+  // nextToken: rule {
+  //   whitespace?
+  //   
+  //   ( identifierName
+  //   | number
+  //   | assignmentOperator
+  //   | punctuation
+  //   | string
+  //   | &'/' token('unknown') // Regex and division are ambiguous
+  //   )
+  // },
+  // 
+  // resetToAfterToken: function (token) {
+  //   this.lastToken = token;
+  //   this.tokenStartPosition = this.input.position = token.endPosition;
+  //   token.nextToken = null;
+  // },
+  // 
+  // resetToBeforeToken: function (token) {
+  //   if (token.previousToken) {
+  //     this.resetToAfterToken(token.previousToken);
+  //   } else {
+  //     this.lastToken = null;
+  //     this.tokenStartPosition = this.input.position = 0;
+  //   }
+  // },
+  // 
+  // sourceChar: rule {
+  //   // Todo: This should exclude the invalid codepoints, like control character,
+  //   // i.e., any valid unicode codepoint.
+  //   char
+  // },
+  // 
+  // identifierName: rule {
+  //   matchedInput[idFirstChar idChar*]:text
+  //   
+  //   ( ?(text === 'null')
+  //     token('null', ['identifierName'], null)
+  //     
+  //   | ?(text === 'true')
+  //     token('true', ['boolean', 'identifierName'], true)
+  //     
+  //   | ?(text === 'false')
+  //     token('false', ['boolean', 'identifierName'], false)
+  //     
+  //   | ?(text.isKeyword(text))
+  //     token(text, ['keyword', 'reservedWord', 'identifierName'])
+  //     
+  //   | ?(text.isFutureReservedWord(text))
+  //     token('futureReservedWord', ['reservedWord', 'identifierName'])
+  //     
+  //   | extendedIdentifier(text)
+  //   
+  //   | token('identifier', ['identifierName'], text)
+  //   )
+  // },
+  // 
+  // extendedIdentifier: rule (text) {},
+  // 
+  // idFirstChar: rule {
+  //   // Todo: handle unicode (es5 compliance)
+  //   char('a'..'z', 'A'..'Z', '_', '$')
+  // },
+  // 
+  // idChar: rule {
+  //   // Todo: handle unicode (es5 compliance)
+  //   char('a'..'z', 'A'..'Z', '_', '$', '0'..'9')
+  // },
+  // 
+  // punctuation: rule {
+  //   ( '{' | '}' | '(' | ')' | '[' | ']' | ';' | ',' | '.' ~digit
+  //   | '<' | '>' | '<=' | '>=' | '===' | '!==' | '==' | '!='
+  //   | '+' | '-' | '*' | '%' | '&' | '|' | '^' | '!' | '~'
+  //   | '&&' | '||' | '?' | ':' | '++' | '--' | '<<' | '>>>' | '>>'
+  //   ):text
+  //   token(text, ['punctuation'])
+  // },
+  // 
+  // assignmentOperator: rule {
+  //   ( '=' ~'=' -> '=' | '+=' | '-=' | '*=' | '%=' | '&=' | '|=' | '^='
+  //   | '<<=' | '>>>=' | '>>='
+  //   ):text
+  //   token(text, ['punctuation', 'assignmentOperator'])
+  // },
+  // 
+  // division: rule {
+  //   ( '/' | '/=' ):text token(text, ['punctuation', 'division'])
+  // },
+  // 
+  // number: rule {
+  //   | decimal
+  //   | hexInteger
+  // },
+  // 
+  // decimal: rule {
+  //   matchedInput[
+  //     | integerPart ('.' digit*)? exponentPart?
+  //     | '.' digit+ exponentPart?
+  //   ]:text ~idChar
+  //   token('number', ['decimal'], parseFloat(text));
+  // },
+  // 
+  // integerPart: rule {
+  //   char('1'..'9') digit*
+  // },
+  // 
+  // digit: rule {
+  //   char('0'..'9')
+  // },
+  // 
+  // hexInteger: rule {
+  //   ('0x'|'0X') matchedInput[hexDigit+]:text ~idChar
+  //   token('number', ['hex'], parseInt(text, 16))
+  // },
+  // 
+  // hexDigit: rule {
+  //   char('0'..'9', 'a'..'f', 'A'..'F')
+  // },
+  // 
+  // string: rule {
+  //   ( stringHelper('\'') | stringHelper('\"') ):text
+  //   token('string', null, text)
+  // },
+  // 
+  // stringHelper: rule (quote) {
+  //   quote (~quote stringChar)*:characters quote
+  //   -> characters.join('')
+  // },
+  // 
+  // stringChar: rule {
+  //   | '\\' stringEscapeSequence
+  //   | '\\' newline -> ''
+  //   | ~newline sourceChar
+  // },
+  // 
+  // stringEscapeSequence: rule {
+  //   | '\'' -> '\''
+  //   | '\"' -> '\"'
+  //   | '\\' -> '\\'
+  //   | 'b'  -> '\b'
+  //   | 'f'  -> '\f'
+  //   | 'n'  -> '\n'
+  //   | 'r'  -> '\r'
+  //   | 't'  -> '\t'
+  //   | 'v'  -> '\v'
+  //   | '0' ~digit -> '\0'
+  //   | 'x' repeat[hexDigit, 2]:hs -> String.fromCodepoint(hs.join(''))
+  //   | 'u' repeat[hexDigit, 4]:hs -> String.fromCodepoint(hs.join(''))
+  //   | ~(newline | digit) sourceChar
+  // },
+  // 
+  // regex: rule {
+  //   '/' matchedInput[(~'*' regexChar) regexChar*]:pattern '/' matchedInput[idChar*]:options
+  //   token('regex', null, new RegExp(pattern, options))
+  // },
+  // 
+  // regexChar: rule {
+  //   | '\\' ~newline sourceChar
+  //   | regexCharacterClass
+  //   | ~('/' | newline) sourceChar
+  // },
+  // 
+  // regexCharacterClass: rule {
+  //   '[' regexCharacterClassChar ']'
+  // },
+  // 
+  // regexCharacterClassChar: rule {
+  //   | '\\' ~newline sourceChar
+  //   | ~(']' | newline) sourceChar
+  // },
+  // 
+  // whitespace: rule {
+  //   (spaces | newline | comment)+
+  // },
+  // 
+  // spaces: rule {
+  //   char(' \t\v\f\u00a0\u200c\u200d\ufeff')*
+  //   token('spaces', ['whitespace'])
+  // },
+  // 
+  // newline: rule {
+  //   ('\r\n' | char('\n\r\u2028\u2029'))
+  //   token('newline', ['whitespace'])
+  // },
+  // 
+  // comment: rule {
+  //   ( '//' (~newline sourceChar)* (newline | eof)
+  //   | '/*' (~'*/' sourceChar)* '*/'
+  //   )
+  //   token('comment', ['whitespace'])
+  // },
   
-  if (write) {
-    fs.writeFileSync(write, code, 'utf8');
-  }
-  
-  return code;
 };
