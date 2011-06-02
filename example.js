@@ -112,16 +112,16 @@ var JSLexer = module.exports = class JSLexer (BaseTextParser) {
     nothing
   },
   
-  // idFirstChar: rule {
-  //   // Todo: handle unicode (es5 compliance)
-  //   char('a'..'z', 'A'..'Z', '_', '$')
-  // },
-  // 
-  // idChar: rule {
-  //   // Todo: handle unicode (es5 compliance)
-  //   char('a'..'z', 'A'..'Z', '_', '$', '0'..'9')
-  // },
-  // 
+  idFirstChar: rule {
+    // Todo: handle unicode (es5 compliance)
+    char('a'..'z', 'A'..'Z', '_', '$')
+  },
+  
+  idChar: rule {
+    // Todo: handle unicode (es5 compliance)
+    char('a'..'z', 'A'..'Z', '_', '$', '0'..'9')
+  },
+  
   punctuation: rule {
     ( '{' | '}' | '(' | ')' | '[' | ']' | ';' | ',' | '.' ~digit
     | '<' | '>' | '<=' | '>=' | '===' | '!==' | '==' | '!='
@@ -154,24 +154,24 @@ var JSLexer = module.exports = class JSLexer (BaseTextParser) {
     ]:text ~idChar
     token('number', ['decimal'], parseFloat(text))
   },
-  // 
-  // integerPart: rule {
-  //   char('1'..'9') digit*
-  // },
-  // 
-  // digit: rule {
-  //   char('0'..'9')
-  // },
-  // 
+  
+  integerPart: rule {
+    char('1'..'9') digit*
+  },
+  
+  digit: rule {
+    char('0'..'9')
+  },
+  
   hexInteger: rule {
     ('0x'|'0X') matchedInput[hexDigit+]:text ~idChar
     token('number', ['hex'], parseInt(text, 16))
   },
-  // 
-  // hexDigit: rule {
-  //   char('0'..'9', 'a'..'f', 'A'..'F')
-  // },
-  // 
+  
+  hexDigit: rule {
+    char('0'..'9', 'a'..'f', 'A'..'F')
+  },
+  
   string: rule {
     ( stringHelper('\'') | stringHelper('\"') ):text
     token('string', null, text)
