@@ -45,6 +45,7 @@ setTimeout(function () {
     throw error;
   }
   
+  // var output = inspect(json, false, 30);
   var output = inspect(json, false, null);
   
   fs.writeFileSync('./example.ast', output, 'utf8');
