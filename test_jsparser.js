@@ -19,7 +19,7 @@
 var JSLexer = require('./lib/combejs/jslexer');
 var JSParser = require('./lib/combejs/jsparser');
 var LexerParsingStream = require('./lib/combejs/lexer_parsing_stream');
-var ParseError = require('./lib/combejs/base_parser').ParseError;
+var BacktrackingException = require('./lib/combejs/backtracking_exception');
 var fs = require('fs');
 var inspect = require('util').inspect;
 
