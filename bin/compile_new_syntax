@@ -1,0 +1,84 @@
+#!/usr/bin/env node
+//
+// Combe - A Parsing Language for JavaScript
+//
+// Copyright 2011 Lorenz Pretterhofer
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+var path = require('path');
+require.paths.unshift(path.dirname(__filename) + '/../lib');
+
+var CombeJSLexer = require('combejs/combejs_lexer');
+var CombeJSParser = require('combejs/combejs_parser');
+var CombeJSAstAnalyseDeclare = require('combejs/combejs_ast_analyse_declare');
+var CombeJSAstToJSAst = require('combejs/combejs_ast_to_js_ast');
+var JSAstTranslator = require('combejs/js_ast_translator');
+var LexerParsingStream = require('combejs/lexer_parsing_stream');
+var BacktrackingException = require('combejs/backtracking_exception');
+var util = require('combejs/util');
+var fs = require('fs');
+var inspect = require('util').inspect;
+
+var compileCombeJSFile = function (sourceFile, destFile) {
+  console.log('- Compiling "' + sourceFile + '"');
+  var ast;
+  var json;
+  var source = fs.readFileSync(sourceFile, 'utf8');
+  var lexerParsingStream = new LexerParsingStream(new CombeJSLexer, source);
+  
+  try {
+    console.log('  - Parsing CombeJS source...');
+    ast = (new CombeJSParser).match('program', lexerParsingStream);
+    console.log('  - Analyse and translate to JS AST...');
+    (new CombeJSAstAnalyseDeclare).visit(ast);
+    (new CombeJSAstToJSAst).visit(ast);
+    // json = ast;
+    json = ast.toJSON();
+  } catch (error) {
+    var token = lexerParsingStream.$array.last();
+    if (token) {
+      console.log('Furthest token matched: ' + token.toString());
+    } else {
+      console.log('No tokens matched');
+    }
+    throw error;
+  }
+  
+  console.log('  - Writing ./ast~ ast dump...');
+  var astOutput = inspect(json, false, null);
+  fs.writeFileSync('./ast~', astOutput, 'utf8');
+  
+  console.log('  - Translating JS AST to JS source...');
+  var iolist = (new JSAstTranslator).translate(ast);
+  var jsOutput = util.flattenIOList(iolist);
+  
+  console.log('  - Writing to ' + destFile);
+  fs.writeFileSync(destFile, jsOutput, 'utf8');
+  
+  console.log('- Done');
+};
+
+setTimeout(function () {
+  if (process.argv.length < 3) {
+    console.error('combec expects grammar to be compiled');
+    return;
+  }
+  
+  var filename = process.argv[2];
+  var tempFilename = filename + '.combec~';
+  var destFilename = filename.replace(/\.combejs$/i, '.js');
+  
+  compileCombeJSFile(filename, destFilename);
+}, 0);
