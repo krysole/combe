@@ -41,7 +41,12 @@ setTimeout(function () {
     json = ast;
     json = ast.toJSON();
   } catch (error) {
-    console.log(lexerParsingStream.$array.last().toString());
+    var token = lexerParsingStream.$array.last();
+    if (token) {
+      console.log(token.toString());
+    } else {
+      console.log("no token");
+    }
     throw error;
   }
   
