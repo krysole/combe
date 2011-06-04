@@ -1,5 +1,5 @@
-var BaseTextParser = (require)("../combejs/base_text_parser");
-var Token = (require)("../combejs/token");
+var BaseTextParser = (require)("combejs/base_text_parser");
+var Token = (require)("combejs/token");
 var JSLexer = ((module).exports = ((function () {
   var JSLexer = (__combejs__Class).create(BaseTextParser, {
     emitToken: {
