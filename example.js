@@ -1,7 +1,7 @@
-var BaseTextParser = (require)("combejs/base_text_parser");
+var TextParser = (require)("combejs/text_parser");
 var Token = (require)("combejs/token");
 var JSLexer = ((module).exports = ((function () {
-  var JSLexer = (__combejs__Class).create(BaseTextParser, {
+  var JSLexer = (__combejs__Class).create(TextParser, {
     emitToken: {
       value: (function (type, tags, value) {
         var endPosition = ((this).input).position;

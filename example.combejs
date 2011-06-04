@@ -16,10 +16,10 @@
 // limitations under the License.
 //
 
-var BaseTextParser = require('combejs/base_text_parser');
+var TextParser = require('combejs/text_parser');
 var Token = require('combejs/token');
 
-var JSLexer = module.exports = class JSLexer (BaseTextParser) {
+var JSLexer = module.exports = class JSLexer (TextParser) {
   
   emitToken: function (type, tags, value) {
     var endPosition = this.input.position;
