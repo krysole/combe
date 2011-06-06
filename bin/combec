@@ -17,24 +17,19 @@
 // limitations under the License.
 //
 
-var fs = require('fs');
-var compileGrammarFile = require('../lib/combejs').compileGrammarFile;
+var path = require('path');
+require.paths.unshift(path.dirname(__filename) + '/../lib');
+
+var combejs = require('combejs');
 
 setTimeout(function () {
   if (process.argv.length < 3) {
-    console.error('combec expects grammar to be compiled');
+    console.error('Usage: combec sourceFile [destFile]');
     return;
   }
   
-  var filename = process.argv[2];
-  var tempFilename = filename + '.combec~';
-  var destFilename = filename.replace(/\.combejs$/i, '.js');
+  var sourceFilename = process.argv[2];
+  var destFilename = process.argv.length >= 3 ? process.argv[3] : null;
   
-  console.log('- Compiling "' + filename + '"');
-  compileGrammarFile(filename, tempFilename);
-  
-  console.log('- Moving temp output to "' + destFilename + '"');
-  fs.renameSync(tempFilename, destFilename);
-  
-  console.log('- Finished.');
+  combejs.compile(sourceFilename, destFilename);
 }, 0);
