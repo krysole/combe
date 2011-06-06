@@ -20,8 +20,8 @@
 var path = require('path');
 require.paths.unshift(path.dirname(__filename) + '/../lib');
 
-var CombeJSLexer = require('combejs/newparser/combejs_lexer');
-var CombeJSParser = require('combejs/newparser/combejs_parser');
+var CombeJSLexer = require('combejs/combejs_lexer');
+var CombeJSParser = require('combejs/combejs_parser');
 var CombeJSAstAnalyseDeclare = require('combejs/combejs_ast_analyse_declare');
 var CombeJSAstToJSAst = require('combejs/combejs_ast_to_js_ast');
 var JSAstTranslator = require('combejs/js_ast_translator');
