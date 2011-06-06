@@ -33,17 +33,23 @@ var inspect = require('util').inspect;
 setTimeout(function () {
   var ast;
   var json;
+  
+  console.log('- Reading example.combejs');
   var source = fs.readFileSync('./example.combejs', 'utf8');
   
+  console.log('- Creating lexerParsingStream');
   var lexerParsingStream = new LexerParsingStream(new CombeJSLexer, source);
   
   try {
+    console.log('- Parsing...');
     parser = CombeJSParser.new();
     ast = parser.match('program', lexerParsingStream);
-    // (new CombeJSAstAnalyseDeclare).visit(ast);
-    // (new CombeJSAstToJSAst).visit(ast);
+    
+    console.log('- Translating CombeJSAst to JSAst');
+    (new CombeJSAstAnalyseDeclare).visit(ast);
+    (new CombeJSAstToJSAst).visit(ast);
     json = ast;
-    // json = ast.toJSON();
+    json = ast.toJSON();
   } catch (error) {
     var token = lexerParsingStream.$array.last();
     if (token) {
@@ -54,12 +60,17 @@ setTimeout(function () {
     throw error;
   }
   
+  console.log('- Writing AST to ./ast~');
   // var output = inspect(json, false, 30);
   var output = inspect(json, false, null);
   fs.writeFileSync('./ast~', output, 'utf8');
   
+  console.log('- Translating JSAst to JS source code');
+  var iolist = (new JSAstTranslator).translate(ast);
+  var outjs = util.flattenIOList(iolist);
   
-  // var iolist = (new JSAstTranslator).translate(ast);
-  // var outjs = util.flattenIOList(iolist);
-  // fs.writeFileSync('./example.js', outjs, 'utf8');
+  console.log('- Writing JS source code');
+  fs.writeFileSync('./example.js', outjs, 'utf8');
+  
+  console.log('- Done');
 }, 0);
