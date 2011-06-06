@@ -20,64 +20,16 @@
 var path = require('path');
 require.paths.unshift(path.dirname(__filename) + '/../lib');
 
-var CombeJSLexer = require('combejs/combejs_lexer');
-var CombeJSParser = require('combejs/combejs_parser');
-var CombeJSAstAnalyseDeclare = require('combejs/combejs_ast_analyse_declare');
-var CombeJSAstToJSAst = require('combejs/combejs_ast_to_js_ast');
-var JSAstTranslator = require('combejs/js_ast_translator');
-var LexerParsingStream = require('combejs/lexer_parsing_stream');
-var BacktrackingException = require('combejs/backtracking_exception');
-var util = require('combejs/util');
-var fs = require('fs');
-
-var compileCombeJSFile = function (sourceFile, destFile) {
-  console.log('- Compiling "' + sourceFile + '"');
-  var ast;
-  var json;
-  var source = fs.readFileSync(sourceFile, 'utf8');
-  var lexerParsingStream = new LexerParsingStream(new CombeJSLexer, source);
-  
-  try {
-    console.log('  - Parsing CombeJS source...');
-    ast = CombeJSParser.new().match('program', lexerParsingStream);
-    
-    console.log('  - Analyse and translate to JS AST...');
-    (new CombeJSAstAnalyseDeclare).visit(ast);
-    (new CombeJSAstToJSAst).visit(ast);
-  } catch (error) {
-    var token = lexerParsingStream.$array.last();
-    if (token) {
-      console.log('Furthest token matched: ' + token.toString());
-    } else {
-      console.log('No tokens matched');
-    }
-    throw error;
-  }
-  
-  // console.log('  - Writing ./ast~ ast dump...');
-  // json = ast;
-  // json = ast.toJSON();
-  // var astOutput = util.inspect(json, false, null);
-  // fs.writeFileSync('./ast~', astOutput, 'utf8');
-  
-  console.log('  - Translating JS AST to JS source...');
-  var iolist = (new JSAstTranslator).translate(ast);
-  var jsOutput = util.flattenIOList(iolist);
-  
-  console.log('  - Writing to ' + destFile);
-  fs.writeFileSync(destFile, jsOutput, 'utf8');
-  
-  console.log('- Done');
-};
+var combejs = require('combejs');
 
 setTimeout(function () {
   if (process.argv.length < 3) {
-    console.error('combec expects grammar to be compiled');
+    console.error('Usage: combec sourceFile [destFile]');
     return;
   }
   
-  var filename = process.argv[2];
-  var destFilename = filename.replace(/\.combejs$/i, '.js');
+  var sourceFilename = process.argv[2];
+  var destFilename = process.argv.length >= 3 ? process.argv[3] : null;
   
-  compileCombeJSFile(filename, destFilename);
+  combejs.compile(sourceFilename, destFilename);
 }, 0);
