@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 //
 // Combe - A Parsing Language for JavaScript
 //
@@ -17,16 +16,4 @@
 // limitations under the License.
 //
 
-var combejs = require('combejs');
-
-setTimeout(function () {
-  if (process.argv.length < 3) {
-    console.error('Usage: combec sourceFile [destFile]');
-    return;
-  }
-  
-  var sourceFilename = process.argv[2];
-  var destFilename = process.argv.length >= 3 ? process.argv[3] : null;
-  
-  combejs.compile(sourceFilename, destFilename);
-}, 0);
+module.exports = require('./lib');

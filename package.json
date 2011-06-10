@@ -1,0 +1,28 @@
+{
+  "author": {
+    "name": "Lorenz Pretterhofer",
+    "email": "krysole@alexicalmistake.com",
+    "url": "http://alexicalmistake.com/"
+  },
+  "name": "combejs",
+  "description": "A Parsing Language for JavaScript",
+  "version": "0.1.0",
+  "homepage": "http://github.com/krysole/combejs",
+  "main": "lib/index",
+  "bin": {
+    "combec": "./bin/combec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/krysole/combejs.git"
+  },
+  "engines": {
+    "node": ">=0.4.7 < 0.5.0"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "directories": {
+    "lib": "./lib",
+    "bin": "./bin"
+  }
+}
