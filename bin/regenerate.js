@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 //
 // Combe - A Parsing Language for JavaScript
 //
@@ -18,9 +19,10 @@
 
 var path = require('path');
 var fs = require('fs');
-require.paths.unshift(path.normalize(path.dirname(__filename) + '/../lib'));
 
-var combeJSDir = path.normalize(path.dirname(__filename) + '/../lib/combejs');
+require.paths.unshift(path.normalize(path.dirname(__filename) + '/..'));
+
+var combeJSDir = path.normalize(path.dirname(__filename) + '/../lib');
 
 var combejs = require('combejs');
 
