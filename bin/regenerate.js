@@ -28,23 +28,23 @@ var combejs = require('combejs');
 
 setTimeout(function () {
   console.log('- Compiling grammars to *.staging.js (in dir ' + combeJSDir + ')');
-  combejs.compile(combeJSDir + '/jslexer.combejs', 
-                  combeJSDir + '/jslexer.staging.js');
-  combejs.compile(combeJSDir + '/jsparser.combejs', 
-                  combeJSDir + '/jsparser.staging.js');
-  combejs.compile(combeJSDir + '/combejs_lexer.combejs', 
-                  combeJSDir + '/combejs_lexer.staging.js');
-  combejs.compile(combeJSDir + '/combejs_parser.combejs', 
-                  combeJSDir + '/combejs_parser.staging.js');
+  combejs.compile(combeJSDir + '/JSLexer.combejs', 
+                  combeJSDir + '/JSLexer.staging.js');
+  combejs.compile(combeJSDir + '/JSParser.combejs', 
+                  combeJSDir + '/JSParser.staging.js');
+  combejs.compile(combeJSDir + '/CombeJSLexer.combejs', 
+                  combeJSDir + '/CombeJSLexer.staging.js');
+  combejs.compile(combeJSDir + '/CombeJSParser.combejs', 
+                  combeJSDir + '/CombeJSParser.staging.js');
   
   console.log('- Moving new .js files into place');
-  fs.renameSync(combeJSDir + '/jslexer.staging.js', 
-                combeJSDir + '/jslexer.js');
-  fs.renameSync(combeJSDir + '/jsparser.staging.js', 
-                combeJSDir + '/jsparser.js');
-  fs.renameSync(combeJSDir + '/combejs_lexer.staging.js', 
-                combeJSDir + '/combejs_lexer.js');
-  fs.renameSync(combeJSDir + '/combejs_parser.staging.js', 
-                combeJSDir + '/combejs_parser.js');
+  fs.renameSync(combeJSDir + '/JSLexer.staging.js', 
+                combeJSDir + '/JSLexer.js');
+  fs.renameSync(combeJSDir + '/JSParser.staging.js', 
+                combeJSDir + '/JSParser.js');
+  fs.renameSync(combeJSDir + '/CombeJSLexer.staging.js', 
+                combeJSDir + '/CombeJSLexer.js');
+  fs.renameSync(combeJSDir + '/CombeJSParser.staging.js', 
+                combeJSDir + '/CombeJSParser.js');
   console.log('- Finished');
 }, 0);
