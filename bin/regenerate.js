@@ -28,23 +28,23 @@ var combejs = require('combejs');
 
 setTimeout(function () {
   console.log('- Compiling grammars to *.staging.js (in dir ' + combeJSDir + ')');
-  combejs.compile(combeJSDir + '/JSLexer.combejs', 
-                  combeJSDir + '/JSLexer.staging.js');
-  combejs.compile(combeJSDir + '/JSParser.combejs', 
-                  combeJSDir + '/JSParser.staging.js');
-  combejs.compile(combeJSDir + '/CombeJSLexer.combejs', 
-                  combeJSDir + '/CombeJSLexer.staging.js');
-  combejs.compile(combeJSDir + '/CombeJSParser.combejs', 
-                  combeJSDir + '/CombeJSParser.staging.js');
+  combejs.compile(combeJSDir + '/JSParser/JSLexer.combejs', 
+                  combeJSDir + '/JSParser/JSLexer.staging.js');
+  combejs.compile(combeJSDir + '/JSParser/JSParser.combejs', 
+                  combeJSDir + '/JSParser/JSParser.staging.js');
+  combejs.compile(combeJSDir + '/Compiler/CombeJSLexer.combejs', 
+                  combeJSDir + '/Compiler/CombeJSLexer.staging.js');
+  combejs.compile(combeJSDir + '/Compiler/CombeJSParser.combejs', 
+                  combeJSDir + '/Compiler/CombeJSParser.staging.js');
   
   console.log('- Moving new .js files into place');
-  fs.renameSync(combeJSDir + '/JSLexer.staging.js', 
-                combeJSDir + '/JSLexer.js');
-  fs.renameSync(combeJSDir + '/JSParser.staging.js', 
-                combeJSDir + '/JSParser.js');
-  fs.renameSync(combeJSDir + '/CombeJSLexer.staging.js', 
-                combeJSDir + '/CombeJSLexer.js');
-  fs.renameSync(combeJSDir + '/CombeJSParser.staging.js', 
-                combeJSDir + '/CombeJSParser.js');
+  fs.renameSync(combeJSDir + '/JSParser/JSLexer.staging.js', 
+                combeJSDir + '/JSParser/JSLexer.js');
+  fs.renameSync(combeJSDir + '/JSParser/JSParser.staging.js', 
+                combeJSDir + '/JSParser/JSParser.js');
+  fs.renameSync(combeJSDir + '/Compiler/CombeJSLexer.staging.js', 
+                combeJSDir + '/Compiler/CombeJSLexer.js');
+  fs.renameSync(combeJSDir + '/Compiler/CombeJSParser.staging.js', 
+                combeJSDir + '/Compiler/CombeJSParser.js');
   console.log('- Finished');
 }, 0);
