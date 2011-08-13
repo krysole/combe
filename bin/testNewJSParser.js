@@ -23,6 +23,7 @@ var JSParser = require('./lib/NewJSParser/JSParser');
 var JSAstToJS = require('./lib/NewJSParser/JSAstToJS');
 
 var fs = require('fs');
+var inspect = require('util').inspect;
 
 setTimeout(function () {
   if (process.argv.length < 4) {
@@ -37,6 +38,8 @@ setTimeout(function () {
   
   var jsast = JSParser.parseProgram(source);
   if (jsast == null) throw new Error('Parse failed');
+  
+  // fs.writeFileSync('ast~', inspect(jsast, false, null), 'utf8');
   
   var jscode = JSAstToJS.translate(jsast);
   if (jscode == null) throw new Error('Translate JSAst to JS failed');
