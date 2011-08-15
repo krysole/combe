@@ -23,7 +23,7 @@ require.paths.unshift(path.normalize(path.dirname(__filename) + '/..'));
 
 var combejs = require('combejs');
 
-var JSParser = require('lib/NewJSParser/JSParser');
+var CombeParser = require('lib/NewJSParser/CombeParser');
 var JSAstToJS = require('lib/NewJSParser/JSAstToJS');
 
 var fs = require('fs');
@@ -40,13 +40,13 @@ setTimeout(function () {
   
   var source = fs.readFileSync(sourceFilename, 'utf8');
   
-  var jsast = JSParser.parseProgram(source);
+  var jsast = CombeParser.parseProgram(source);
   if (jsast == null) throw new Error('Parse failed');
   
-  // fs.writeFileSync('ast~', inspect(jsast, false, null), 'utf8');
+  fs.writeFileSync('ast~', inspect(jsast, false, null), 'utf8');
   
-  var jscode = JSAstToJS.translate(jsast);
-  if (jscode == null) throw new Error('Translate JSAst to JS failed');
+  // var jscode = JSAstToJS.translate(jsast);
+  // if (jscode == null) throw new Error('Translate JSAst to JS failed');
   
-  fs.writeFileSync(destFilename, jscode, 'utf8');
+  // fs.writeFileSync(destFilename, jscode, 'utf8');
 }, 0);
