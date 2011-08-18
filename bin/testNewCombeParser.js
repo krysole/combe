@@ -46,9 +46,9 @@ setTimeout(function () {
   
   fs.writeFileSync('ast~', inspect(combeAst, false, null), 'utf8');
   
-  // var jsast = CombeAstToJSAst.translate(combeAst);
+  var jsast = CombeAstToJSAst.translate(combeAst);
   
-  // fs.writeFileSync('ast~', inspect(jsast, false, null), 'utf8');
+  fs.writeFileSync('ast~', inspect(jsast, false, null), 'utf8');
   
   // var jscode = JSAstToJS.translate(jsast);
   // if (jscode == null) throw new Error('Translate JSAst to JS failed');
