@@ -44,11 +44,11 @@ setTimeout(function () {
   var combeAst = CombeParser.parseProgram(source);
   if (combeAst == null) throw new Error('Parse failed');
   
-  // fs.writeFileSync('ast~', inspect(combeAst, false, null), 'utf8');
+  fs.writeFileSync('_combeast~', inspect(combeAst, false, null), 'utf8');
   
   var jsast = CombeAstToJSAst.translate(combeAst);
   
-  // fs.writeFileSync('ast~', inspect(jsast, false, null), 'utf8');
+  fs.writeFileSync('_jsast~', inspect(jsast, false, null), 'utf8');
   
   var jscode = JSAstToJS.translate(jsast);
   if (jscode == null) throw new Error('Translate JSAst to JS failed');
