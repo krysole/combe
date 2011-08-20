@@ -17,7 +17,7 @@
 // limitations under the License.
 //
 
-var combejs = require('combejs');
+var combe = require('combe');
 
 setTimeout(function () {
   if (process.argv.length < 3) {
@@ -28,5 +28,5 @@ setTimeout(function () {
   var sourceFilename = process.argv[2];
   var destFilename = process.argv.length >= 3 ? process.argv[3] : null;
   
-  combejs.compile(sourceFilename, destFilename);
+  combe.compile(sourceFilename, destFilename);
 }, 0);

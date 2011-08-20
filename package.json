@@ -7,13 +7,13 @@
   "name": "combe",
   "description": "A Parsing Language for JavaScript",
   "version": "0.1.0",
-  "homepage": "http://github.com/krysole/combejs",
+  "homepage": "http://github.com/krysole/combe",
   "bin": {
     "combec": "./bin/combec"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/krysole/combejs.git"
+    "url": "git://github.com/krysole/combe.git"
   },
   "engines": {
     "node": ">=0.4.7 < 0.5.0"

@@ -1,5 +1,5 @@
-CombeJS - A Parsing Language for JavaScript
-===========================================
+Combe - A Parsing Language for JavaScript
+=========================================
 
 LICENSE
 -------

@@ -22,29 +22,33 @@ var fs = require('fs');
 
 require.paths.unshift(path.normalize(path.dirname(__filename) + '/..'));
 
-var combeJSDir = path.normalize(path.dirname(__filename) + '/../lib');
+var combeDir = path.normalize(path.dirname(__filename) + '/../lib');
 
-var combejs = require('combejs');
+var compile = require('combe').compile;
 
 setTimeout(function () {
-  console.log('- Compiling grammars to *.staging.js (in dir ' + combeJSDir + ')');
-  combejs.compile(combeJSDir + '/JSParser/JSLexer.combejs', 
-                  combeJSDir + '/JSParser/JSLexer.staging.js');
-  combejs.compile(combeJSDir + '/JSParser/JSParser.combejs', 
-                  combeJSDir + '/JSParser/JSParser.staging.js');
-  combejs.compile(combeJSDir + '/Compiler/CombeJSLexer.combejs', 
-                  combeJSDir + '/Compiler/CombeJSLexer.staging.js');
-  combejs.compile(combeJSDir + '/Compiler/CombeJSParser.combejs', 
-                  combeJSDir + '/Compiler/CombeJSParser.staging.js');
+  console.log('* Compiling grammars to *.regen.js (in dir ' + combeDir + ')');
+  console.log('  * JSLexer');
+  compile(combeDir + '/JSLexer.combe', 
+          combeDir + '/JSLexer.regen.js');
+  console.log('  * JSParser');
+  compile(combeDir + '/JSParser.combe', 
+          combeDir + '/JSParser.regen.js');
+  console.log('  * CombeLexer');
+  compile(combeDir + '/CombeLexer.combe', 
+          combeDir + '/CombeLexer.regen.js');
+  console.log('  * CombeParser');
+  compile(combeDir + '/CombeParser.combe', 
+          combeDir + '/CombeParser.regen.js');
   
-  console.log('- Moving new .js files into place');
-  fs.renameSync(combeJSDir + '/JSParser/JSLexer.staging.js', 
-                combeJSDir + '/JSParser/JSLexer.js');
-  fs.renameSync(combeJSDir + '/JSParser/JSParser.staging.js', 
-                combeJSDir + '/JSParser/JSParser.js');
-  fs.renameSync(combeJSDir + '/Compiler/CombeJSLexer.staging.js', 
-                combeJSDir + '/Compiler/CombeJSLexer.js');
-  fs.renameSync(combeJSDir + '/Compiler/CombeJSParser.staging.js', 
-                combeJSDir + '/Compiler/CombeJSParser.js');
-  console.log('- Finished');
+  console.log('* Moving new .js files into place');
+  fs.renameSync(combeDir + '/JSLexer.regen.js', 
+                combeDir + '/JSLexer.js');
+  fs.renameSync(combeDir + '/JSParser.regen.js', 
+                combeDir + '/JSParser.js');
+  fs.renameSync(combeDir + '/CombeLexer.regen.js', 
+                combeDir + '/CombeLexer.js');
+  fs.renameSync(combeDir + '/CombeParser.regen.js', 
+                combeDir + '/CombeParser.js');
+  console.log('* Finished');
 }, 0);
