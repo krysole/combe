@@ -6,7 +6,7 @@
   },
   "name": "combe",
   "description": "A Parsing Language for JavaScript",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "homepage": "http://github.com/krysole/combe",
   "licenses": [
     {

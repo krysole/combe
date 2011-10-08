@@ -39,10 +39,10 @@ var CombeParser = module.exports = Class.new(JSParser, {
     return this.parse(string, 'sourceElement');
   },
   
-  parse: function (string, ruleName /* ...args */) {
+  parse: function (string, /* ruleName, ...restOfArgs */) {
     var args = Array.prototype.slice.call(arguments, 1);
     var parser = this.new(CombeLexer.new(string));
-    var result = parser.match.apply(parser, [ruleName].concat(args));
+    var result = parser.match.apply(parser, args);
     if (!result) {
       if (parser.tokens.last) {
         console.log('  *JSParser Failed: Last token seen was ' + parser.tokens.last);
