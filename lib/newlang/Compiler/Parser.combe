@@ -1,0 +1,537 @@
+/*
+  The Metaphor Programming Language
+  
+  Copyright 2011 Lorenz Pretterhofer
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+'use strict';
+
+var combe = require('combe');
+
+var Ast = require('./Ast');
+
+var Parser = module.exports = Class.new(combe.TextParser, {
+  
+  parse: function (source) {
+    var parser = this.new(source);
+    var result = parser.match('file');
+    if (result == null) {
+      var lc = source.lineColumnAt(parser.furthestPosition);
+      console.error('Parse failed with furthest position ' + lc[0] + ':' + lc[1]);
+      throw new Error('Parse Failure');
+    }
+    return result;
+  },
+  
+}, {
+  
+  file: rule {
+    expressionSequence:expr eof
+    -> Ast.File(expr)
+  },
+  
+  expressionSequence: rule {
+    delimited[expression, ';']:es ';'?
+    -> Ast.Sequence(es)
+  },
+  
+  expression: rule {
+    operatorExpression
+  },
+  
+  operatorExpression: rule {
+    assignmentExpression
+  },
+  
+  assignmentExpression: rule {
+    | variableAssignment
+    | dotAssignment
+    | association
+  },
+  
+  variableAssigment: rule {
+    variableName:name op('=') assignmentExpression:rvalue
+    -> Ast.Assignment(name, rvalue)
+  },
+  
+  dotAssignment: rule {
+    callExpression:expr
+    
+    ( '.' identifier:name argumentList:args &'.'
+      !(expr = Ast.MethodCall(expr, name, args))
+    | '.' identifier:name &'.'
+      !(expr = Ast.MethodCall(expr, name, []))
+    )*
+    
+    ( '.' identifier:name argumentList:args op('=') assignmentExpression:rvalue
+      -> Ast.AssignmentMethodCall(expr, name, args, rvalue)
+    | '.' identifier:name
+      -> Ast.AssignmentMethodCall(expr, name, [], rvalue)
+    )
+  },
+  
+  association: rule {
+    logicalOr:k ':' logicalOr:v
+    -> Ast.Association(k, v)
+  },
+  
+  logicalOr: rule {
+    logicalXor:expr
+    ( id('or'):opname logicalXor:rhs
+      !(expr = Ast.Or(expr, rhs))
+    )*
+    -> expr
+  },
+  logicalXor: rule {
+    logicalAnd:expr
+    ( id('xor'):opname logicalAnd:rhs
+      !(expr = Ast.Xor(expr, rhs))
+    )*
+    -> expr
+  },
+  logicalAnd: rule {
+    logicalNot:expr
+    ( id('and'):opname logicalNot:rhs
+      !(expr = Ast.And(expr, rhs))
+    )*
+    -> expr
+  },
+  logicalNot: rule {
+    | id('not'):opname logicalNot:expr
+      -> Ast.Not(expr)
+    | equalityOperator
+  },
+  
+  equalityOperator: rule {
+    // Todo: Change this from left-associative to math-like notation.
+    comparisonOperator:expr
+    ( (op('==') | op('!=') | op('<=') | op('<') | op('>=') | op('>')):opname
+      comparisonOperator:rhs
+      !(expr = Ast.Operator(opname, expr, rhs))
+    )*
+    -> expr
+  },
+  
+  comparisonOperator: rule {
+    // Non-Associative (can only appear once)
+    unionOperator:expr
+    ( op('<=>'):opname unionOperator:rhs
+      -> Ast.Operator(opname, expr, rhs)
+    | -> expr
+    )
+  },
+  
+  unionOperator: rule { // lhs OR rhs
+    leftAssocOperator[symmetricDifferenceOperator, op('|')]
+  },
+  symmetricDifferenceOperator: rule { // lhs XOR rhs
+    leftAssocOperator[intersectOperator, op('^')]
+  },
+  intersectOperator: rule { // lhs AND rhs
+    leftAssocOperator[differenceOperator, op('&')]
+  },
+  differenceOperator: rule { // lhs AND (NOT rhs)
+    leftAssocOperator[shiftOperator, op('\\')]
+  },
+  
+  shiftOperator: rule {
+    leftAssocOperator[addOperator, (op('<<') | op('>>') | op('>>>'))]
+  },
+  addOperator: rule {
+    leftAssocOperator[multiplyOperator, (op('+') | op('-'))]
+  },
+  multiplyOperator: rule {
+    leftAssocOperator[exponentOperator, (op('*') | op('/') | op('//') | op('%'))]
+  },
+  exponentOperator: rule {
+    rightAssocOperator[prefixOperatorExpression, op('**')]
+  },
+  
+  leftAssocOperator: rule (term, operator) {
+    term:expr
+    ( operator:opname term:rhs
+      !(expr = Ast.Operator(opname, expr, rhs))
+    )*
+    -> expr
+  },
+  
+  rightAssocOperator: rule (term, operator) {
+    term:expr
+    ( operator:opname rightAssocOperator(term, operator):rhs
+      -> Ast.Operator(opname, expr, rhs)
+    | -> expr
+    )
+  },
+  
+  prefixOperatorExpression: rule {
+    | (op('+') | op('-') | op('~')):opname prefixOperatorExpression:e
+      -> Ast.PrefixOperator(opname, e)
+    | dotExpression
+  },
+  
+  dotExpression: rule {
+    callExpression:expr
+    ( '.' identifier:name argumentList:args
+      !(expr = Ast.MethodCall(expr, name, args))
+    | '.' identifier:name
+      !(expr = Ast.MethodCall(expr, name, []))
+    )*
+    -> expr
+  },
+  
+  callExpression: rule {
+    primaryExpression:expr
+    ( argumentList:args
+      -> Ast.Call(expr, args)
+    | -> expr
+    )
+  },
+  
+  argumentList: rule {
+    '(' delimited[splatExpression[expression], ',']:args ','? ')' -> args
+  },
+  
+  splatExpression: rule (alternative) {
+    | op('*') expression:expr
+      -> Ast.Splat(expr)
+    | alternative
+  },
+  
+  primaryExpression: rule {
+    | keywordExpression
+    | psuedoVariable
+    | lookupVariable
+    | uninterpolatedStringLiteral
+    | numberLiteral
+    | collectionLiteral
+    | objectLiteral
+    | classLiteral
+    | functionLiteral
+    | subexpression
+  },
+  
+  keywordExpression: rule {
+    | returnExpression
+    | declareVariableExpression
+    | ifExpression
+    | whileExpression
+    | loopExpression
+  },
+  
+  returnExpression: rule {
+    id('return') expression:e
+    -> Ast.Return(e)
+  },
+  
+  declareVariableExpression: rule {
+    id('var') delimited1[declvarFragment, ',']:decls
+    -> {
+      if (decls.length > 1) {
+        return Ast.Sequence(decls);
+      }
+      else {
+        return decls[0];
+      }
+    }
+  },
+  
+  declvarFragment: rule {
+    | variableName:name '=' assignmentExpression:rvalue
+      -> Ast.DeclareVariable(name, rvalue)
+    | variableName:name
+      -> Ast.DeclareVariable(name, null)
+  },
+  
+  ifExpression: rule {
+    id('if') expression:c id('then') expression:t
+    ( id('else') expression:e
+      -> Ast.If(c, t, e)
+    | -> Ast.If(c, t, null)
+    )
+  },
+  
+  whileExpression: rule {
+    id('while') expression:cond id('do') expression:body
+    -> Ast.While(cond, body)
+  },
+  
+  loopExpression: rule {
+    id('loop') expression:body
+    -> Ast.Loop(body)
+  },
+  
+  psuedoVariable: rule {
+    | id('null')  -> Ast.Null()
+    | id('true')  -> Ast.True()
+    | id('false') -> Ast.False()
+    | id('this')  -> Ast.This()
+    | id('self')  -> Ast.Self()
+  },
+  
+  lookupVariable: rule {
+    variableIdentifier:name
+    -> Ast.Lookup(name)
+  },
+  
+  collectionLiteral: rule {
+    | '[' delimited[splatExpression[association], ',']:elems ','? ']'
+      -> Ast.OrderedMap(elems)
+    | '[' delimited[splatExpression[~association expression], ',']:elems ','? ']'
+      -> Ast.Array(elems)
+    | '{' delimited[splatExpression[association], ',']:elems ','? '}'
+      -> Ast.Map(elems)
+    | '{' delimited[splatExpression[~association expression], ',']:elems ','? '}'
+      -> Ast.Set(elems)
+  },
+  
+  objectLiteral: rule {
+    '#' '{' delimited[splatExpression[propertyDefinition], ',']:elems ','? ']'
+    -> Ast.ObjectLiteral(props)
+  },
+  
+  classLiteral: rule {
+    fail // Todo
+  },
+  
+  propertyDefinition: rule {
+    association // Todo: Support the other kinds of property definitions
+  },
+  
+  functionLiteral: rule {
+    parameterList?:ps op('->') expressionSequence:body
+    -> Ast.Function(ps, body)
+  }
+  
+  parameterList: rule {
+    '(' delimited[splatParameter, ',']:ps ','? ')' -> ps
+  },
+  
+  splatParameter: rule {
+    | op('*') parameter:p
+      -> Ast.SplatParameter(p)
+    | parameter
+  },
+  
+  parameter: rule {
+    | variableName:name -> Ast.Parameter(name)
+    | id('_') -> Ast.IgnoreParameter()
+  },
+  
+  subexpression: rule {
+    '(' expressionSequence:expr ')'
+    -> expr
+  },
+  
+  numberLiteral: rule {
+    | decimal
+    | hexInteger
+  },
+  
+  decimal: rule {
+    ws?
+    matchedInput[
+      | integerPart ('.' digit*)? exponentPart?
+      | '.' digit+ exponentPart?
+    ]:text ~idChar
+    -> Ast.Number(parseFloat(text));
+  },
+  
+  hexInteger: rule {
+    ws?
+    ('0x'|'0X') matchedInput[hexDigit+]:text ~idChar
+    -> Ast.Number(parseFloat(text))
+  },
+  
+  // interpolatedStringLiteral: rule { 
+  //   ws?
+  //   openString:delimiter
+  //   ( stringFragment(delimiter)
+  //   | stringInterpolatedExpression(delimiter)
+  //   )*:es
+  //   delimiter
+  //   -> {
+  //     if (es.length === 0) {
+  //       return Ast.String('');
+  //     }
+  //     else if (es.length === 1 && es[0].is('String')) {
+  //       return es[0];
+  //     }
+  //     else {
+  //       return Ast.InterpolatedString(es);
+  //     }
+  //   }
+  // },
+  
+  uninterpolatedStringLiteral: rule {
+    ws?
+    openString:delimiter
+    ( stringFragment(delimiter)
+    | -> Ast.String('')
+    ):s
+    delimiter
+    -> s
+  },
+  
+  openString: rule {
+    | '\'' -> rule { '\'' }
+    | '\"' -> rule { '\"' }
+  },
+  
+  stringFragment: rule (delimiter) {
+    basicStart
+    stringChar(delimiter)+:cs -> Ast.String(cs.join(''))
+  },
+  
+  stringChar: rule (delimiter) {
+    ~delimiter
+    ( '\\' stringEscapeSequence
+    | ~newline char
+    )
+  },
+  
+  stringEscapeSequence: rule {
+    | '\'' -> '\''
+    | '\"' -> '\"'
+    | '\\' -> '\\'
+    | '0'  -> '\x00' // ^@  Null Character
+    | 'a'  -> '\x07' // ^G  Alarm/Bell
+    | 'b'  -> '\x08' // ^H  Backspace
+    | 't'  -> '\x09' // ^I  Tab
+    | 'n'  -> '\x0a' // ^J  Line Feed
+    | 'v'  -> '\x0b' // ^K  Vertical Tab
+    | 'f'  -> '\x0c' // ^L  Form Feed
+    | 'r'  -> '\x0d' // ^M  Carriage Return
+    | 'e'  -> '\x1b' // ^[  Escape
+    | 'x' repeat[hexDigit, %2]:hs -> String.fromCodepoint(hs.join(''))
+    | 'u' repeat[hexDigit, %4]:hs -> String.fromCodepoint(hs.join(''))
+    | 'u' '(' hexDigit*:hs ')' -> String.fromCodepoint(hs.join(''))
+    | error('Unsupported escape sequence')
+  },
+  
+  regex: rule {
+    ws? fail // Todo
+  },
+  
+  PsuedoVariableNames: [
+    'this', 'self', 'true', 'false', 'null', '_'
+  ],
+  
+  id: rule (expectedName) {
+    identifier:name ?(name.value === expectedName) -> name
+  },
+  
+  variableIdentifier: rule {
+    identifier:name
+    ?(!this.PsuedovariableNames.include(name.value))
+    -> name
+  },
+  
+  identifier: rule {
+    ws? matchedInput[initialIdChar idChar*]
+  },
+  
+  op: rule (expectedOpname) {
+    operator:opname ?(opname.value === expectedOpname) -> opname
+  },
+  
+  operator: rule {
+    ws?
+    ( '<<' | '>>>' | '>>' | '<=>' | '<=' | '>=' | '<' | '>'
+    | '==' | '!=' | '='
+    | '||' | '|' | '^^' | '^' | '&&' | '&' | '\\\\' | '\\'
+    | '+' | '-' | '**' | '*' | '//' | '/' | '%' | '~'
+    | '->'
+    ):text
+    -> text
+  },
+  
+  ws: rule {
+    ( spaces | comment | newline )+
+  },
+  
+  spaces: rule {
+    ' '+
+  },
+  
+  comment: rule {
+    | delimitedComment
+    | lineComment
+  },
+  
+  delimitedComment: rule {
+    '/*' &( spaces | newline | eof | '*/' )
+    ( ~'*/' (delimitedComment | char) )*
+    ('*/' | eof)
+  },
+  
+  lineComment: rule {
+    '//' (~newline char)* (newline | eof)
+  },
+  
+  newline: rule {
+    '\r\n' | '\n' | '\r'
+  },
+  
+  digit: rule {
+    char('0'..'9')
+  },
+  
+  hexDigit: rule {
+    char('0'..'9', 'a'..'f', 'A'..'F')
+  },
+  
+  idChar: rule {
+    char('a'..'z', 'A'..'Z', '0'..'9', '_', '$')
+  },
+  
+  initialIdChar: rule {
+    char('a'..'z', 'A'..'Z', '_', '$')
+  },
+  
+  stringPatternHandler: rule (string) {
+    ws? eachChar(string)
+  },
+  
+  tokenOperatorHandler: rule (parser) {
+    ws? parser
+  },
+  
+  next: function () {
+    var c = TextParser.prototype.next.call(this);
+    this.furthestPosition = Math.max(
+      this.furthestPosition,
+      this.state.position
+    );
+    return c;
+  },
+  
+  nextIf: function (predicate) {
+    var c = TextParser.prototype.next.call(this);
+    if (predicate.call(this, c)) {
+      this.furthestPosition = Math.max(
+        this.furthestPosition,
+        this.state.position
+      );
+      return c;
+    }
+    else {
+      return this.fail();
+    }
+  },
+  
+  stringPatternHandler: rule (string) {
+    ws? eachChar(string)
+  },
+  
+});
