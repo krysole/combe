@@ -193,7 +193,7 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   callExpression: rule {
     primaryExpression:expr
     ( argumentList:args
-      -> Ast.Call(expr, args)
+      -> Ast.Call(expr, null, args)
     | -> expr
     )
   },
