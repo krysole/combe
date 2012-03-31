@@ -82,7 +82,7 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   },
   
   association: rule {
-    logicalOr:k ':' logicalOr:v
+    logicalOr:k op(':') logicalOr:v
     -> Ast.Association(k, v)
   },
   
@@ -215,8 +215,6 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     | uninterpolatedStringLiteral
     | numberLiteral
     | collectionLiteral
-    | objectLiteral
-    | classLiteral
     | functionLiteral
     | subexpression
   },
@@ -227,6 +225,9 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     | ifExpression
     | whileExpression
     | loopExpression
+    | newExpression
+    | extendExpression
+    | classExpression
   },
   
   returnExpression: rule {
@@ -271,12 +272,37 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     -> Ast.Loop(body)
   },
   
+  newExpression: rule {
+    | 'new' primaryExpression:expr argumentList?:args
+      ( '{' expressionSequence:body '}'
+        -> Ast.New(expr, (args != null ? args : []), body)
+      | ~'{'
+        -> Ast.new(expr, (args != null ? args : []), null)
+      )
+    | 'new' '{' expressionSequence:body '}'
+      -> Ast.new(null, [], body)
+  }
+  
+  extendExpression: rule {
+    'extend' expression:subject '{' expressionSequence:body '}'
+    -> Ast.Extend(subject, body)
+  },
+  
+  classLiteral: rule {
+    'class' expression?:parent '{' expressionSequence:body '}'
+    -> Ast.Class(parent, body)
+  },
+  
+  propertyDefinition: rule {
+    association // Todo: Support the other kinds of property definitions
+  },
+  
   psuedoVariable: rule {
     | id('null')  -> Ast.Null()
     | id('true')  -> Ast.True()
     | id('false') -> Ast.False()
     | id('this')  -> Ast.This()
-    | id('self')  -> Ast.Self()
+    | id('super') -> Ast.Super()
   },
   
   lookupVariable: rule {
@@ -293,19 +319,6 @@ var Parser = module.exports = Class.new(combe.TextParser, {
       -> Ast.Map(elems)
     | '{' delimited[splatExpression[~association expression], ',']:elems ','? '}'
       -> Ast.Set(elems)
-  },
-  
-  objectLiteral: rule {
-    '#' '{' delimited[splatExpression[propertyDefinition], ',']:elems ','? ']'
-    -> Ast.ObjectLiteral(props)
-  },
-  
-  classLiteral: rule {
-    fail // Todo
-  },
-  
-  propertyDefinition: rule {
-    association // Todo: Support the other kinds of property definitions
   },
   
   functionLiteral: rule {
@@ -424,7 +437,7 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   },
   
   PsuedoVariableNames: [
-    'this', 'self', 'true', 'false', 'null', '_'
+    'new', 'extend', 'class', 'this', 'super',  'true', 'false', 'null', '_'
   ],
   
   id: rule (expectedName) {
@@ -452,6 +465,7 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     | '||' | '|' | '^^' | '^' | '&&' | '&' | '\\\\' | '\\'
     | '+' | '-' | '**' | '*' | '//' | '/' | '%' | '~'
     | '->'
+    | ':'
     ):text
     -> text
   },
