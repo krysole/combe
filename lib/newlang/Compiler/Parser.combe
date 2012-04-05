@@ -36,6 +36,11 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
 }, {
   
+  // Todo: I believe that this dialect of Combe may be served by providing
+  // Ruby style do-end delimited in addition to the parentheses delimitiers.
+  // This would also allow the layout rule to exist as more a minor improvement
+  // in Ruby's notation (real continuation lines, block indentation, and less semicolons).
+  
   file: rule {
     expressionSequence:expr eof
     -> Ast.File(expr)
@@ -56,34 +61,18 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   assignmentExpression: rule {
     | variableAssignment
-    | dotAssignment
-    | association
+    | memberAssignment
+    | logicalOr
   },
   
   variableAssigment: rule {
     variableName:name op('=') assignmentExpression:rvalue
-    -> Ast.Assignment(name, rvalue)
+    -> Ast.VariableAssignment(name, rvalue)
   },
   
-  dotAssignment: rule {
-    callExpression:expr
-    
-    ( '.' identifier:name argumentList:args &'.'
-      !(expr = Ast.MethodCall(expr, name, args))
-    | '.' identifier:name &'.'
-      !(expr = Ast.MethodCall(expr, name, []))
-    )*
-    
-    ( '.' identifier:name argumentList:args op('=') assignmentExpression:rvalue
-      -> Ast.AssignmentMethodCall(expr, name, args, rvalue)
-    | '.' identifier:name
-      -> Ast.AssignmentMethodCall(expr, name, [], rvalue)
-    )
-  },
-  
-  association: rule {
-    logicalOr:k op(':') logicalOr:v
-    -> Ast.Association(k, v)
+  memberAssignment: rule {
+    secondaryExpression:expr ?(expr.is('MethodCall')) op('=') assignmentExpression:rvalue
+    -> Ast.MethodCallAssignment(expr.receiver, expr.name, expr.arguments, rvalue)
   },
   
   logicalOr: rule {
@@ -125,12 +114,19 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   comparisonOperator: rule {
     // Non-Associative (can only appear once)
-    unionOperator:expr
-    ( op('<=>'):opname unionOperator:rhs
+    association:expr
+    ( op('<=>'):opname association:rhs
       -> Ast.Operator(opname, expr, rhs)
     | -> expr
     )
   },
+  
+  association: rule {
+    associationLValue:k op(':') associationRValue:v
+    -> Ast.Association(k, v)
+  },
+  associationLValue: rule { unionOperator },
+  associationRValue: rule { unionOperator },
   
   unionOperator: rule { // lhs OR rhs
     leftAssocOperator[symmetricDifferenceOperator, op('|')]
@@ -177,25 +173,21 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   prefixOperatorExpression: rule {
     | (op('+') | op('-') | op('~')):opname prefixOperatorExpression:e
       -> Ast.PrefixOperator(opname, e)
-    | dotExpression
+    | secondaryExpression
   },
   
-  dotExpression: rule {
-    callExpression:expr
-    ( '.' identifier:name argumentList:args
-      !(expr = Ast.MethodCall(expr, name, args))
-    | '.' identifier:name
-      !(expr = Ast.MethodCall(expr, name, []))
-    )*
+  secondaryExpression: rule {
+    primaryExpression:expr ( secondaryExpressionFragment(expr):expr )*
     -> expr
   },
   
-  callExpression: rule {
-    primaryExpression:expr
-    ( argumentList:args
-      -> Ast.Call(expr, null, args)
-    | -> expr
-    )
+  seconaryExpressionFragment: rule (receiver) {
+    | op('.') propertyName:name argumentsList?:args
+      -> Ast.MethodCall(receiver, name, (args != null ? args : []))
+    | op('::') propertyName:name argumentsList?:args
+      -> Ast.MethodCall(Ast.LookupPrototype(receiver), name, (args != null ? args : []))
+    | argumentList:args
+      -> Ast.Call(receiver, null, args)
   },
   
   argumentList: rule {
@@ -274,27 +266,70 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   newExpression: rule {
     | 'new' primaryExpression:expr argumentList?:args
-      ( '{' expressionSequence:body '}'
-        -> Ast.New(expr, (args != null ? args : []), body)
+      ( '{' propertyDeclarationsBody:pdecls '}'
+        -> Ast.New(expr, (args != null ? args : []), pdecls)
       | ~'{'
         -> Ast.new(expr, (args != null ? args : []), null)
       )
-    | 'new' '{' expressionSequence:body '}'
-      -> Ast.new(null, [], body)
+    | 'new' '{' propertyDeclarationsBody:pdecls '}'
+      -> Ast.new(null, [], pdecls)
   }
   
   extendExpression: rule {
-    'extend' expression:subject '{' expressionSequence:body '}'
-    -> Ast.Extend(subject, body)
+    'extend' expression:subject '{' propertyDeclarationsBody:pdecls '}'
+    -> Ast.Extend(subject, pdecls)
   },
   
-  classLiteral: rule {
-    'class' expression?:parent '{' expressionSequence:body '}'
-    -> Ast.Class(parent, body)
+  classExpression: rule {
+    'class' subexpression?:superclass propertyDeclarationsBody:pdecls
+    -> Ast.Class(superclass, pdecls)
   },
   
-  propertyDefinition: rule {
-    association // Todo: Support the other kinds of property definitions
+  propertyDeclarations: rule {
+    '{' delimited[propertyDeclaration, ',']:elems '}'
+    -> elems
+  },
+  
+  propertyDeclaration: rule {
+    | slotPropertyDeclaration
+    | primitivePropertyDeclaration
+    | methodPropertyDeclaration
+    | doExpressionPropertyDeclaration
+    // | describePropertyDeclaration // Todo: Provide support for JS property descriptor maps
+  },
+  
+  slotPropertyDeclaration: rule {
+    | id('const') propertyName:name op('=') assignmentExpression:rvalue
+      -> Ast.ConstantSlotPropertyDeclaration(name, rvalue)
+    | propertyName:name op('=') assignmentExpression:rvalue
+      -> Ast.SlotPropertyDeclaration(name, rvalue)
+  },
+  
+  primitivePropertyDeclaration: rule {
+    propertyName:name op(':') expression:rvalue
+    -> Ast.PrimitivePropertyDeclaration(name, rvalue)
+  },
+  
+  methodPropertyDeclaration: rule {
+    | propertyName:name parameterList?:ps op('->') expression:body
+      -> Ast.MethodPropertyDeclaration(name, (ps != null ? ps : []), body)
+    | propertyName:name parameterList?:ps op('=') parameter:rvname op('->') expression:body
+      -> {
+        ps = (ps != null ? ps : []);
+        var realname = name + '='
+        var realparams = ps.concat([rvname]);
+        return Ast.MethodPropertyDeclaration(realname, realparams, body)
+      }
+  },
+  
+  doExpressionPropertyDeclaration: rule {
+    id('do') expression:body
+    -> Ast.DoExpressionPropertyDeclaration(body)
+  },
+  
+  propertyName: rule {
+    | identifier:name -> Ast.String(name)
+    | string
   },
   
   psuedoVariable: rule {
@@ -302,12 +337,12 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     | id('true')  -> Ast.True()
     | id('false') -> Ast.False()
     | id('this')  -> Ast.This()
-    | id('super') -> Ast.Super()
+    | id('_')     -> Ast.Underscore()
   },
   
   lookupVariable: rule {
-    variableIdentifier:name
-    -> Ast.Lookup(name)
+    variableName:name
+    -> Ast.VariableLookup(name)
   },
   
   collectionLiteral: rule {
@@ -322,8 +357,8 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   },
   
   functionLiteral: rule {
-    parameterList?:ps op('->') expressionSequence:body
-    -> Ast.Function(ps, body)
+    parameterList?:ps op('->') expression:body
+    -> Ast.Function((ps != null ? ps : []), body)
   }
   
   parameterList: rule {
@@ -332,13 +367,13 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   splatParameter: rule {
     | op('*') parameter:p
-      -> Ast.SplatParameter(p)
+      -> Ast.SplatParameter(p.name)
     | parameter
   },
   
   parameter: rule {
     | variableName:name -> Ast.Parameter(name)
-    | id('_') -> Ast.IgnoreParameter()
+    | id('_') -> Ast.Parameter(null)
   },
   
   subexpression: rule {
@@ -349,6 +384,15 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   numberLiteral: rule {
     | decimal
     | hexInteger
+  },
+  
+  PsuedoVariableNames: [
+    'new', 'extend', 'class', 'this',  'true', 'false', 'null', '_'
+  ],
+  
+  variableName: rule {
+    identifier:name ?(!this.PsuedovariableNames.include(name.value))
+    -> name
   },
   
   decimal: rule {
@@ -436,18 +480,8 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     ws? fail // Todo
   },
   
-  PsuedoVariableNames: [
-    'new', 'extend', 'class', 'this', 'super',  'true', 'false', 'null', '_'
-  ],
-  
   id: rule (expectedName) {
     identifier:name ?(name.value === expectedName) -> name
-  },
-  
-  variableIdentifier: rule {
-    identifier:name
-    ?(!this.PsuedovariableNames.include(name.value))
-    -> name
   },
   
   identifier: rule {
@@ -465,7 +499,6 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     | '||' | '|' | '^^' | '^' | '&&' | '&' | '\\\\' | '\\'
     | '+' | '-' | '**' | '*' | '//' | '/' | '%' | '~'
     | '->'
-    | ':'
     ):text
     -> text
   },
