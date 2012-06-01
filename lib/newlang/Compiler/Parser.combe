@@ -213,10 +213,11 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   keywordExpression: rule {
     | returnExpression
+    | breakExpression
+    | continueExpression
     | declareVariableExpression
     | ifExpression
     | whileExpression
-    | loopExpression
     | newExpression
     | extendExpression
     | classExpression
@@ -225,6 +226,16 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   returnExpression: rule {
     id('return') expression:e
     -> Ast.Return(e)
+  },
+  
+  breakExpression: rule {
+    id('break')
+    -> Ast.Break()
+  },
+  
+  continueExpression: rule {
+    id('continue')
+    -> Ast.Continue()
   },
   
   declareVariableExpression: rule {
@@ -259,29 +270,18 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     -> Ast.While(cond, body)
   },
   
-  loopExpression: rule {
-    id('loop') expression:body
-    -> Ast.Loop(body)
-  },
-  
   newExpression: rule {
-    | 'new' primaryExpression:expr argumentList?:args
-      ( '{' propertyDeclarationsBody:pdecls '}'
-        -> Ast.New(expr, (args != null ? args : []), pdecls)
-      | ~'{'
-        -> Ast.new(expr, (args != null ? args : []), null)
-      )
-    | 'new' '{' propertyDeclarationsBody:pdecls '}'
-      -> Ast.new(null, [], pdecls)
+    id('new') subexpression?:proto propertyDeclarationsBody:pdecls
+    -> Ast.new(proto, pdecls)
   }
   
   extendExpression: rule {
-    'extend' expression:subject '{' propertyDeclarationsBody:pdecls '}'
+    id('extend') subexpression:subject propertyDeclarationsBody:pdecls
     -> Ast.Extend(subject, pdecls)
   },
   
   classExpression: rule {
-    'class' subexpression?:superclass propertyDeclarationsBody:pdecls
+    id('class') subexpression?:superclass propertyDeclarationsBody:pdecls
     -> Ast.Class(superclass, pdecls)
   },
   
@@ -310,9 +310,18 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     -> Ast.PrimitivePropertyDeclaration(name, rvalue)
   },
   
+  // Todo: I've made a mistake in defining function variables, which cannot
+  // be called using their name, but must use {name}{()}, which looks right, but isn't
+  // for functions in slots, which are then {receiver}{.}{name()}{()}, the second
+  // parens being the function call, the first being to get the function slot.
+  //
+  // Method variables should be possible since they're still just lexically scoped
+  // functions which are called in the same way as object methods. The difference
+  // and limitations of lexical scoping should be the only difference between them...
   methodPropertyDeclaration: rule {
     | propertyName:name parameterList?:ps op('->') expression:body
       -> Ast.MethodPropertyDeclaration(name, (ps != null ? ps : []), body)
+    // Todo: Replace the hardcoded name + '=' below with a separate Ast case.
     | propertyName:name parameterList?:ps op('=') parameter:rvname op('->') expression:body
       -> {
         ps = (ps != null ? ps : []);
@@ -386,12 +395,18 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     | hexInteger
   },
   
-  PsuedoVariableNames: [
-    'new', 'extend', 'class', 'this',  'true', 'false', 'null', '_'
+  InvalidVariableNames: [
+    'new', 'extend', 'class', 'this',  'true', 'false', 'null', '_',
+    
+    'or', 'and', 'xor', 'not',
+    
+    'return', 'var', 'if', 'then', 'else', 'while', 'do',
+    'break', 'continue',
+    'end' // If I change to Ruby like delimiters
   ],
   
   variableName: rule {
-    identifier:name ?(!this.PsuedovariableNames.include(name.value))
+    identifier:name ?(!this.InvalidVariableNames.include(name.value))
     -> name
   },
   
