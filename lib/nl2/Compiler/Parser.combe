@@ -1,0 +1,270 @@
+/*
+  The Combe Programming Language
+  
+  Copyright 2011 Lorenz Pretterhofer
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+'use strict';
+
+var combe = require('combe');
+
+var Ast = require('./Ast');
+
+var Parser = module.exports = Class.new(combe.TextParser, {
+  
+  parse: function (source) {
+    var parser = this.new(source);
+    var result = parser.match('file');
+    if (result == null) {
+      var lc = source.lineColumnAt(parser.furthestPosition);
+      throw new Error('Parse failed with furthest position ' + lc[0] + ':' + lc[1]);
+    }
+    return result;
+  },
+  
+}, {
+  
+  // Syntactic Rules
+  
+  // Todo
+  
+  
+  // Token rules
+  
+  InvalidVariableNames: [
+    'this', 'true', 'false', 'null', 'undefined', '_',
+    
+    'or', 'and', 'xor', 'not',
+    
+    'return', 'var', 'if', 'then', 'else', 'while', 'do',
+    'break', 'continue',
+    'end'
+  ],
+  
+  variableName: rule {
+    identifier:name ?(!this.InvalidVariableNames.include(name)) -> name
+  },
+  
+  number: rule {
+    | decimalNumber
+    | hexNumber
+  },
+  
+  decimalNumber: rule {
+    ws?
+    matchedInput[ digit+ ('.' digit*)? (('e'|'E') digit+)? ]:text ~idChar
+    -> parseFloat(text)
+  },
+  
+  hexNumber: rule {
+    ws?
+    ('0x'|'0X') matchedInput[ hexDigit+ ]:text ~idChar
+    -> parseFloat(text)
+  },
+  
+  string: rule {
+    ws?
+    ( '\'' (~'\'' stringChar)*:cs '\''
+    | '\"' (~'\"' stringChar)*:cs '\"'
+    ) -> cs.join('')
+  },
+  
+  stringChar: rule (delimiter) {
+    | '\\' stringEscapeSequence
+    | ~newline char
+  },
+  
+  stringEscapeSequence: rule {
+    | '\'' -> '\''
+    | '\"' -> '\"'
+    | '\\' -> '\\'
+    | '0'  -> '\x00' // ^@  Null Character
+    | 'a'  -> '\x07' // ^G  Alarm/Bell
+    | 'b'  -> '\x08' // ^H  Backspace
+    | 't'  -> '\x09' // ^I  Tab
+    | 'n'  -> '\x0a' // ^J  Line Feed
+    | 'v'  -> '\x0b' // ^K  Vertical Tab
+    | 'f'  -> '\x0c' // ^L  Form Feed
+    | 'r'  -> '\x0d' // ^M  Carriage Return
+    | 'e'  -> '\x1b' // ^[  Escape
+    | 'x' repeat[hexDigit, %2]:hs -> String.fromCodepoint(hs.join(''))
+    | 'u' repeat[hexDigit, %4]:hs -> String.fromCodepoint(hs.join(''))
+    | 'u' '(' hexDigit*:hs ')' -> String.fromCodepoint(hs.join(''))
+    | error('Unsupported escape sequence')
+  },
+  
+  regex: rule {
+    ws? fail // Unimplemented
+  },
+  
+  id: rule (expectedName) {
+    identifier:name ?(name === expectedName) -> name
+  },
+  
+  identifier: rule {
+    ws? matchedInput[initialIdChar idChar*]
+  },
+  
+  op: rule (expectedOpname) {
+    operator:opname ?(opname === expectedOpname) -> opname
+  },
+  
+  operator: rule {
+    ws?
+    ( '<<' | '>>>' | '>>' | '<=>' | '<=' | '>=' | '<' | '>'
+    | '==' | '!=' | '=' | '!'
+    | '||' | '|' | '^^' | '^' | '&&' | '&' | '\\\\'
+    | '+' | '-' | '**' | '*' | '//' | '/' | '%' | '~'
+    | '->' | '=>'
+    ):text
+    -> text
+  },
+  
+  ws: rule {
+    (
+      ( spaces | comment )+
+      continuationLine
+    )+
+  },
+  
+  statementTerminator: rule {
+    | ws? blankline* newline currentIndentation ~ws
+    | ws? ';'
+  },
+  
+  blankline: rule {
+    newline ( spaces | comment )+ &newline
+  },
+  
+  continuationLine: rule {
+    | '\\' newline ( spaces | comment )+
+    | newline currentIndentation ( spaces | comment )+
+  },
+  
+  currentIndentation: function () {
+    for (var i = 0; i < this.state.indentationLevelStack.last; i++) {
+      this.space()
+    }
+  },
+  
+  indent: rule {
+    currentIndentation spaces:ss
+    !(this.state.indentationLevelStack.push(this.state.indentationLevelStack.last + ss.length);
+  },
+  
+  dedent: rule { // Only dedents a single level!
+    ~currentIndentation
+    !(this.state.indentationLevelStack.pop())
+    currentIndentation
+  },
+  
+  dedentMany: rule {
+    (
+      ~currentIndentation
+      !(this.state.indentationLevelStack.pop())
+    )+
+    currentIndentation
+  },
+  
+  comment: rule {
+    | delimitedComment
+    | lineComment
+  },
+  
+  delimitedComment: rule {
+    '{-' &(space | newline | '-}')
+    ( ~'-}' (delimitedComment | char) )*
+    ('-}' | eof)
+  },
+  
+  lineComment: rule {
+    '--' (~newline char)* newline
+  },
+  
+  newline: rule { '\r\n' | '\n' | '\r' | eof },
+  
+  digit: rule { char('0'..'9') },
+  
+  hexDigit: rule { char('0'..'9', 'a'..'f', 'A'..'F') },
+  
+  idChar:        rule { char('a'..'z', 'A'..'Z', '_', '$', '0'..'9') },
+  initialIdChar: rule { char('a'..'z', 'A'..'Z', '_', '$') },
+  
+  space: rule { ' ' },
+  spaces: rule { space+ },
+  
+  
+  // Basic Parser Functionality
+  
+  next: function () {
+    var c = TextParser.prototype.next.call(this);
+    this.furthestPosition = Math.max(
+      this.futhestPosition,
+      this.state.position
+    );
+    return c;
+  },
+  
+  nextIf: function (predicate) {
+    var c = TextParser.prototype.next.call(this);
+    if (predicate.call(this, c)) {
+      this.furthestPosition = Math.max(
+        this.furthestPosition,
+        this.state.position
+      );
+      return c;
+    }
+    else {
+      return this.fail();
+    }
+  },
+  
+  emptyState: function () {
+    return {
+      position: 0,
+      indentationLevelStack: [0],
+    };
+  },
+  
+  copyState: function () {
+    return {
+      position: this.state.position,
+      indentationLevelStack: this.state.indentationLevelStack.copy(),
+    };
+  },
+  
+  stringPatternHandler: rule (string) {
+    eachChar(string)
+  },
+  
+  tokenOperatorHandler: rule (parser) {
+    ws? parser
+  },
+  
+  // Layout rules
+  // 1. A line terminator followed by an indentation level the same length as the
+  //    current block's indentation level is considered a statement terminator.
+  // 2. If a line has an indentation level deeper than the current blocks, it
+  //    is considered a continuation line of the current statement.
+  // 3. Only a block scope changes the current block indentation level. Respectively
+  //    all blocks are terminated by an 'end' token at the beginning of a line and
+  //    are begun by either a 'do' token at the end of a line or a special syntactic
+  //    case, i.e., if statements.
+  // 4. Semicolons may be used to add additional statements to a line. These may
+  //    still be used to denote blocks, and the same layout rules apply treating
+  //    the semicolons as newlines, but not changing the indentation level until
+  //    a fresh line is provided at the new indentation level.
+  // 5. Trailing semicolons on a line are ignored and do not affect the above rules.
+  
+});
