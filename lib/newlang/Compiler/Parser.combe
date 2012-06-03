@@ -36,121 +36,219 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
 }, {
   
-  // Todo: I believe that this dialect of Combe may be served by providing
-  // Ruby style do-end delimited in addition to the parentheses delimitiers.
-  // This would also allow the layout rule to exist as more a minor improvement
-  // in Ruby's notation (real continuation lines, block indentation, and less semicolons).
+  // Syntactic Rules
   
   file: rule {
-    expressionSequence:expr eof
-    -> Ast.File(expr)
+    delimited[statement, statementTerminator]:stmts ws? eof
+    -> Ast.File(Ast.Block(stmts))
   },
   
-  expressionSequence: rule {
-    delimited[expression, ';']:es ';'?
-    -> Ast.Sequence(es)
+  statement: rule {
+    | ifStatement
+    | expression
   },
   
   expression: rule {
-    operatorExpression
+    | ifExpression
+    | letExpression
+    | varExpression
+    | returnExpression
+    | throwExpression
+    | operatorExpression
   },
+  
+  ifStatement: rule {
+    id('if') expression:c statementTerminator
+      blockBody:b
+    !(Ast.If(c, b, null)):ast !(ast):tail
+    (
+      id('else') id('if') expression:c statementTerminator
+        blockBody:b
+      !(tail.alternative = Ast.If(c, b, null)) !(tail.alternative):tail
+    )*
+    (
+      id('else') statementTerminator
+        blockBody:b
+      !(tail.alternative = b)
+    )?
+    id('end')
+    -> ast
+  },
+  
+  ifExpression: rule {
+    id('if') expression:condition
+    id('then') expression:consiquent
+    ( id('else') expression:alternative )?
+    -> Ast.If(condition, consiquent, alternative)
+  },
+  
+  letExpression: rule {
+    id('let') variableIdentifier:name op('=') assignmentExpression:rvalue
+    -> Ast.Let(name, rvalue)
+  },
+  
+  varExpression: rule {
+    id('var') variableIdentifier:name ( op('=') assignmentExpression:rvalue )?
+    -> Ast.Var(name, rvalue)
+  },
+  
+  returnExpression: rule {
+    id('return') expression?:arg
+    -> Ast.Return(arg)
+  },
+  
+  throwExpression: rule {
+    id('throw') expression?:arg
+    -> Ast.Throw(arg)
+  },
+  
+  
+  blockBody: rule {
+    | (
+        indent
+        delimited[statement, statementTerminator]:stmts
+        dedent
+      )
+      -> Ast.Block(stmts)
+    | -> Ast.Noop()
+  },
+  
   
   operatorExpression: rule {
     assignmentExpression
   },
   
   assignmentExpression: rule {
-    | variableAssignment
-    | memberAssignment
-    | logicalOr
+    | lvalueExpression:lvalue op('=') assignmentExpression:rvalue
+      -> Ast.Assignment(lvalue, rvalue)
+    | logicalOperator
   },
   
-  variableAssigment: rule {
-    variableName:name op('=') assignmentExpression:rvalue
-    -> Ast.VariableAssignment(name, rvalue)
+  
+  lvalueExpression: rule {
+    | lvalueSecondaryExpression
+    | lvaluePrimaryExpression
   },
   
-  memberAssignment: rule {
-    secondaryExpression:expr ?(expr.is('MethodCall')) op('=') assignmentExpression:rvalue
-    -> Ast.MethodCallAssignment(expr.receiver, expr.name, expr.arguments, rvalue)
+  lvaluePrimaryExpression: {
+    variableLookup
   },
   
-  logicalOr: rule {
-    logicalXor:expr
-    ( id('or'):opname logicalXor:rhs
+  lvalueSecondaryExpression: rule {
+    primaryExpression:expr ( lvalueSecondaryExpressionFragment(expr):expr )+
+    -> expr
+  }
+  
+  lvalueSecondaryExpressionFragment: rule (expr) {
+    | op('.') propertyName:pname
+      -> Ast.PropertyLookup(expr, pname)
+    | op(':') propertyName:pname
+      -> Ast.PrototypePropertyLookup(expr, pname))
+  },
+  
+  
+  logicalOperator: rule {
+    wordedLogicalOr
+  },
+  
+  wordedLogicalOr: rule {
+    wordedLogicalXor:expr
+    ( id('or') wordedLogicalXor:rhs
       !(expr = Ast.Or(expr, rhs))
     )*
     -> expr
   },
-  logicalXor: rule {
-    logicalAnd:expr
-    ( id('xor'):opname logicalAnd:rhs
+  wordedLogicalXor: rule {
+    wordedLogicalAnd:expr
+    ( id('xor') wordedLogicalAnd:rhs
       !(expr = Ast.Xor(expr, rhs))
     )*
     -> expr
   },
-  logicalAnd: rule {
-    logicalNot:expr
-    ( id('and'):opname logicalNot:rhs
+  wordedLogicalAnd: rule {
+    wordedLogicalNot:expr
+    ( id('and') wordedLogicalNot:rhs
       !(expr = Ast.And(expr, rhs))
     )*
     -> expr
   },
-  logicalNot: rule {
-    | id('not'):opname logicalNot:expr
+  wordedLogicalNot: rule {
+    | id('not') wordedLogicalNot:expr
+      -> Ast.Not(expr)
+    | symbolicLogicalOr
+  },
+  
+  symbolicLogicalOr: rule {
+    symbolicLogicalXor:expr
+    ( op('||') symbolicLogicalXor:rhs
+      !(expr = Ast.Or(expr, rhs))
+    )*
+    -> expr
+  },
+  symbolicLogicalXor: rule {
+    symbolicLogicalAnd:expr
+    ( op('^^') symbolicLogicalAnd:rhs
+      !(expr = Ast.Xor(expr, rhs))
+    )*
+    -> expr
+  },
+  symbolicLogicalAnd: rule {
+    symbolicLogicalNot:expr
+    ( op('&&') symbolicLogicalNot:rhs
+      !(expr = Ast.And(expr, rhs))
+    )*
+    -> expr
+  },
+  symbolicLogicalNot: rule {
+    | op('!') symbolicLogicalNot:expr
       -> Ast.Not(expr)
     | equalityOperator
   },
   
   equalityOperator: rule {
-    // Todo: Change this from left-associative to math-like notation.
+    // Todo: Allow Math style sequences of equality operators (i.e., 0 <= i < length) 
     comparisonOperator:expr
-    ( (op('==') | op('!=') | op('<=') | op('<') | op('>=') | op('>')):opname
+    ( (op('==') | op('!=') | op('<=') | op('<') | op('>=') | op('>') ):opname
       comparisonOperator:rhs
-      !(expr = Ast.Operator(opname, expr, rhs))
-    )*
-    -> expr
+      -> Ast.Operator(opname, expr, rhs)
+    | -> expr
   },
   
   comparisonOperator: rule {
-    // Non-Associative (can only appear once)
     association:expr
-    ( op('<=>'):opname association:rhs
+    ( op('<>'):opname association:rhs
       -> Ast.Operator(opname, expr, rhs)
     | -> expr
     )
   },
   
   association: rule {
-    associationLValue:k op(':') associationRValue:v
-    -> Ast.Association(k, v)
+    | propertyName:lhs op(':') bitwiseOr:rhs
+      -> Ast.Association(lhs, rhs)
+    | bitwiseOr:lhs op('=>') bitwiseOr:rhs
+      -> Ast.Association(lhs, rhs)
   },
-  associationLValue: rule { unionOperator },
-  associationRValue: rule { unionOperator },
   
-  unionOperator: rule { // lhs OR rhs
-    leftAssocOperator[symmetricDifferenceOperator, op('|')]
+  bitwiseOr: rule {
+    leftAssocOperator[bitwiseXor op('|')]
   },
-  symmetricDifferenceOperator: rule { // lhs XOR rhs
-    leftAssocOperator[intersectOperator, op('^')]
+  bitwiseXor: rule {
+    leftAssocOperator[bitwiseAnd op('^')]
   },
-  intersectOperator: rule { // lhs AND rhs
-    leftAssocOperator[differenceOperator, op('&')]
-  },
-  differenceOperator: rule { // lhs AND (NOT rhs)
-    leftAssocOperator[shiftOperator, op('\\')]
+  bitwiseAnd: rule {
+    leftAssocOperator[shiftOperator op('&')]
   },
   
   shiftOperator: rule {
-    leftAssocOperator[addOperator, (op('<<') | op('>>') | op('>>>'))]
+    leftAssocOperator[additionOperator, ( op('<<') | op('>>') | op('>>>') )]
   },
-  addOperator: rule {
-    leftAssocOperator[multiplyOperator, (op('+') | op('-'))]
+  additionOperator: rule {
+    leftAssocOperator[multiplicationOperator, ( op('+') | op('-') )]
   },
-  multiplyOperator: rule {
-    leftAssocOperator[exponentOperator, (op('*') | op('/') | op('//') | op('%'))]
+  multiplicationOperator: rule {
+    leftAssocOperator[exponentiationOperator, ( op('*') | op('/') | op('//') | op('%') )]
   },
-  exponentOperator: rule {
+  exponentiationOperator: rule {
     rightAssocOperator[prefixOperatorExpression, op('**')]
   },
   
@@ -161,7 +259,6 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     )*
     -> expr
   },
-  
   rightAssocOperator: rule (term, operator) {
     term:expr
     ( operator:opname rightAssocOperator(term, operator):rhs
@@ -171,305 +268,226 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   },
   
   prefixOperatorExpression: rule {
-    | (op('+') | op('-') | op('~')):opname prefixOperatorExpression:e
-      -> Ast.PrefixOperator(opname, e)
+    | ( op('+') | op('-') | op('~') ):opname prefixOperatorExpression:expr
+      -> Ast.PrefixOperator(opname, expr)
     | secondaryExpression
   },
+  
   
   secondaryExpression: rule {
     primaryExpression:expr ( secondaryExpressionFragment(expr):expr )*
     -> expr
   },
   
-  seconaryExpressionFragment: rule (receiver) {
-    | op('.') propertyName:name argumentsList?:args
-      -> Ast.MethodCall(receiver, name, (args != null ? args : []))
-    | op('::') propertyName:name argumentsList?:args
-      -> Ast.MethodCall(Ast.LookupPrototype(receiver), name, (args != null ? args : []))
-    | argumentList:args
-      -> Ast.Call(receiver, null, args)
+  secondaryExpressionFragment: rule (expr) {
+    | op('.') propertyName:pname argumentsList:ad
+      -> Ast.MethodCall(expr, pname, ad.this, ad.arguments)
+    | op('.') propertyName:pname
+      -> Ast.PropertyLookup(expr, pname)
+    | op(':') propertyName:pname argumentsList:ad
+      -> Ast.PrototypeMethodCall(expr, pname, ad.this, ad.arguments)
+    | op(':') propertyName:pname
+      -> Ast.PrototypePropertyLookup(expr, pname))
+    | argumentsList:ad
+      -> Ast.Call(expr, ad.this, ad.arguments)
+    | subscript:args
+      -> Ast.Subscript(expr, args)
   },
   
-  argumentList: rule {
-    '(' delimited[splatExpression[expression], ',']:args ','? ')' -> args
+  
+  argumentsList: rule {
+    '(' 
+      ( expression:t ';' )?
+      delimited[expansion[expression], ',']:args ','?
+    ')'
+    -> { this: t, arguments: args }
   },
   
-  splatExpression: rule (alternative) {
-    | op('*') expression:expr
-      -> Ast.Splat(expr)
+  subscript: rule {
+    '[' delimited[expansion[expression], ',']:args ','? ']'
+    -> args
+  },
+  
+  expansion: rule (alternative) {
+    | op('..') expression:expr
+      -> Ast.ExpandArguments(expr)
     | alternative
   },
   
+  
   primaryExpression: rule {
-    | keywordExpression
     | psuedoVariable
-    | lookupVariable
-    | uninterpolatedStringLiteral
+    | variableLookup
+    | stringLiteral
     | numberLiteral
-    | collectionLiteral
+    | objectLiteral
     | functionLiteral
     | subexpression
   },
   
-  keywordExpression: rule {
-    | returnExpression
-    | breakExpression
-    | continueExpression
-    | declareVariableExpression
-    | ifExpression
-    | whileExpression
-    | newExpression
-    | extendExpression
-    | classExpression
-  },
-  
-  returnExpression: rule {
-    id('return') expression:e
-    -> Ast.Return(e)
-  },
-  
-  breakExpression: rule {
-    id('break')
-    -> Ast.Break()
-  },
-  
-  continueExpression: rule {
-    id('continue')
-    -> Ast.Continue()
-  },
-  
-  declareVariableExpression: rule {
-    id('var') delimited1[declvarFragment, ',']:decls
-    -> {
-      if (decls.length > 1) {
-        return Ast.Sequence(decls);
-      }
-      else {
-        return decls[0];
-      }
-    }
-  },
-  
-  declvarFragment: rule {
-    | variableName:name '=' assignmentExpression:rvalue
-      -> Ast.DeclareVariable(name, rvalue)
-    | variableName:name
-      -> Ast.DeclareVariable(name, null)
-  },
-  
-  ifExpression: rule {
-    id('if') expression:c id('then') expression:t
-    ( id('else') expression:e
-      -> Ast.If(c, t, e)
-    | -> Ast.If(c, t, null)
-    )
-  },
-  
-  whileExpression: rule {
-    id('while') expression:cond id('do') expression:body
-    -> Ast.While(cond, body)
-  },
-  
-  newExpression: rule {
-    id('new') subexpression?:proto propertyDeclarationsBody:pdecls
-    -> Ast.new(proto, pdecls)
-  }
-  
-  extendExpression: rule {
-    id('extend') subexpression:subject propertyDeclarationsBody:pdecls
-    -> Ast.Extend(subject, pdecls)
-  },
-  
-  classExpression: rule {
-    id('class') subexpression?:superclass propertyDeclarationsBody:pdecls
-    -> Ast.Class(superclass, pdecls)
-  },
-  
-  propertyDeclarations: rule {
-    '{' delimited[propertyDeclaration, ',']:elems '}'
-    -> elems
-  },
-  
-  propertyDeclaration: rule {
-    | slotPropertyDeclaration
-    | primitivePropertyDeclaration
-    | methodPropertyDeclaration
-    | doExpressionPropertyDeclaration
-    // | describePropertyDeclaration // Todo: Provide support for JS property descriptor maps
-  },
-  
-  slotPropertyDeclaration: rule {
-    | id('const') propertyName:name op('=') assignmentExpression:rvalue
-      -> Ast.ConstantSlotPropertyDeclaration(name, rvalue)
-    | propertyName:name op('=') assignmentExpression:rvalue
-      -> Ast.SlotPropertyDeclaration(name, rvalue)
-  },
-  
-  primitivePropertyDeclaration: rule {
-    propertyName:name op(':') expression:rvalue
-    -> Ast.PrimitivePropertyDeclaration(name, rvalue)
-  },
-  
-  // Todo: I've made a mistake in defining function variables, which cannot
-  // be called using their name, but must use {name}{()}, which looks right, but isn't
-  // for functions in slots, which are then {receiver}{.}{name()}{()}, the second
-  // parens being the function call, the first being to get the function slot.
-  //
-  // Method variables should be possible since they're still just lexically scoped
-  // functions which are called in the same way as object methods. The difference
-  // and limitations of lexical scoping should be the only difference between them...
-  methodPropertyDeclaration: rule {
-    | propertyName:name parameterList?:ps op('->') expression:body
-      -> Ast.MethodPropertyDeclaration(name, (ps != null ? ps : []), body)
-    // Todo: Replace the hardcoded name + '=' below with a separate Ast case.
-    | propertyName:name parameterList?:ps op('=') parameter:rvname op('->') expression:body
-      -> {
-        ps = (ps != null ? ps : []);
-        var realname = name + '='
-        var realparams = ps.concat([rvname]);
-        return Ast.MethodPropertyDeclaration(realname, realparams, body)
-      }
-  },
-  
-  doExpressionPropertyDeclaration: rule {
-    id('do') expression:body
-    -> Ast.DoExpressionPropertyDeclaration(body)
-  },
-  
-  propertyName: rule {
-    | identifier:name -> Ast.String(name)
-    | string
-  },
-  
   psuedoVariable: rule {
-    | id('null')  -> Ast.Null()
-    | id('true')  -> Ast.True()
-    | id('false') -> Ast.False()
-    | id('this')  -> Ast.This()
-    | id('_')     -> Ast.Underscore()
+    | id('this')      -> Ast.This()
+    
+    | id('null')      -> Ast.Null()
+    | id('undefined') -> Ast.Undefined()
+    | id('true')      -> Ast.True()
+    | id('false')     -> Ast.False()
   },
   
-  lookupVariable: rule {
-    variableName:name
+  variableLookup: rule {
+    variableIdentifier:name
     -> Ast.VariableLookup(name)
   },
   
-  collectionLiteral: rule {
-    | '[' delimited[splatExpression[association], ',']:elems ','? ']'
-      -> Ast.OrderedMap(elems)
-    | '[' delimited[splatExpression[~association expression], ',']:elems ','? ']'
-      -> Ast.Array(elems)
-    | '{' delimited[splatExpression[association], ',']:elems ','? '}'
-      -> Ast.Map(elems)
-    | '{' delimited[splatExpression[~association expression], ',']:elems ','? '}'
-      -> Ast.Set(elems)
+  stringLiteral: rule {
+    string:s
+    -> Ast.String(s)
+  },
+  
+  numberLiteral: rule {
+    number:n
+    -> Ast.Number(n)
+  },
+  
+  objectLiteral: rule {
+    '{' delimited[propertyDeclaration, ',']:pdecls ','? '}'
+    -> Ast.Object(pdecls)
   },
   
   functionLiteral: rule {
-    parameterList?:ps op('->') expression:body
-    -> Ast.Function((ps != null ? ps : []), body)
-  }
-  
-  parameterList: rule {
-    '(' delimited[splatParameter, ',']:ps ','? ')' -> ps
+    | optParameterList:pd functionBody:body
+      -> Ast.Function(pd.this, pd.parameters, body)
   },
   
-  splatParameter: rule {
-    | op('*') parameter:p
-      -> Ast.SplatParameter(p.name)
+  functionBody: rule {
+    | op('->') expression:body -> body
+    | id('do') statementTerminator
+        blockBody:body
+      id('end')
+      -> body
+  },
+    
+  
+  subexpression: rule {
+    '(' expression:expr ')'
+    -> expr
+  },
+  
+  
+  optParameterList: rule {
+    parameterList:pd
+    -> (pd != null ? pd : { this: null, parameters: [] })
+  },
+  parameterList: rule {
+    '('
+      ( parameter:t ';' )?
+      delimited[contractionParameter, ',']:params ','?
+    ')'
+    -> { this: t, parameters: params }
+  },
+  
+  contractionParameter: rule {
+    | op('..') variableIdentifier:name
+      -> Ast.ContractParameters(name)
     | parameter
   },
   
   parameter: rule {
-    | variableName:name -> Ast.Parameter(name)
-    | id('_') -> Ast.Parameter(null)
+    | variableIdentifier:name -> Ast.Parameter(name)
+    | id('_') -> Ast.IgnoredParameter()
   },
   
-  subexpression: rule {
-    '(' expressionSequence:expr ')'
-    -> expr
+  
+  propertyDeclaration: rule {
+    | prototypePropertyDeclaration
+    | valuePropertyDeclaration
+    | getPropertyDeclaration
+    | setPropertyDeclaration
+    | methodPropertyDeclaration
+    | describePropertyDeclaration
   },
   
-  numberLiteral: rule {
-    | decimal
-    | hexInteger
+  prototypePropertyDeclaration: rule {
+    id('prototype') expression:value
+    -> Ast.PrototypePropertyDeclaration(value)
   },
   
-  InvalidVariableNames: [
-    'new', 'extend', 'class', 'this',  'true', 'false', 'null', '_',
+  valuePropertyDeclaration: rule {
+    propertyName:name op(':') expression:value
+    -> Ast.ValuePropertyDeclaration(name, value)
+  },
+  
+  getPropertyDeclaration: rule {
+    id('get') propertyName:name optParameterList:pd functionBody:body
+    -> Ast.GetPropertyDeclaration(name, pd.this, pd.parameters, body)
+  },
+  
+  setPropertyDeclaration: rule {
+    id('set') propertyName:name optParameterList:pd functionBody:body
+    -> Ast.SetPropertyDeclaration(name, pd.this, pd.parameters, body)
+  },
+  
+  methodPropertyDeclaration: rule {
+    id('method') propertyName:name optParameterList:pd functionBody:body
+    -> Ast.MethodPropertyDeclaration(name, pd.this, pd.parameters, body)
+  },
+  
+  describePropertyDeclaration: rule {
+    id('describe') propertyName:name op(':') expression:dict
+    -> Ast.DescribePropertyDeclaration(name, dict)
+  },
+  
+  
+  propertyName: rule {
+    | identifier:name -> Ast.String(name)
+    | stringLiteral
+  },
+  
+  
+  // Token rules
+  
+  InvalidVariableIdentifiers: [
+    'this', 'true', 'false', 'null', 'undefined', '_',
     
     'or', 'and', 'xor', 'not',
     
-    'return', 'var', 'if', 'then', 'else', 'while', 'do',
-    'break', 'continue',
-    'end' // If I change to Ruby like delimiters
+    'if', 'then', 'else',
+    'let', 'var',
+    'return', 'throw',
+    'do', 'end'
   ],
   
-  variableName: rule {
-    identifier:name ?(!this.InvalidVariableNames.include(name.value))
-    -> name
+  variableIdentifier: rule {
+    identifier:name ?(!this.InvalidVariableIdentifiers.include(name)) -> name
   },
   
-  decimal: rule {
+  number: rule {
+    | decimalNumber
+    | hexNumber
+  },
+  
+  decimalNumber: rule {
     ws?
-    matchedInput[
-      | integerPart ('.' digit*)? exponentPart?
-      | '.' digit+ exponentPart?
-    ]:text ~idChar
-    -> Ast.Number(parseFloat(text));
+    matchedInput[ digit+ ('.' digit*)? (('e'|'E') digit+)? ]:text ~idChar
+    -> parseFloat(text)
   },
   
-  hexInteger: rule {
+  hexNumber: rule {
     ws?
-    ('0x'|'0X') matchedInput[hexDigit+]:text ~idChar
-    -> Ast.Number(parseFloat(text))
+    ('0x'|'0X') matchedInput[ hexDigit+ ]:text ~idChar
+    -> parseFloat(text)
   },
   
-  // interpolatedStringLiteral: rule { 
-  //   ws?
-  //   openString:delimiter
-  //   ( stringFragment(delimiter)
-  //   | stringInterpolatedExpression(delimiter)
-  //   )*:es
-  //   delimiter
-  //   -> {
-  //     if (es.length === 0) {
-  //       return Ast.String('');
-  //     }
-  //     else if (es.length === 1 && es[0].is('String')) {
-  //       return es[0];
-  //     }
-  //     else {
-  //       return Ast.InterpolatedString(es);
-  //     }
-  //   }
-  // },
-  
-  uninterpolatedStringLiteral: rule {
+  string: rule {
     ws?
-    openString:delimiter
-    ( stringFragment(delimiter)
-    | -> Ast.String('')
-    ):s
-    delimiter
-    -> s
-  },
-  
-  openString: rule {
-    | '\'' -> rule { '\'' }
-    | '\"' -> rule { '\"' }
-  },
-  
-  stringFragment: rule (delimiter) {
-    basicStart
-    stringChar(delimiter)+:cs -> Ast.String(cs.join(''))
+    ( '\'' (~'\'' stringChar)*:cs '\''
+    | '\"' (~'\"' stringChar)*:cs '\"'
+    ) -> cs.join('')
   },
   
   stringChar: rule (delimiter) {
-    ~delimiter
-    ( '\\' stringEscapeSequence
+    | '\\' stringEscapeSequence
     | ~newline char
-    )
   },
   
   stringEscapeSequence: rule {
@@ -491,12 +509,8 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     | error('Unsupported escape sequence')
   },
   
-  regex: rule {
-    ws? fail // Todo
-  },
-  
   id: rule (expectedName) {
-    identifier:name ?(name.value === expectedName) -> name
+    identifier:name ?(name === expectedName) -> name
   },
   
   identifier: rule {
@@ -504,26 +518,64 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   },
   
   op: rule (expectedOpname) {
-    operator:opname ?(opname.value === expectedOpname) -> opname
+    operator:opname ?(opname === expectedOpname) -> opname
   },
   
   operator: rule {
     ws?
-    ( '<<' | '>>>' | '>>' | '<=>' | '<=' | '>=' | '<' | '>'
-    | '==' | '!=' | '='
-    | '||' | '|' | '^^' | '^' | '&&' | '&' | '\\\\' | '\\'
+    ( '<<' | '>>>' | '>>' | '<>' | '<=' | '>=' | '<' | '>'
+    | '!=' | '==' | '!' | '='
+    | '||' | '|' | '^^' | '^' | '&&' | '&'
     | '+' | '-' | '**' | '*' | '//' | '/' | '%' | '~'
-    | '->'
+    | '->' | '=>' | '<-' | '..' | '.'
     ):text
     -> text
   },
   
   ws: rule {
-    ( spaces | comment | newline )+
+    (
+      ( spaces | comment )+
+      continuationLine
+    )+
   },
   
-  spaces: rule {
-    ' '+
+  statementTerminator: rule {
+    | ws? blankline* newline &( currentIndentation ~ws )
+    | ws? ';'
+  },
+  
+  blankline: rule {
+    newline ( spaces | comment )+ &newline
+  },
+  
+  continuationLine: rule {
+    | '\\' newline ( spaces | comment )+
+    | newline currentIndentation ( spaces | comment )+
+  },
+  
+  currentIndentation: function () {
+    for (var i = 0; i < this.state.indentationLevelStack.last; i++) {
+      this.space()
+    }
+  },
+  
+  indent: rule {
+    currentIndentation spaces:ss
+    !(this.state.indentationLevelStack.push(this.state.indentationLevelStack.last + ss.length);
+  },
+  
+  dedent: rule { // Only dedents a single level!
+    ~currentIndentation
+    !(this.state.indentationLevelStack.pop())
+    currentIndentation
+  },
+  
+  dedentMany: rule {
+    (
+      ~currentIndentation
+      !(this.state.indentationLevelStack.pop())
+    )+
+    currentIndentation
   },
   
   comment: rule {
@@ -532,47 +584,34 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   },
   
   delimitedComment: rule {
-    '/*' &( spaces | newline | eof | '*/' )
-    ( ~'*/' (delimitedComment | char) )*
-    ('*/' | eof)
+    '{-' &(space | newline | '-}')
+    ( ~'-}' (delimitedComment | char) )*
+    ('-}' | eof)
   },
   
   lineComment: rule {
-    '//' (~newline char)* (newline | eof)
+    '--' (~newline char)* newline
   },
   
-  newline: rule {
-    '\r\n' | '\n' | '\r'
-  },
+  newline: rule { '\r\n' | '\n' | '\r' | eof },
   
-  digit: rule {
-    char('0'..'9')
-  },
+  digit: rule { char('0'..'9') },
   
-  hexDigit: rule {
-    char('0'..'9', 'a'..'f', 'A'..'F')
-  },
+  hexDigit: rule { char('0'..'9', 'a'..'f', 'A'..'F') },
   
-  idChar: rule {
-    char('a'..'z', 'A'..'Z', '0'..'9', '_', '$')
-  },
+  idChar:        rule { char('a'..'z', 'A'..'Z', '_', '$', '0'..'9') },
+  initialIdChar: rule { char('a'..'z', 'A'..'Z', '_', '$') },
   
-  initialIdChar: rule {
-    char('a'..'z', 'A'..'Z', '_', '$')
-  },
+  space: rule { ' ' },
+  spaces: rule { space+ },
   
-  stringPatternHandler: rule (string) {
-    ws? eachChar(string)
-  },
   
-  tokenOperatorHandler: rule (parser) {
-    ws? parser
-  },
+  // Basic Parser Functionality
   
   next: function () {
     var c = TextParser.prototype.next.call(this);
     this.furthestPosition = Math.max(
-      this.furthestPosition,
+      this.futhestPosition,
       this.state.position
     );
     return c;
@@ -592,8 +631,41 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     }
   },
   
+  emptyState: function () {
+    return {
+      position: 0,
+      indentationLevelStack: [0],
+    };
+  },
+  
+  copyState: function () {
+    return {
+      position: this.state.position,
+      indentationLevelStack: this.state.indentationLevelStack.copy(),
+    };
+  },
+  
   stringPatternHandler: rule (string) {
     ws? eachChar(string)
   },
+  
+  tokenOperatorHandler: rule (parser) {
+    ws? parser
+  },
+  
+  // Layout rules
+  // 1. A line terminator followed by an indentation level the same length as the
+  //    current block's indentation level is considered a statement terminator.
+  // 2. If a line has an indentation level deeper than the current blocks, it
+  //    is considered a continuation line of the current statement.
+  // 3. Only a block scope changes the current block indentation level. Respectively
+  //    all blocks are terminated by an 'end' token at the beginning of a line and
+  //    are begun by either a 'do' token at the end of a line or a special syntactic
+  //    case, i.e., if statements.
+  // 4. Semicolons may be used to add additional statements to a line. These may
+  //    still be used to denote blocks, and the same layout rules apply treating
+  //    the semicolons as newlines, but not changing the indentation level until
+  //    a fresh line is provided at the new indentation level.
+  // 5. Trailing semicolons on a line are ignored and do not affect the above rules.
   
 });

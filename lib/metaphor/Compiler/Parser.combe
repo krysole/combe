@@ -37,6 +37,18 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   // Syntactic Rules
   
+  file: rule {
+    delimited[statement, statementTerminator]:stmts ws? eof
+    -> Ast.File(Ast.Block(stmts))
+  },
+  
+  // Todo: I think I need to move some things form the statement level down
+  // into the expression level, like return, break and continue, for example.
+  // 
+  // Basically anything that doesn't cause the creation of block scope can
+  // probably be used freely in other situations. Block scope may in fact be
+  // the very definition of the statement level of Metaphor's notation.
+
   statement: rule {
     | ifStatement
     | whileStatement
@@ -44,10 +56,11 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     | loopStatement
     | letStatement
     | varStatement
+    | defStatement
     | returnStatement
     | breakStatement
     | continueStatement
-    | expressionStatement
+    | expression
   },
   
   expression: rule {
@@ -55,14 +68,8 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     | whileExpression
     | doWhileExpression
     | loopExpression
+    | defExpression
     | operatorExpression
-  },
-  
-  ifExpression: rule {
-    id('if') expression:condition 
-    id('then') expression:consiquent 
-    ( id('else') expression:alternative )?
-    -> Ast.If(condition, consiquent, alternative)
   },
   
   ifStatement: rule {
@@ -74,10 +81,11 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     -> Ast.If(condition, consiquent, alternative)
   },
   
-  whileExpression: rule {
-    id('while') expression:condition
-    id('do') expression:body
-    -> Ast.While(condition, body)
+  ifExpression: rule {
+    id('if') expression:condition 
+    id('then') expression:consiquent 
+    ( id('else') expression:alternative )?
+    -> Ast.If(condition, consiquent, alternative)
   },
   
   whileStatement: rule {
@@ -87,9 +95,10 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     -> Ast.While(condition, body)
   },
   
-  doWhileExpression: rule {
-    id('do') expression:body id('while') expression:condition
-    -> Ast.DoWhile(body, condition)
+  whileExpression: rule {
+    id('while') expression:condition
+    id('do') expression:body
+    -> Ast.While(condition, body)
   },
   
   doWhileStatement: rule {
@@ -99,9 +108,9 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     -> Ast.DoWhile(body, condition)
   },
   
-  loopExpression: rule {
-    id('loop') expression:body
-    -> Ast.Loop(body)
+  doWhileExpression: rule {
+    id('do') expression:body id('while') expression:condition
+    -> Ast.DoWhile(body, condition)
   },
   
   loopStatement: rule {
@@ -111,14 +120,31 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     -> Ast.Loop(body)
   },
   
+  loopExpression: rule {
+    id('loop') expression:body
+    -> Ast.Loop(body)
+  },
+  
   letStatement: rule {
-    id('let') variableIdentifier:name op('<-') assignmentExpression:rvalue
+    id('let') lexicalIdentifier:name op('<-') assignmentExpression:rvalue
     -> Ast.Let(name, rvalue)
   },
   
   varStatement: rule {
-    id('var') variableIdentifier:name ( op('<-') assignmentExpression:rvalue )?
+    id('var') lexicalIdentifier:name ( op('<-') assignmentExpression:rvalue )?
     -> Ast.Var(name, rvalue)
+  },
+  
+  defExpression: rule {
+    id('def') lexicalIdentifier:name parameterList?:params op('->') expression:body
+    -> Ast.Def(name, params, body)
+  },
+  
+  defStatement: rule {
+    id('def') lexicalIdentifier:name parameterList?:params statementTerminator
+      blockBody:body
+    id('end')
+    -> Ast.Def(name, params, body)
   },
   
   returnStatement: rule {
@@ -136,10 +162,6 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     -> Ast.Continue()
   },
   
-  expressionStatement: rule {
-    expression
-  },
-  
   
   doBlock: rule {
     id('do') statementTerminator
@@ -150,7 +172,7 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   blockBody: rule {
     | (
-        ident
+        indent
         delimited[statement, statementTerminator]:stmts
         dedent
       )
@@ -164,18 +186,22 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   },
   
   assignmentExpression: rule {
-    | variableAssignment
-    | methodCallAssignment
+    | lexicalMessageSendAssignment
+    | MessageSendAssignment
     | logicalOperator
   },
   
-  variableAssignment: rule {
-    variableIdentifier:name op('<-') assignmentExpression:rvalue
+  
+  lexicalMessageSendAssignment: rule {
+    lexicalMessageSend:mes op('<-') assignmentExpression:rvalue
+    -> Ast.AssignmentMessageSend(mes, rvalue)
   },
   
   methodCallAssignment: rule {
-    // Todo
+    primaryExpression:expr ( messageSendFragment(expr):expr )+ op('<-') assignmentExpression:rvalue
+    -> Ast.AssignmentMessageSend(expr, rvalue)
   },
+  
   
   logicalOperator: rule {
     wordedLogicalOr
@@ -253,23 +279,20 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   },
   
   association: rule {
-    | ( string | identifier):lhs op(':') unionOperator:rhs
+    | ( string | identifier ):lhs op(':') bitwiseOr:rhs
       -> Ast.Association(Ast.String(lhs), rhs)
-    | unionOperator:lhs op('=>') unionOperator:rhs
+    | bitwiseOr:lhs op('=>') bitwiseOr:rhs
       -> Ast.Association(lhs, rhs)
   },
   
-  unionOperator: rule { // lhs OR rhs
-    leftAssocOperator[symmetricalDifferenceOperator, op('|')]
+  bitwiseOr: rule {
+    leftAssocOperator[bitwiseXor op('|')]
   },
-  symmetricalDifferenceOperator: rule { // lhs XOR rhs
-    leftAssocOperator[intersectionOperator, op('^')]
+  bitwiseXor: rule {
+    leftAssocOperator[bitwiseAnd op('^')]
   },
-  intersectionOperator: rule { // lhs AND rhs
-    leftAssocOperator[differenceOperator, op('&')]
-  },
-  differenceOperator: rule { // lhs AND (NOT rhs)
-    leftAssocOperator[shiftOperator, op('\\')]
+  bitwiseAnd: rule {
+    leftAssocOperator[shiftOperator op('&')]
   },
   
   shiftOperator: rule {
@@ -308,32 +331,40 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   
   secondaryExpression: rule {
-    primaryExpression:expr ( secondaryExpressionFragment(expr):expr )*
+    primaryExpression:expr ( messageSendFragment(expr):expr )*
     -> expr
   },
   
-  secondayExpressionFragment: rule (receiver) {
-    | op('.') selector:name argumentsList?:args
+  messageSendFragment: rule (receiver) {
+    | op('.') identifier:name argumentsList?:args
       -> Ast.MessageSend(receiver, name, args)
     | argumentsList:args
       -> Ast.ApplyMessageSend(receiver, args)
+    | squareArgumentsList:args
+      -> Ast.ApplyMessageSend(receiver, args)
   },
   
+  
   argumentsList: rule {
-    '(' delimited[splatExpression[expression], ',']:args ','? ')'
+    '(' delimited[expansion[expression], ',']:args ','? ')'
     -> args
   },
   
-  splatExpression: rule (alternative) {
-    | op('*') expression:expr
-      -> Ast.Splat(expr)
+  squareArgumentsList: rule {
+    '[' delimited[expansion[expression], ',']:args ','? ']'
+    -> args
+  },
+  
+  expansion: rule (alternative) {
+    | op('..') expression:expr
+      -> Ast.Expansion(expr)
     | alternative
   },
   
   
   primaryExpression: rule {
     | psuedoVariable
-    | variableLookup
+    | lexicalMessageSend
     | stringLiteral
     | numberLiteral
     | collectionLiteral
@@ -342,33 +373,37 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   },
   
   psuedoVariable: rule {
-    | id('self')  -> Ast.Self()
+    | id('self')  -> Ast.Self() // A compiler provided lexical binding
+    | id('this')  -> Ast.This() // Current lexical context
+    
     | id('nil')   -> Ast.Nil()
     | id('true')  -> Ast.True()
     | id('false') -> Ast.False()
   },
   
-  variableLookup: rule {
-    variableIdentifier:name
-    -> Ast.VariableLookup(name)
+  lexicalMessageSend: rule {
+    lexicalIdentifier:name argumentsList?:args
+    -> Ast.LexicalMessageSend(name, args)
   },
   
   stringLiteral: rule {
-    string:s -> Ast.String(s)
+    string:s
+    -> Ast.String(s)
   },
   
   numberLiteral: rule {
-    number:n -> Ast.Number(n)
+    number:n
+    -> Ast.Number(n)
   },
   
   collectionLiteral: rule {
-    | '[' delimited[splatExpression[association], ',']:elems ','? ']'
+    | '[' delimited[expansion[association], ',']:elems ','? ']'
       -> Ast.OrderedMap(elems)
-    | '[' delimited[splatExpression[~association expression], ',']:elems ','? ']'
+    | '[' delimited[expansion[~association expression], ',']:elems ','? ']'
       -> Ast.Array(elems)
-    | '{' delimited[splatExpression[expression], ',']:elems ','? ']'
+    | '{' delimited[expansion[expression], ',']:elems ','? ']'
       -> Ast.Map(elems)
-    | '{' delimited[splatExpression[~association expression], ',']:elems ','? ']'
+    | '{' delimited[expansion[~association expression], ',']:elems ','? ']'
       -> Ast.Set(elems)
   },
   
@@ -378,17 +413,17 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   },
   
   parameterList: rule {
-    '(' delimited[splatParameter, ',']:ps ','? ')' -> ps
+    '(' delimited[contractionParameter, ',']:ps ','? ')' -> ps
   },
   
-  splatParameter: rule {
-    | op('*') variableIdentifier:name
-      -> Ast.SplatParameter(name)
+  constractionParameter: rule {
+    | op('..') lexicalIdentifier:name
+      -> Ast.ContractionParameter(name)
     | parameter
   },
   
   parameter: rule {
-    | variableIdentifier:name -> Ast.Parameter(name)
+    | lexicalIdentifier:name -> Ast.Parameter(name)
     | id('_') -> Ast.IgnoredParameter()
   },
   
@@ -400,7 +435,7 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   // Token rules
   
-  InvalidVariableIdentifiers: [
+  InvalidLexicalIdentifiers: [
     'self', 'true', 'false', 'nil', '_',
     
     'or', 'and', 'xor', 'not',
@@ -411,8 +446,8 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     'end'
   ],
   
-  variableIdentifier: rule {
-    identifier:name ?(!this.InvalidVariableIdentifiers.include(name)) -> name
+  lexicalIdentifier: rule {
+    identifier:name ?(!this.InvalidLexicalIdentifiers.include(name)) -> name
   },
   
   number: rule {
@@ -479,9 +514,9 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     ws?
     ( '<<' | '>>>' | '>>' | '<>' | '<=' | '>=' | '<' | '>'
     | '/=' | '=' | '!'
-    | '||' | '|' | '^^' | '^' | '&&' | '&' | '\\\\'
+    | '||' | '|' | '^^' | '^' | '&&' | '&'
     | '+' | '-' | '**' | '*' | '//' | '/' | '%' | '~'
-    | '->' | '=>' | '<-'
+    | '->' | '=>' | '<-' | '..' | '.'
     ):text
     -> text
   },
