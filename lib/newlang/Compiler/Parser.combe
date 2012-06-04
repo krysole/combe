@@ -23,18 +23,33 @@ var Ast = require('./Ast');
 
 var Parser = module.exports = Class.new(combe.TextParser, {
   
-  parse: function (source) {
-    var parser = this.new(source);
-    var result = parser.match('file');
-    if (result == null) {
+  parseFile: function (string, filename) {
+    return this.parse(string, filename, 'file');
+  },
+  
+  parse: function (source, filename) {
+    var rest = Array.slice(arguments, 3);
+    if (filename == null) filename = '(unnamed)';
+    
+    var parser = this.new(string, filename);
+    var result = parser.match.apply(parser, [rulename].concat(rest));
+    if (!result) {
       var lc = source.lineColumnAt(parser.furthestPosition);
-      console.error('Parse failed with furthest position ' + lc[0] + ':' + lc[1]);
-      throw new Error('Parse Failure');
+      throw Error.new('Combe/Newlang Parser Failed: Furthest position was ' + filename + ':' + lc[0] + ':' + lc[1]);
     }
     return result;
   },
   
 }, {
+  
+  initialize: function (source, filename) {
+    if (filename == null) filename = '(unnamed)';
+    
+    this.source = source;
+    this.filename = filename;
+    TextParser.prototype.initialize.call(this, source);
+  },
+  
   
   // Syntactic Rules
   
@@ -50,7 +65,6 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   expression: rule {
     | ifExpression
-    | letExpression
     | varExpression
     | returnExpression
     | throwExpression
@@ -80,11 +94,6 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     id('then') expression:consiquent
     ( id('else') expression:alternative )?
     -> Ast.If(condition, consiquent, alternative)
-  },
-  
-  letExpression: rule {
-    id('let') variableIdentifier:name op('=') assignmentExpression:rvalue
-    -> Ast.Let(name, rvalue)
   },
   
   varExpression: rule {
@@ -120,7 +129,18 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   assignmentExpression: rule {
     | lvalueExpression:lvalue op('=') assignmentExpression:rvalue
-      -> Ast.Assignment(lvalue, rvalue)
+      -> {
+        if (lvalue.is('VariableLookup')) {
+          return Ast.VariableAssignment(lvalue.name, rvalue);
+        }
+        else if (lvalue.is('PropertyLookup')) {
+          return Ast.PropertyAssignment(lvalue.object, lvalue.name, rvalue);
+        }
+        else if (lvalue.is('PrototypePropertyAssignment')) {
+          return Ast.PrototypePropertyAssignment(lvalue.object, lvalue.name, rvalue);
+        }
+        else assert(false);
+      }
     | logicalOperator
   },
   
@@ -350,8 +370,11 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   },
   
   objectLiteral: rule {
-    '{' delimited[propertyDeclaration, ',']:pdecls ','? '}'
-    -> Ast.Object(pdecls)
+    '{'
+      ( expression:proto ';' )?
+      delimited[propertyDeclaration, ',']:pdecls ','? 
+    '}'
+    -> Ast.Object(proto, pdecls)
   },
   
   functionLiteral: rule {
@@ -399,17 +422,11 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   
   propertyDeclaration: rule {
-    | prototypePropertyDeclaration
     | valuePropertyDeclaration
     | getPropertyDeclaration
     | setPropertyDeclaration
     | methodPropertyDeclaration
     | describePropertyDeclaration
-  },
-  
-  prototypePropertyDeclaration: rule {
-    id('prototype') expression:value
-    -> Ast.PrototypePropertyDeclaration(value)
   },
   
   valuePropertyDeclaration: rule {
@@ -446,13 +463,20 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   // Token rules
   
+  // Todo: The strings used here are sometimes treated as string patterns, 
+  // which means that their whitespace handling may not be setup correctly.
+  // I'm probably going to want to figure out a better way of implementing
+  // separated lexers without the problems of maintaining separate state
+  // (i.e., like some sort of quasi-lexer/parser pair which replace the usage
+  // of 'this' for state with monad style state management?)
+  
   InvalidVariableIdentifiers: [
     'this', 'true', 'false', 'null', 'undefined', '_',
     
     'or', 'and', 'xor', 'not',
     
     'if', 'then', 'else',
-    'let', 'var',
+    'var',
     'return', 'throw',
     'do', 'end'
   ],
