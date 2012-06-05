@@ -48,6 +48,7 @@ var Parser = module.exports = Class.new(TextParser, {
     
     this.source = source;
     this.filename = filename;
+    this.furthestPosition = 0;
     TextParser.prototype.initialize.call(this, source);
   },
   
@@ -55,7 +56,9 @@ var Parser = module.exports = Class.new(TextParser, {
   // Syntactic Rules
   
   file: rule {
-    delimited[statement, statementTerminator]:stmts ws? eof
+    statementTerminator*
+    delimited[statement, statementTerminator+]:stmts
+    ws? eof
     -> Ast.File(Ast.Block(stmts))
   },
   
@@ -237,13 +240,17 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   comparisonOperator: rule {
-    association:expr
+    associationOperator:expr
     ( op('<>'):opname association:rhs
       -> Ast.Operator(opname, expr, rhs)
     | -> expr
     )
   },
   
+  associationOperator: rule {
+    | association
+    | bitwiseOr
+  },
   association: rule {
     | propertyName:lhs op(':') bitwiseOr:rhs
       -> Ast.Association(lhs, rhs)
@@ -252,13 +259,13 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   bitwiseOr: rule {
-    leftAssocOperator[bitwiseXor op('|')]
+    leftAssocOperator[bitwiseXor, op('|')]
   },
   bitwiseXor: rule {
-    leftAssocOperator[bitwiseAnd op('^')]
+    leftAssocOperator[bitwiseAnd, op('^')]
   },
   bitwiseAnd: rule {
-    leftAssocOperator[shiftOperator op('&')]
+    leftAssocOperator[shiftOperator, op('&')]
   },
   
   shiftOperator: rule {
@@ -561,23 +568,20 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   ws: rule {
-    (
-      ( spaces | comment )+
-      continuationLine
-    )+
+    ( spaces | continuationLine | comment )+
   },
   
   statementTerminator: rule {
-    | ws? blankline* newline &( currentIndentation ~ws )
-    | ws? ';'
+    | ws? ';'? blankline* ws? newline &( currentIndentation ~ws )
+    | ws? ';' ws? ~newline
   },
   
   blankline: rule {
-    newline ( spaces | comment )+ &newline
+    ws? newline ws? &( newline | eof )
   },
   
   continuationLine: rule {
-    | '\\' newline ( spaces | comment )+
+    | '\\' newline
     | newline currentIndentation ( spaces | comment )+
   },
   
@@ -612,16 +616,16 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   delimitedComment: rule {
-    '{-' &(space | newline | '-}')
+    '{-' &(space | newline | eof | '-}')
     ( ~'-}' (delimitedComment | char) )*
     ('-}' | eof)
   },
   
   lineComment: rule {
-    '--' (~newline char)* newline
+    '--' (~newline char)* ( newline | eof )
   },
   
-  newline: rule { '\r\n' | '\n' | '\r' | eof },
+  newline: rule { '\r\n' | '\n' | '\r' },
   
   digit: rule { char('0'..'9') },
   
@@ -639,7 +643,7 @@ var Parser = module.exports = Class.new(TextParser, {
   next: function () {
     var c = TextParser.prototype.next.call(this);
     this.furthestPosition = Math.max(
-      this.futhestPosition,
+      this.furthestPosition,
       this.state.position
     );
     return c;
@@ -679,6 +683,13 @@ var Parser = module.exports = Class.new(TextParser, {
   
   tokenOperatorHandler: rule (parser) {
     ws? parser
+  },
+  
+  debuglog: function (name, index) {
+    var lc = this.source.lineColumnAt(this.state.position);
+    var output = 'Debug point ' + this.filename + ':' + lc[0] + ':' + lc[1] +
+      ' ' + name + ':' + index;
+    console.log(output);
   },
   
   // Layout rules
