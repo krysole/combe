@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 //
 // Combe - A Parsing Language for JavaScript
 //
@@ -15,29 +16,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-'use strict';
 
 var combe = require('combe');
+var __combe = require('combe/lib/newlang/__combe');
+var NewlangCompiler = require('combe/lib/newlang/Compiler');
 
-var Association = module.exports = Class.new(Object, {}, {
+setTimeout(function () {
+  if (process.argv.length < 2) {
+    console.error('Usage: combec sourceFile');
+    return;
+  }
   
-  initialize: function (key, value) {
-    this.key = key;
-    this.value = value;
-  },
+  var sourceFilename = process.argv[2];
   
-  get key() {
-    return this.key;
-  },
-  set key(value) {
-    this.key = value;
-  },
-  
-  get value() {
-    return this.value;
-  },
-  set value(value) {
-    this.value = value;
-  },
-  
-});
+  NewlangCompiler.compileAndCacheFile(sourceFilename);
+}, 0);

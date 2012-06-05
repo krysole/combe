@@ -18,20 +18,21 @@
 'use strict';
 
 var combe = require('combe');
+var TextParser = combe.TextParser;
 
 var Ast = require('./Ast');
 
-var Parser = module.exports = Class.new(combe.TextParser, {
+var Parser = module.exports = Class.new(TextParser, {
   
-  parseFile: function (string, filename) {
-    return this.parse(string, filename, 'file');
+  parseFile: function (source, filename) {
+    return this.parse(source, filename, 'file');
   },
   
-  parse: function (source, filename) {
+  parse: function (source, filename, rulename) {
     var rest = Array.slice(arguments, 3);
     if (filename == null) filename = '(unnamed)';
     
-    var parser = this.new(string, filename);
+    var parser = this.new(source, filename);
     var result = parser.match.apply(parser, [rulename].concat(rest));
     if (!result) {
       var lc = source.lineColumnAt(parser.furthestPosition);
@@ -150,20 +151,20 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     | lvaluePrimaryExpression
   },
   
-  lvaluePrimaryExpression: {
+  lvaluePrimaryExpression: rule {
     variableLookup
   },
   
   lvalueSecondaryExpression: rule {
     primaryExpression:expr ( lvalueSecondaryExpressionFragment(expr):expr )+
     -> expr
-  }
+  },
   
   lvalueSecondaryExpressionFragment: rule (expr) {
     | op('.') propertyName:pname
       -> Ast.PropertyLookup(expr, pname)
     | op(':') propertyName:pname
-      -> Ast.PrototypePropertyLookup(expr, pname))
+      -> Ast.PrototypePropertyLookup(expr, pname)
   },
   
   
@@ -232,6 +233,7 @@ var Parser = module.exports = Class.new(combe.TextParser, {
       comparisonOperator:rhs
       -> Ast.Operator(opname, expr, rhs)
     | -> expr
+    )
   },
   
   comparisonOperator: rule {
@@ -307,7 +309,7 @@ var Parser = module.exports = Class.new(combe.TextParser, {
     | op(':') propertyName:pname argumentsList:ad
       -> Ast.PrototypeMethodCall(expr, pname, ad.this, ad.arguments)
     | op(':') propertyName:pname
-      -> Ast.PrototypePropertyLookup(expr, pname))
+      -> Ast.PrototypePropertyLookup(expr, pname)
     | argumentsList:ad
       -> Ast.Call(expr, ad.this, ad.arguments)
     | subscript:args
@@ -378,13 +380,15 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   },
   
   functionLiteral: rule {
-    | optParameterList:pd functionBody:body
+    | optParameterList:pd op('->') expression:body
+      -> Ast.Function(pd.this, pd.parameters, body)
+    | id('fn') optParameterList:pd functionBody:body
       -> Ast.Function(pd.this, pd.parameters, body)
   },
   
   functionBody: rule {
     | op('->') expression:body -> body
-    | id('do') statementTerminator
+    | statementTerminator
         blockBody:body
       id('end')
       -> body
@@ -579,13 +583,13 @@ var Parser = module.exports = Class.new(combe.TextParser, {
   
   currentIndentation: function () {
     for (var i = 0; i < this.state.indentationLevelStack.last; i++) {
-      this.space()
+      this.space();
     }
   },
   
   indent: rule {
     currentIndentation spaces:ss
-    !(this.state.indentationLevelStack.push(this.state.indentationLevelStack.last + ss.length);
+    !(this.state.indentationLevelStack.push(this.state.indentationLevelStack.last + ss.length))
   },
   
   dedent: rule { // Only dedents a single level!

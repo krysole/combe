@@ -364,7 +364,7 @@ var JSParser = module.exports = Class.new(TokenParser, {
       -> JSAst.For(initExpr, condExpr, incExpr, stmt)
     | 'for' '(' 'var' variableDeclarationList(true):declvars ';' expression?:condExpr
         ';' expression?:incExpr ')' statement:stmt
-      -> JSAst.For(Ast.ForVar(declvars), condExpr, incExpr, stmt)
+      -> JSAst.For(JSAst.ForVar(declvars), condExpr, incExpr, stmt)
   },
   
   forInStatement: rule {

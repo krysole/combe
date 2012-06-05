@@ -15,7 +15,8 @@
     }
   ],
   "bin": {
-    "combec": "./bin/combec"
+    "combec": "./bin/combec",
+    "newlang": "./bin/newlang"
   },
   "repository": {
     "type": "git",
