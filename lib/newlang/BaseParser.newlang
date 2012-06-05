@@ -16,6 +16,7 @@
   limitations under the License.
 -}
 
+{-
 var BacktrackingException = require('./BacktrackingException')
 
 var BaseParser = module.exports = Class.new(Object, {}, {
@@ -29,3 +30,4 @@ var BaseParser = module.exports = Class.new(Object, {}, {
   -- Todo
 
 });
+-}

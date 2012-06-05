@@ -318,15 +318,15 @@ var Parser = module.exports = Class.new(TextParser, {
   
   
   argumentsList: rule {
-    '(' 
-      ( expression:t ';' )?
-      delimited[expansion[expression], ',']:args ','?
-    ')'
+    #'(' 
+      ( expression:t #';' )?
+      delimited[expansion[expression], #',']:args #','?
+    #')'
     -> { this: t, arguments: args }
   },
   
   subscript: rule {
-    '[' delimited[expansion[expression], ',']:args ','? ']'
+    #'[' delimited[expansion[expression], #',']:args #','? #']'
     -> args
   },
   
@@ -372,10 +372,10 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   objectLiteral: rule {
-    '{'
-      ( expression:proto ';' )?
-      delimited[propertyDeclaration, ',']:pdecls ','? 
-    '}'
+    #'{'
+      ( expression:proto #';' )?
+      delimited[propertyDeclaration, #',']:pdecls #','? 
+    #'}'
     -> Ast.Object(proto, pdecls)
   },
   
@@ -396,7 +396,7 @@ var Parser = module.exports = Class.new(TextParser, {
     
   
   subexpression: rule {
-    '(' expression:expr ')'
+    #'(' expression:expr #')'
     -> expr
   },
   
@@ -406,10 +406,10 @@ var Parser = module.exports = Class.new(TextParser, {
     -> (pd != null ? pd : { this: null, parameters: [] })
   },
   parameterList: rule {
-    '('
-      ( parameter:t ';' )?
-      delimited[contractionParameter, ',']:params ','?
-    ')'
+    #'('
+      ( parameter:t #';' )?
+      delimited[contractionParameter, #',']:params #','?
+    #')'
     -> { this: t, parameters: params }
   },
   
@@ -674,7 +674,7 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   stringPatternHandler: rule (string) {
-    ws? eachChar(string)
+    eachChar(string)
   },
   
   tokenOperatorHandler: rule (parser) {
