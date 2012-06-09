@@ -28,4 +28,4 @@ var BaseParser = module.exports = Class.new(Object, {}, {
   
   -- Todo
 
-});
+})

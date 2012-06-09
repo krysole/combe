@@ -56,13 +56,14 @@ var Parser = module.exports = Class.new(TextParser, {
   // Syntactic Rules
   
   file: rule {
-    statementTerminator*
-    delimited[statement, statementTerminator+]:stmts
-    ws? eof
+    blankline*
+    delimited[statement, statementTerminator]:stmts statementTerminator?
+    eof
     -> Ast.File(Ast.Block(stmts))
   },
   
   statement: rule {
+    | emptyStatement
     | ifStatement
     | expression
   },
@@ -75,19 +76,26 @@ var Parser = module.exports = Class.new(TextParser, {
     | operatorExpression
   },
   
+  emptyStatement: rule {
+    &( ( spaces | comment )* ';' )
+  },
+  
   ifStatement: rule {
-    id('if') expression:c statementTerminator
-      blockBody:b
-    !(Ast.If(c, b, null)):ast !(ast):tail
+    specialBlock[
+      id('if') expression
+    ]:sb
+    !(Ast.If(sb.header, sb.body, null)):ast !(ast):tail
     (
-      id('else') id('if') expression:c statementTerminator
-        blockBody:b
-      !(tail.alternative = Ast.If(c, b, null)) !(tail.alternative):tail
+      specialBlock[
+        id('else') id('if') expression
+      ]:sb
+      !(tail.alternative = Ast.If(sb.header, sb.body, null)) !(tail.alternative):tail
     )*
-    (
-      id('else') statementTerminator
-        blockBody:b
-      !(tail.alternative = b)
+    ( specialBlock[
+        id('else')
+      ]:sb
+      !(tail.alternative = sb.body)
+    | !(tail.alternative = Ast.Noop())
     )?
     id('end')
     -> ast
@@ -116,14 +124,15 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   
-  blockBody: rule {
-    | (
-        indent
-        delimited[statement, statementTerminator]:stmts
-        dedent
-      )
-      -> Ast.Block(stmts)
-    | -> Ast.Noop()
+  specialBlock: rule (header) {
+    blockHeader(header):h
+    
+    ( &increasedIndentation withIncreasedIndentation[
+        delimited[statement, statementTerminator]:stmts statementTerminator?
+      ]
+      -> { header: h, body: Ast.Block(stmts) }
+    | -> { header: h, body: Ast.Noop() }
+    )
   },
   
   
@@ -325,15 +334,21 @@ var Parser = module.exports = Class.new(TextParser, {
   
   
   argumentsList: rule {
-    #'(' 
+    #'('
+    ignoringIndentation[
       ( expression:t #';' )?
       delimited[expansion[expression], #',']:args #','?
+    ]
     #')'
     -> { this: t, arguments: args }
   },
   
   subscript: rule {
-    #'[' delimited[expansion[expression], #',']:args #','? #']'
+    #'['
+    ignoringIndentation[
+      delimited[expansion[expression], #',']:args #','?
+    ]
+    #']'
     -> args
   },
   
@@ -380,30 +395,25 @@ var Parser = module.exports = Class.new(TextParser, {
   
   objectLiteral: rule {
     #'{'
+    ignoringIndentation[
       ( expression:proto #';' )?
       delimited[propertyDeclaration, #',']:pdecls #','? 
+    ]
     #'}'
     -> Ast.Object(proto, pdecls)
   },
   
   functionLiteral: rule {
-    | optParameterList:pd op('->') expression:body
+    | id('fn')? optParameterList:pd op('->') expression:body
       -> Ast.Function(pd.this, pd.parameters, body)
-    | id('fn') optParameterList:pd functionBody:body
-      -> Ast.Function(pd.this, pd.parameters, body)
-  },
-  
-  functionBody: rule {
-    | op('->') expression:body -> body
-    | statementTerminator
-        blockBody:body
+    | specialBlock[ id('fn') optParameterList:pd ]:sb
       id('end')
-      -> body
+      -> Ast.Function(pd.this, pd.parameters, sb.body)
   },
     
   
   subexpression: rule {
-    #'(' expression:expr #')'
+    #'(' ignoringIndentation[ expression:expr ] #')'
     -> expr
   },
   
@@ -414,8 +424,10 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   parameterList: rule {
     #'('
+    ignoringIndentation[
       ( parameter:t #';' )?
       delimited[contractionParameter, #',']:params #','?
+    ]
     #')'
     -> { this: t, parameters: params }
   },
@@ -473,13 +485,6 @@ var Parser = module.exports = Class.new(TextParser, {
   
   
   // Token rules
-  
-  // Todo: The strings used here are sometimes treated as string patterns, 
-  // which means that their whitespace handling may not be setup correctly.
-  // I'm probably going to want to figure out a better way of implementing
-  // separated lexers without the problems of maintaining separate state
-  // (i.e., like some sort of quasi-lexer/parser pair which replace the usage
-  // of 'this' for state with monad style state management?)
   
   InvalidVariableIdentifiers: [
     'this', 'true', 'false', 'null', 'undefined', '_',
@@ -567,49 +572,6 @@ var Parser = module.exports = Class.new(TextParser, {
     -> text
   },
   
-  ws: rule {
-    ( spaces | continuationLine | comment )+
-  },
-  
-  statementTerminator: rule {
-    | ws? ';'? blankline* ws? newline &( currentIndentation ~ws )
-    | ws? ';' ws? ~newline
-  },
-  
-  blankline: rule {
-    ws? newline ws? &( newline | eof )
-  },
-  
-  continuationLine: rule {
-    | '\\' newline
-    | newline currentIndentation ( spaces | comment )+
-  },
-  
-  currentIndentation: function () {
-    for (var i = 0; i < this.state.indentationLevelStack.last; i++) {
-      this.space();
-    }
-  },
-  
-  indent: rule {
-    currentIndentation spaces:ss
-    !(this.state.indentationLevelStack.push(this.state.indentationLevelStack.last + ss.length))
-  },
-  
-  dedent: rule { // Only dedents a single level!
-    ~currentIndentation
-    !(this.state.indentationLevelStack.pop())
-    currentIndentation
-  },
-  
-  dedentMany: rule {
-    (
-      ~currentIndentation
-      !(this.state.indentationLevelStack.pop())
-    )+
-    currentIndentation
-  },
-  
   comment: rule {
     | delimitedComment
     | lineComment
@@ -622,7 +584,7 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   lineComment: rule {
-    '--' (~newline char)* ( newline | eof )
+    '--' (~newline char)* &( newline | eof )
   },
   
   newline: rule { '\r\n' | '\n' | '\r' },
@@ -666,14 +628,19 @@ var Parser = module.exports = Class.new(TextParser, {
   emptyState: function () {
     return {
       position: 0,
-      indentationLevelStack: [0],
+      blocks: [
+        {
+          ignoreIndentation: false,
+          columnCount: 0,
+        }
+      ],
     };
   },
   
   copyState: function () {
     return {
       position: this.state.position,
-      indentationLevelStack: this.state.indentationLevelStack.copy(),
+      blocks: this.state.blocks.copy(),
     };
   },
   
@@ -692,19 +659,154 @@ var Parser = module.exports = Class.new(TextParser, {
     console.log(output);
   },
   
-  // Layout rules
-  // 1. A line terminator followed by an indentation level the same length as the
-  //    current block's indentation level is considered a statement terminator.
-  // 2. If a line has an indentation level deeper than the current blocks, it
-  //    is considered a continuation line of the current statement.
-  // 3. Only a block scope changes the current block indentation level. Respectively
-  //    all blocks are terminated by an 'end' token at the beginning of a line and
-  //    are begun by either a 'do' token at the end of a line or a special syntactic
-  //    case, i.e., if statements.
-  // 4. Semicolons may be used to add additional statements to a line. These may
-  //    still be used to denote blocks, and the same layout rules apply treating
-  //    the semicolons as newlines, but not changing the indentation level until
-  //    a fresh line is provided at the new indentation level.
-  // 5. Trailing semicolons on a line are ignored and do not affect the above rules.
+  
+  // Layout Handling
+  
+  // Rules:
+  //
+  // 1. Statement defines current indentation level, or inherits from the
+  //    block that contains it.
+  //
+  // 2. A statement is terminated if a newline followed by a statement line
+  //    (not a blank line) which is at the statements current level of
+  //    indentation, or is dedented further.
+  //
+  // 3. A statement is continued by a continuation line, if any non-empty line
+  //    of code is indented. This does not change the indentation level, and
+  //    the indentation of the continuation lines may vary, so long as they
+  //    are still further indented compared to the statements indentation level.
+  //
+  // 4. Any code explicitely delimited by parentheses, braces or brackets
+  //    will disable the layout rules for the host statement until the closing
+  //    delimiter is found. New indentation levels may still be created by
+  //    nesting blocks in the enclosed expressions.
+  //
+  // 5. A block closing delimiter must be dedented compared to the indentation
+  //    level of statements contained by the block, even if there is no 
+  //    indentation level associated with the statement containing the block.
+  //    Block closing delimiters must not be below a currently active indentation
+  //    level of the host statement.
+  
+  statementTerminator: rule {
+    | newlineStatementTerminator
+    | semicolonStatementTerminator
+  },
+  
+  semicolonStatementTerminator: rule {
+    ( spaces | comment )* ';' ~( ( spaces | comment )* newline )
+  },
+  
+  newlineStatementTerminator: rule {
+    ( spaces | comment )* ';'? ( spaces | comment )* newline
+    blankline*
+    &( currentIndentation | decreasedIndentation | eof )
+  },
+  
+  blockHeaderTerminator: rule {
+    | semicolonStatementTerminator
+    | blockHeaderNewlineTerminator
+  },
+  
+  blockHeaderNewlineTerminator: rule {
+    ( spaces | comment )* ';'? ( spaces | comment )* newline
+    blankline*
+  }
+  
+  withIncreasedIndentation: rule (parser) {
+    &increasedIndentation:count
+    !(this.state.blocks.push({
+      singleLine: false,
+      ignoreLayout: false,
+      columnCount: count
+    })
+    
+    parser:result
+    
+    &decreasedIndentation !(this.state.blocks.pop())
+    &currentIndentation
+    
+    -> result
+  },
+  
+  ignoringIndentation: rule (parser) {
+    !(this.state.blocks.push({
+      singleLine: this.state.blocks.last.singleLine,
+      ignoreLayout: true,
+      columnCount: this.state.blocks.last.columnCount,
+    })
+    parser:result
+    !(this.state.blocks.pop())
+    -> result
+  },
+  
+  blockHeader: rule (parser) {
+    !(this.state.blocks.push({
+      singleLine: true,
+      ignoreLayout: this.state.blocks.last.ignoreLayout,
+      columnCount: this.state.blocks.last.columnCount,
+    })
+    
+    parser:result
+    
+    !(this.state.blocks.pop())
+    
+    blockHeaderTerminator
+    
+    -> result
+  },
+  
+  ws: rule {
+    ( spaces | comment | continuationLine | ignoredNewline )*
+  },
+  
+  ignoredNewline: rule {
+    ?(this.state.blocks.last.ignoreLayout) newline
+  },
+  
+  continuationLine: rule {
+    ?(!this.state.blocks.last.singleLine)
+    ( spaces | comment )* newline
+    blankline*
+    &increasedIndentation
+  },
+  
+  ignoredLayout: rule {
+    ?(this.state.blocks.last.ignoreLayout) newline
+  },
+  
+  currentIndentation: rule {
+    !(this.state.blocks.last):b
+    indentation:count ?(b.ignoreIndentation || count === b.columnCount)
+  },
+  
+  increasedIndentation: rule {
+    !(this.state.blocks.last):b
+    indentation:count ?(b.ignoreIndentation || count > b.columnCount)
+    -> count
+  },
+  
+  decreasedIndentation: rule {
+    !(this.state.blocks.last):b
+    indentation:count ?(count < b.columnCount)
+    -> count
+  },
+  
+  indentation: rule {
+    !(0):count
+    ( spaces:s !(count + s.length):count
+    | comment // We completely disregard comments right now...
+    )*
+    -> count
+  },
+  
+  blankline: rule {
+    ( spaces | comment )* newline
+  },
+  
+  eof: rule {
+    ( spaces | comment | newline )* %TextParser.prototype.eof
+  },
+  
+  // Todo: Add support layout sensitive delimited comment handling.
   
 });
