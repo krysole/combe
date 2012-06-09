@@ -336,10 +336,10 @@ var Parser = module.exports = Class.new(TextParser, {
   argumentsList: rule {
     #'('
     ignoringIndentation[
-      ( expression:t #';' )?
+      ( expression:t #';' -> t )?:t
       delimited[expansion[expression], #',']:args #','?
+      #')'
     ]
-    #')'
     -> { this: t, arguments: args }
   },
   
@@ -347,8 +347,8 @@ var Parser = module.exports = Class.new(TextParser, {
     #'['
     ignoringIndentation[
       delimited[expansion[expression], #',']:args #','?
+      #']'
     ]
-    #']'
     -> args
   },
   
@@ -396,24 +396,31 @@ var Parser = module.exports = Class.new(TextParser, {
   objectLiteral: rule {
     #'{'
     ignoringIndentation[
-      ( expression:proto #';' )?
+      ( expression:proto #';' -> proto )?:proto
       delimited[propertyDeclaration, #',']:pdecls #','? 
+      #'}'
     ]
-    #'}'
     -> Ast.Object(proto, pdecls)
   },
   
   functionLiteral: rule {
-    | id('fn')? optParameterList:pd op('->') expression:body
+    | optParameterList:pd op('->') expression:body
       -> Ast.Function(pd.this, pd.parameters, body)
-    | specialBlock[ id('fn') optParameterList:pd ]:sb
+    | functionBlock[ id('fn') ]:fb
+      -> Ast.Function(fb.this, fb.parameters, fb.body)
+  },
+  
+  functionBlock: rule (header) {
+    | header optParameterList:pd op('->') expression:body
+      -> { this: pd.this, parameters: pd.parameters, body: sb.body }
+    | specialBlock[ header optParameterList:pd ]:sb
       id('end')
-      -> Ast.Function(pd.this, pd.parameters, sb.body)
+      -> { this: pd.this, parameters: pd.parameters, body: sb.body }
   },
     
   
   subexpression: rule {
-    #'(' ignoringIndentation[ expression:expr ] #')'
+    #'(' ignoringIndentation[ expression:expr #')' ]
     -> expr
   },
   
@@ -425,10 +432,10 @@ var Parser = module.exports = Class.new(TextParser, {
   parameterList: rule {
     #'('
     ignoringIndentation[
-      ( parameter:t #';' )?
+      ( parameter:t #';' -> t )?:t
       delimited[contractionParameter, #',']:params #','?
+      #')'
     ]
-    #')'
     -> { this: t, parameters: params }
   },
   
@@ -458,18 +465,18 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   getPropertyDeclaration: rule {
-    id('get') propertyName:name optParameterList:pd functionBody:body
-    -> Ast.GetPropertyDeclaration(name, pd.this, pd.parameters, body)
+    functionBlock[ id('get') propertyName:name ]:fb
+    -> Ast.GetPropertyDeclaration(name, fb.this, fb.parameters, fb.body)
   },
   
   setPropertyDeclaration: rule {
-    id('set') propertyName:name optParameterList:pd functionBody:body
-    -> Ast.SetPropertyDeclaration(name, pd.this, pd.parameters, body)
+    functionBlock[ id('set') propertyName:name ]:fb
+    -> Ast.SetPropertyDeclaration(name, fb.this, fb.parameters, fb.body)
   },
   
   methodPropertyDeclaration: rule {
-    id('method') propertyName:name optParameterList:pd functionBody:body
-    -> Ast.MethodPropertyDeclaration(name, pd.this, pd.parameters, body)
+    functionBlock[ id('method') propertyName:name ]:fb
+    -> Ast.MethodPropertyDeclaration(name, fb.this, fb.parameters, fb.body)
   },
   
   describePropertyDeclaration: rule {
@@ -692,33 +699,33 @@ var Parser = module.exports = Class.new(TextParser, {
     | semicolonStatementTerminator
   },
   
-  semicolonStatementTerminator: rule {
+  semicolonStatementTerminator: rule (__forceNoMemoization__) {
     ( spaces | comment )* ';' ~( ( spaces | comment )* newline )
   },
   
-  newlineStatementTerminator: rule {
+  newlineStatementTerminator: rule (__forceNoMemoization__) {
     ( spaces | comment )* ';'? ( spaces | comment )* newline
     blankline*
     &( currentIndentation | decreasedIndentation | eof )
   },
   
-  blockHeaderTerminator: rule {
+  blockHeaderTerminator: rule (__forceNoMemoization__) {
     | semicolonStatementTerminator
     | blockHeaderNewlineTerminator
   },
   
-  blockHeaderNewlineTerminator: rule {
+  blockHeaderNewlineTerminator: rule (__forceNoMemoization__) {
     ( spaces | comment )* ';'? ( spaces | comment )* newline
     blankline*
-  }
+  },
   
-  withIncreasedIndentation: rule (parser) {
+  withIncreasedIndentation: rule (parser, __forceNoMemoization__) {
     &increasedIndentation:count
     !(this.state.blocks.push({
       singleLine: false,
       ignoreLayout: false,
       columnCount: count
-    })
+    }))
     
     parser:result
     
@@ -728,23 +735,23 @@ var Parser = module.exports = Class.new(TextParser, {
     -> result
   },
   
-  ignoringIndentation: rule (parser) {
+  ignoringIndentation: rule (parser, __forceNoMemoization__) {
     !(this.state.blocks.push({
       singleLine: this.state.blocks.last.singleLine,
       ignoreLayout: true,
       columnCount: this.state.blocks.last.columnCount,
-    })
+    }))
     parser:result
     !(this.state.blocks.pop())
     -> result
   },
   
-  blockHeader: rule (parser) {
+  blockHeader: rule (parser, __forceNoMemoization__) {
     !(this.state.blocks.push({
       singleLine: true,
       ignoreLayout: this.state.blocks.last.ignoreLayout,
       columnCount: this.state.blocks.last.columnCount,
-    })
+    }))
     
     parser:result
     
@@ -755,37 +762,37 @@ var Parser = module.exports = Class.new(TextParser, {
     -> result
   },
   
-  ws: rule {
+  ws: rule (__forceNoMemoization__) {
     ( spaces | comment | continuationLine | ignoredNewline )*
   },
   
-  ignoredNewline: rule {
+  ignoredNewline: rule (__forceNoMemoization__) {
     ?(this.state.blocks.last.ignoreLayout) newline
   },
   
-  continuationLine: rule {
+  continuationLine: rule (__forceNoMemoization__) {
     ?(!this.state.blocks.last.singleLine)
     ( spaces | comment )* newline
     blankline*
     &increasedIndentation
   },
   
-  ignoredLayout: rule {
+  ignoredLayout: rule (__forceNoMemoization__) {
     ?(this.state.blocks.last.ignoreLayout) newline
   },
   
-  currentIndentation: rule {
+  currentIndentation: rule (__forceNoMemoization__) {
     !(this.state.blocks.last):b
-    indentation:count ?(b.ignoreIndentation || count === b.columnCount)
+    indentation:count ?(b.ignoreLayout || count === b.columnCount)
   },
   
-  increasedIndentation: rule {
+  increasedIndentation: rule (__forceNoMemoization__) {
     !(this.state.blocks.last):b
-    indentation:count ?(b.ignoreIndentation || count > b.columnCount)
+    indentation:count ?(b.ignoreLayout || count > b.columnCount)
     -> count
   },
   
-  decreasedIndentation: rule {
+  decreasedIndentation: rule (__forceNoMemoization__) {
     !(this.state.blocks.last):b
     indentation:count ?(count < b.columnCount)
     -> count
