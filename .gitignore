@@ -11,3 +11,7 @@
 # Eclipse project
 .project
 .settings
+
+# Newlang compiler output
+*.newlang.astdump
+*.newlang.js
