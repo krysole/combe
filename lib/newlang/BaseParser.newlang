@@ -26,6 +26,292 @@ var BaseParser = module.exports = Class.new(Object, {}, {
     self.memoTables = Array()
   end,
   
-  -- Todo
+  method emptyState()
+    return {
+      position: 0
+    }
+  end,
+  
+  method copyState()
+    return {
+      position: self.state.position
+    }
+  end,
+  
+  method getMemoTable(position)
+    var memo = self.memoTables[position]
+    if memo == null
+      memo = self.memoTables[position] = {}
+    end
+    return memo
+  end,
+  
+  method getCurrentMemoTable()
+    return self.getMemoTable(self.state.position)
+  end,
+  
+  method memoize(name, parser)
+    var memo = self.getCurrentMemoTable()
+    var entry = memo[name]
+    if entry == BacktrackingException
+      throw BacktrackingException
+    else if entry != null
+      self.state.position = entry.position
+      return entry.result
+    else
+      try
+        var result = parser(self; )
+        memo[name] = { result: result, position: self.state.position }
+        return result
+      catch e
+        if e == BacktrackingException
+          memo[name] = BacktrackingException
+        end
+        throw e
+      end
+    end
+  end,
+  
+  method match(rulename, ..args)
+    try
+      return self.applyRule(self; rulename, ..args)
+    catch e
+      if e == BacktrackingException
+        return null
+      else
+        throw e
+      end
+    end
+  end,
+  
+  -- matchAll ommitted; not sure it was ever used anyway
+  
+  method applyRule(rulename, ..args)
+    var rule = self.getRule(rulename)
+    return rule(self; ..args)
+  end,
+  
+  method getRule(rulename)
+    var rule = self[rulename]
+    if rule != null
+      return rule
+    else
+      throw Error.new('Could not find rule for: ' + rulename + '!')
+    end
+  end,
+  
+  method _choice(..parsers)
+    var initialState = self.state
+    -- Todo: Implement blocks or for loops...
+    self.fail()
+  end,
+  
+  method _concat(..parsers)
+    -- Todo: Implement blocks or for loops...
+  end,
+  
+  method _not(parser)
+    var initialState = self.copyState()
+    try
+      parser(self; )
+    catch e
+      if e == BacktrackingException
+        self.state = initialState
+        return null
+      else
+        throw e
+      end
+    end
+    self.state = initialState
+    self.fail()
+  end,
+  
+  method _lookahead(parser)
+    var initialState = self.copyState()
+    var result = parser(self; )
+    self.state = initialState
+    return result
+  end,
+  
+  method _repeat(parser, range)
+    if Number.include(range) -- Figure out typeof operation for Constructors...
+      range = Range.inclusive(range, range)
+    else if range == null
+      range = Range.exclusive(0, null)
+    end
+    
+    var results = Array()
+    var initialState = self.copyState()
+    -- Todo: Add while loop support
+    return results
+  end
+  
+  method _repeat1(parser)
+    return self._repeat(parser, Range.exclusive(1, null))
+  end
+  
+  method repeat(parser, range)
+    return self._repeat(parser, range)
+  end
+  
+  method delimited(elementParser, delimiterParser, range)
+    if Number.include(range) -- Figure out typeof operation for Constructors...
+      range = Range.inclusive(range, range)
+    else if range == null
+      range = Range.exclusive(0, null)
+    end
+    
+    var results = Array()
+    var initialState = self.copyState()
+    -- Todo: Add while loop support
+    return results
+  end,
+  
+  method delimited1(elementParser, delimiterParser)
+    return self.delimited(elementParser, delimiterParser, Range.exclusive(1, null))
+  end,
+  
+  method _optional(parser)
+    var initialState = self.copyState()
+    try
+      return parser(self; )
+    catch e
+      if e == BacktrackingException
+        self.state = initialState
+        return null
+      else
+        throw e
+      end
+    end
+  end,
+  
+  method tokenOperatorHandler(parser)
+    return parser(self; )
+  end,
+  
+  method stringPatternHandler(string)
+    throw Error.new('String pattern handler not provided by BaseParser')
+  end,
+  
+  method numberPatternHandler(number)
+    throw Error.new('Number pattern handler not provided by BaseParser')
+  end,
+  
+  method rangePatternHandler(range)
+    throw Error.new('Range pattern handler not provided by BaseParser')
+  end,
+  
+  method equals(number)
+    return self.nextIf((obj) -> obj == number)
+  end,
+  
+  method eachChar(string)
+    -- Todo: Implement for loop handling
+    return string
+  end,
+  
+  method each(what)
+    var iteratorFunction = if what.each != null
+                           then what.each 
+                           else what.forEach
+    var results = []
+    iteratorFunction(what; (elem) -> results.push(elem(self; )))
+    return results
+  end,
+  
+  method includedIn(collection)
+    return self.nextIf((o) -> collection.include(o))
+  end,
+  
+  method char(..args)
+    if args.length == 0
+      return self.next()
+    else
+      var c = self.next()
+      -- Todo: Implement for loops
+      return self.fail()
+    end
+  end,
+  
+  method _applyCharPredicate(pred, c)
+    if Function.include(pred)
+      return pred(self; c)
+    else
+      return pred.include(c)
+    end
+  end,
+  
+  method fail()
+    throw BacktrackingException
+  end,
+  
+  method isEof()
+    return self.state.position >= self.source.length
+  end,
+  
+  method peekNext()
+    if not self.isEof()
+      return self.source[self.state.position]
+    else
+      self.fail()
+    end
+  end,
+  
+  method next()
+    if not self.isEof()
+      self.state.position = self.state.position + 1
+      return self.source[self.state.position]
+    else
+      self.fail()
+    end
+  end,
+  
+  method nextIf(predicate)
+    var o = self.next()
+    if predicate(self; o)
+      return o
+    else
+      this.fail()
+    end
+  end,
+  
+  method error(description)
+    throw Error.new(description)
+  end,
+  
+  method nothing()
+    return null
+  end,
+  
+  method eof()
+    if self.isEof()
+      return null
+    else
+      return self.fail()
+    end
+  end,
+  
+  method _predicate(predicate)
+    if predicate(self; )
+      return null
+    else
+      return self.fail()
+    end
+  end,
+  
+  method _action(action)
+    return action(self; )
+  end,
+  
+  method matchedInput(parser)
+    var startPosition = self.state.position
+    parser(self; )
+    var endPosition = self.state.position
+    return self.slice(startPosition, endPosition)
+  end,
+  
+  method slice(start, end)
+    return self.source.slice(start, end)
+  end,
 
 })

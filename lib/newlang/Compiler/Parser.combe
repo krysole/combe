@@ -101,6 +101,13 @@ var Parser = module.exports = Class.new(TextParser, {
     -> ast
   },
   
+  tryCatchStatement: rule {
+    specialBlock[ id('try') ]:tryBlock
+    specialBlock[ id('catch') variableIdentifier:name ]:catchBlock
+    id('end')
+    -> TryCatch(tryBlock.body, name, catchBlock.body)
+  },
+  
   ifExpression: rule {
     id('if') expression:condition
     id('then') expression:consiquent
@@ -162,6 +169,9 @@ var Parser = module.exports = Class.new(TextParser, {
     | lvalueSecondaryExpression
     | lvaluePrimaryExpression
   },
+  
+  // Todo: Either add support for a subscript lvalue operation, or provide
+  // some other way for tersely getting and setting properties.
   
   lvaluePrimaryExpression: rule {
     variableLookup
@@ -406,7 +416,7 @@ var Parser = module.exports = Class.new(TextParser, {
   functionLiteral: rule {
     | optParameterList:pd op('->') expression:body
       -> Ast.Function(pd.this, pd.parameters, body)
-    | functionBlock[ id('fn') ]:fb
+    | functionBlock[ id('function') ]:fb
       -> Ast.Function(fb.this, fb.parameters, fb.body)
   },
   
@@ -574,7 +584,7 @@ var Parser = module.exports = Class.new(TextParser, {
     | '!=' | '==' | '!' | '='
     | '||' | '|' | '^^' | '^' | '&&' | '&'
     | '+' | '-' | '**' | '*' | '//' | '/' | '%' | '~'
-    | '->' | '=>' | '<-' | '..' | '.'
+    | '->' | '=>' | '<-' | '..' | '.' | ':'
     ):text
     -> text
   },
