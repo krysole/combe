@@ -65,6 +65,7 @@ var Parser = module.exports = Class.new(TextParser, {
   statement: rule {
     | emptyStatement
     | ifStatement
+    | tryCatchStatement
     | expression
   },
   
@@ -105,7 +106,7 @@ var Parser = module.exports = Class.new(TextParser, {
     specialBlock[ id('try') ]:tryBlock
     specialBlock[ id('catch') variableIdentifier:name ]:catchBlock
     id('end')
-    -> TryCatch(tryBlock.body, name, catchBlock.body)
+    -> Ast.TryCatch(tryBlock.body, name, catchBlock.body)
   },
   
   ifExpression: rule {
@@ -116,7 +117,7 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   varExpression: rule {
-    id('var') variableIdentifier:name ( op('=') assignmentExpression:rvalue )?
+    id('var') variableIdentifier:name ( op('=') expression:rvalue )?
     -> Ast.Var(name, rvalue)
   },
   
@@ -187,6 +188,8 @@ var Parser = module.exports = Class.new(TextParser, {
       -> Ast.PropertyLookup(expr, pname)
     | op(':') propertyName:pname
       -> Ast.PrototypePropertyLookup(expr, pname)
+    | #'[' ignoringIndentation[ expression:pname ] #']'
+      -> Ast.PropertyLookup(expr, pname)
   },
   
   
@@ -338,8 +341,10 @@ var Parser = module.exports = Class.new(TextParser, {
       -> Ast.PrototypePropertyLookup(expr, pname)
     | argumentsList:ad
       -> Ast.Call(expr, ad.this, ad.arguments)
-    | subscript:args
-      -> Ast.Subscript(expr, args)
+    | #'[' ignoringIndentation[ expression:pname ] #']'
+      -> Ast.PropertyLookup(expr, pname)
+    // | subscript:args
+    //   -> Ast.Subscript(expr, args)
   },
   
   
@@ -509,8 +514,8 @@ var Parser = module.exports = Class.new(TextParser, {
     'or', 'and', 'xor', 'not',
     
     'if', 'then', 'else',
-    'var',
-    'return', 'throw',
+    'try', 'catch',
+    'var', 'return', 'throw',
     'do', 'end'
   ],
   
@@ -583,8 +588,8 @@ var Parser = module.exports = Class.new(TextParser, {
     ( '<<' | '>>>' | '>>' | '<>' | '<=' | '>=' | '<' | '>'
     | '!=' | '==' | '!' | '='
     | '||' | '|' | '^^' | '^' | '&&' | '&'
-    | '+' | '-' | '**' | '*' | '//' | '/' | '%' | '~'
     | '->' | '=>' | '<-' | '..' | '.' | ':'
+    | '+' | '-' | '**' | '*' | '//' | '/' | '%' | '~'
     ):text
     -> text
   },

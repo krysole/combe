@@ -144,15 +144,15 @@ var BaseParser = module.exports = Class.new(Object, {}, {
     var initialState = self.copyState()
     -- Todo: Add while loop support
     return results
-  end
+  end,
   
   method _repeat1(parser)
     return self._repeat(parser, Range.exclusive(1, null))
-  end
+  end,
   
   method repeat(parser, range)
     return self._repeat(parser, range)
-  end
+  end,
   
   method delimited(elementParser, delimiterParser, range)
     if Number.include(range) -- Figure out typeof operation for Constructors...
@@ -214,7 +214,7 @@ var BaseParser = module.exports = Class.new(Object, {}, {
     var iteratorFunction = if what.each != null
                            then what.each 
                            else what.forEach
-    var results = []
+    var results = Array()
     iteratorFunction(what; (elem) -> results.push(elem(self; )))
     return results
   end,
@@ -310,8 +310,8 @@ var BaseParser = module.exports = Class.new(Object, {}, {
     return self.slice(startPosition, endPosition)
   end,
   
-  method slice(start, end)
-    return self.source.slice(start, end)
+  method slice(start, _end)
+    return self.source.slice(start, _end)
   end,
 
 })
