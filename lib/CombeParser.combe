@@ -39,7 +39,7 @@ var CombeParser = module.exports = Class.new(JSParser, {
     return this.parse(string, 'sourceElement');
   },
   
-  parse: function (string, /* ruleName, ...restOfArgs */) {
+  parse: function (string /* ruleName, ...restOfArgs */) {
     var args = Array.prototype.slice.call(arguments, 1);
     var parser = this.new(CombeLexer.new(string));
     var result = parser.match.apply(parser, args);
@@ -220,9 +220,6 @@ var CombeParser = module.exports = Class.new(JSParser, {
     '|'? returnPattern:ptn
     ( ('|' returnPattern)+:ptns 
       !(ptn = Ast.ChoicePattern([ptn].concat(ptns)))
-    )?
-    ( '|'
-      !(ptn.push(Ast.EmptyPattern()))
     )?
     -> ptn
   },

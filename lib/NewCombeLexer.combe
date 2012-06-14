@@ -1,0 +1,232 @@
+//
+// Combe - A Parsing Language for JavaScript
+//
+// Copyright 2011 Lorenz Pretterhofer
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+'use strict';
+
+var TextParser = require('./TextParser');
+
+var NewCombeLexer = module.exports = Class.new(TextParser, {}, {
+  
+  initialize: function (source) {
+    this.source = source;
+    TextParser.prototype.initialize.call(this, source);
+  },
+  
+  
+  AmbiguousTokenFailure: Object.unique('AmbiguousTokenFailure'),
+  
+  
+  nextToken: rule {
+    ws?:nl !(this.initialTokenPosition = this.position)
+    
+    ( identifier
+    | number
+    | operatorAssignment
+    | punctuation(nl)
+    | string
+    | &'/' !{ throw AmbiguousTokenFailure; }
+    | eof createToken('eof')
+    | !{ throw Error.new('Lexer failed at position ' + this.source.lineColumnAt(this.position).join(':')); }
+    )
+  },
+  
+  
+  identifier: rule {
+    initialIdChar idChar*:text
+    createToken('identifier'):token
+    ( ?(this.ReservedWords.include(token.text))
+      !(token.reserved = true)
+      ( ?(['return', 'break', 'continue', 'throw']) &ws:nl ?(nl)
+        !(token.precedesNewline = true)
+      )
+    )
+    -> token
+  },
+  
+  ReservedWords: String.ReservedWords.concat([
+    'rule'
+  ]),
+
+  
+  operatorAssignment: rule {
+    ( '+=' | '-=' | '*=' | '%=' | '&=' | '|=' | '^='
+    | '<<=' | '>>>=' | '>>='
+    ):text
+    createToken('operatorAssignment')
+  },
+  
+  
+  punctuation: rule (nl) {
+    ( '{' | '}' | '(' | ')' | '[' | ']' | ';' | ','
+    | '<<' | '>>>' | '>>' | '<=' | '>=' | '<' | '>'
+    | '===' | '!==' | '==' | '!=' | '!' | '='
+    | '...' | '..' | '.' ~digit -> '.'
+    | '->' | '#'
+    | '&&' | '||' | '&' | '|' | '++' | '--' | '+' | '-'
+    | '*' | '%' | '~' | '?' | ':'
+    ):text
+    createToken(text):t
+    ( ?(nl) !(t.newlinePrecedes = true) )
+    -> t
+  },
+  
+  
+  number: rule {
+    | decimal
+    | hexInteger
+  },
+  
+  decimal: rule {
+    matchedInput[
+      | integerPart ('.' digit*)? exponentPart?
+      | '.' digit+ exponentPart?
+    ]:text ~idChar
+    createToken('number', parseFloat(text))
+  },
+  
+  integerPart: rule {
+    | '0'
+    | char('1'..'9') digit*
+  },
+  
+  exponentPart: rule {
+    ('e'|'E') ('+'|'-'|nothing) digit+
+  },
+  
+  hexInteger: rule {
+    ('0x'|'0X') matchedInput[hexDigit+]:text ~idChar
+    createToken('number', parseInt(text, 16))
+  },
+  
+  
+  string: rule {
+    ( stringFragment['\''] | stringFragment['\"'] ):text
+    createToken('string', text)
+  },
+  
+  stringFragment: rule (quote) {
+    quote (~quote stringChar)*:cs quote
+    -> cs.join('')
+  },
+  
+  stringChar: rule {
+    | '\\' stringEscapeSequence
+    | '\\' newline -> ''
+    | ~newline sourceChar
+  },
+  
+  stringEscapeSequence: rule {
+    | '\'' -> '\''
+    | '\"' -> '\"'
+    | '\\' -> '\\'
+    | 'b'  -> '\b'
+    | 'f'  -> '\f'
+    | 'n'  -> '\n'
+    | 'r'  -> '\r'
+    | 't'  -> '\t'
+    | 'v'  -> '\v'
+    | '0' ~digit -> '\0'
+    | 'x' repeat[hexDigit, %2]:hs -> String.fromCodepoint(hs.join(''))
+    | 'u' repeat[hexDigit, %4]:hs -> String.fromCodepoint(hs.join(''))
+    | ~(newline | digit) sourceChar
+  },
+  
+  
+  // Disambiguation rules. These are called after the syntactic context is known.
+  
+  divisionAssignment: rule {
+    '/=' createToken('/=')
+  },
+  
+  division: rule {
+    '/' ~'=' createToken('/')
+  },
+  
+  regex: rule {
+    '/' matchedInput[~'*' regexChar*]:pattern '/' matchedInput[idChar*]:options
+    createToken('regex', RegExp.new(pattern, options))
+  },
+  
+  regexChar: rule {
+    | '\\' ~newline sourceChar
+    | regexCharacterClass
+    | ~( '/' | newline ) sourceChar
+  },
+  
+  regexCharacterClass: rule {
+    '[' regexCharacterClassChar ']'
+  },
+  
+  regexCharacterClassChar: rule {
+    | '\\' ~newline sourceChar
+    | ~(']' | newline) sourceChar
+  },
+  
+  
+  
+  
+  initialIdChar: rule { char('a'..'z', 'A'..'Z', '_', '$') },
+  idChar:        rule { char('a'..'z', 'A'..'Z', '_', '$', '0'..'9') },
+  digit:         rule { char('0'..'9') },
+  hexDigit:      rule { char('0'..'9', 'a'..'f', 'A'..'F') },
+  
+  ws:            rule {
+    !(false):nl
+    ( spaces | newline !(true):nl | comment )+
+    -> nl
+  },
+  
+  spaces:        rule { char(' \t\v\f\u00a0\u200c\u200d\ufeff') },
+  newline:       rule { '\r\n' | char('\n\r\u2028\u2029') },
+  
+  sourceChar:    rule { char },
+  
+  comment: rule {
+    | '//' (~newline sourceChar)* (newline | eof)
+    | '/*' (~'*/' sourceChar)* '*/'
+  },
+  
+  
+  createToken: function (type, value) {
+    var text = this.slice(this.initialTokenPosition, this.position);
+    
+    var token = {
+      type: type,
+      value: value,
+      text: text,
+      position: this.initialTokenPosition,
+      length: this.position - this.initialTokenPosition,
+    };
+    
+    return token;
+  },
+  
+  
+  // Basic functionality
+  
+  emptyState: function () {
+    return 0; // Position only
+  },
+  
+  copyState: function () {
+    return this.position;
+  },
+  
+  get position() { return this._position; },
+  set position(value) { this._position = value; },
+  
+});

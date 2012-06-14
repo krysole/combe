@@ -1,0 +1,712 @@
+//
+// Combe - A Parsing Language for JavaScript
+//
+// Copyright 2011 Lorenz Pretterhofer
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+'use strict';
+
+var BaseParser = require('./BaseParser');
+
+var Ast = require('./CombeAst');
+var NewCombeLexer = require('./NewCombeLexer');
+
+var NewCombeParser = module.exports = Class.new(BaseParser, {
+  
+  parseProgram: function (string) {
+    return this.parse(string, 'program');
+  },
+  
+  parseExpression: function (string) {
+    return this.parse(string, 'expression');
+  },
+  
+  parseStatement: function (string) {
+    return this.parse(string, 'statement');
+  },
+  
+  parseSourceElement: function (string) {
+    return this.parse(string, 'sourceElement');
+  },
+  
+  parse: function (string, filename, rulename) {
+    var rest = Array.slice(arguments, 3);
+    if (filename == null) filename = '(unnamed)';
+    
+    var parser = this.new(source, filename);
+    var result = parser.match.apply(parser, [rulename].concat(rest));
+    if (!result) {
+      var t = parser.futhestToken;
+      var lc = source.lineColumnAt(t.position);
+      throw Error.new('NewCombe Parser Failed: Furthest token was [' + t.text + '] ' + filename + ':' + lc[0] + ':' + lc[1]);
+    }
+    return result;
+  },
+  
+}, {
+  
+  initialize: function (source, filename) {
+    BaseParser.prototype.initialize.call(this);
+    
+    this.source = source;
+    this.filename = filename;
+    
+    this.lexer = NewCombeLexer.new(source, filename);
+    this.tokens = [];
+  },
+  
+  
+  program: rule {
+    sourceElement*:stmts eof
+    -> Ast.Program(stmts)
+  },
+  
+  sourceElement: rule {
+    | statement
+    | functionDeclaration
+  },
+  
+  
+  functionDeclaration: rule {
+    id('function') variableIdentifier:name functionArguments:args
+    '{' functionBody:stmts '}'
+    -> Ast.FunctionDeclaration(name, args, stmts)
+  },
+  
+  functionExpression: rule {
+    id('function') variableIdentifier?:name functionArguments:args
+    '{' functionBody:stmts '}'
+    -> Ast.Function(name, args, stmts)
+  },
+  
+  functionArguments: rule {
+    '(' delimited[identifier, ',']:args ')' -> args
+  },
+  
+  functionBody: rule {
+    sourceElement*
+  },
+  
+  
+  ruleExpression: rule {
+    id('rule') variableIdentifier?:name functionArguments:args
+    '{' patternOpt:p '}'
+    -> Ast.Rule(name, args, p)
+  },
+  patternOpt: rule {
+    | choicePattern
+    | '|'? -> Ast.EmptyPattern()
+  },
+  
+  
+  statement: rule {
+    | block
+    
+    | variableDeclarationStatement
+    | ifStatement
+    | whileStatement
+    | doWhileStatement
+    | forStatement
+    | forInStatement
+    | switchStatement
+    | tryCatchStatement
+    | throwStatement
+    
+    | returnStatement
+    | breakStatement
+    | continueStatement
+    | debuggerStatement
+    
+    | labelledStatement
+    
+    | expressionStatement
+    | emptyStatement
+    
+    | withStatement
+  },
+  
+  block: rule {
+    '{' statement*:stmts '}'
+    -> Ast.BlockStatement(stmts)
+  },
+  
+  variableDeclarationStatement: rule {
+    id('var') delimited1[variableDeclaration(false), ',']:decls ';'
+    -> Ast.VariableDeclarationStatement(decls)
+  },
+  
+  variableDeclaration: rule (noInFlag) {
+    variableIdentifier:name ( '=' assignmentExpression(noInFlag):expr )?
+    -> Ast.VariableDeclaration(name, expr)
+  },
+  
+  ifStatement: rule {
+    id('if') '(' expression:condition ')' statement:consiquent
+    ( id('else') statement:alternative )?
+    -> Ast.IfStatement(condition, consiquent, alternative)
+  },
+  
+  whileStatement: rule {
+    id('while') '(' expression:condition ')' statement:stmt
+    -> Ast.WhileStatement(condition, stmt)
+  },
+  
+  doWhileStatement: rule {
+    id('do') statement:stmt id('while') '(' expression:condition ')' ';'
+    -> Ast.DoWhileStatement(stmt, condition)
+  },
+  
+  forStatement: rule {
+    | id('for') '('
+        expressionWithNoInFlag(true)?:initExpr ';' 
+        expression?:condExpr ';'
+        expression?:incExpr ')' statement:stmt
+      -> Ast.ForStatement(initExpr, condExpr, incExpr, stmt)
+    | id('for') '('
+        id('var') delimited1[variableDeclaration(true), ',']:decls ';'
+        expression?:condExpr ':'
+        expression?:incExpr ')' statement:stmt
+      -> Ast.ForDeclaringStatement(decls, condExpr, incExpr, stmt)
+  },
+  
+  forInStatement: rule {
+    | id('for') '(' 
+        leftHandSideExpression:lvalue id('in') expression:subject ')'
+        statement:stmt
+      -> Ast.ForInStatement(lvalue, subject, stmt)
+    | id('for') '(' 
+        id('var') variableDeclaration(true):decl id('in') expression:subject ')'
+        statement:stmt
+      -> Ast.ForInStatement(vardecl, subject, stmt)
+  },
+  
+  switchStatement: rule {
+    id('switch') '(' expression:subject ')' '{'
+      caseClause*:cs
+      ( defaultClause:d caseClause*:cs2 -> cs.concat([d]).concat(cs2) )?:cs
+      '}'
+    -> Ast.SwitchStatement(subject, cs)
+  },
+  
+  caseClause: rule {
+    id('case') expression:subject ':' statement*:stmts
+    -> Ast.CaseClause(subject, stmts)
+  },
+  
+  defaultClause: rule {
+    id('default') ':' statement*:stmts
+    -> Ast.DefaultClause(stmts)
+  },
+  
+  tryCatchStatement: rule {
+    id('try') block:tryBlock
+    ( id('catch') '(' variableIdentifier:catchBinding ')' block:catchBlock )?
+    ( id('finally') block:finallyBlock )?
+    -> Ast.TryCatchStatement(tryBlock, catchBinding, catchBlock, finallyBlock)
+  },
+  
+  throwStatement: rule {
+    id('throw'):t
+    ( ?(t.precedesNewline) ';'
+    | expression?:expr ';'
+    )
+    -> Ast.ThrowStatement(expr)
+  },
+  
+  returnStatement: rule {
+    id('return'):t
+    ( ?(t.precedesNewline) ';'
+    | expression?:expr ';'
+    )
+    -> Ast.ReturnStatement(expr)
+  },
+  
+  breakStatement: rule {
+    id('break'):t
+    ( ?(t.precedesNewline) ';'
+    | 'identifier':name ';'
+    )
+    -> Ast.BreakStatement(name)
+  },
+  
+  breakStatement: rule {
+    id('continue'):t
+    ( ?(t.precedesNewline) ';'
+    | 'identifier':name ';'
+    )
+    -> Ast.ContinueStatement(name)
+  },
+  
+  debuggerStatement: rule {
+    id('debugger') ';'
+    -> Ast.DebuggerStatement()
+  },
+  
+  labelledStatement: rule {
+    'identifier':name ':' statement:stmt
+    -> Ast.LabelStatement(name, stmt)
+  },
+  
+  expressionStatement: rule {
+    ~( '{' | id('function') | id('rule') ) expression:expr ';'
+    -> Ast.ExpressionStatement(expr)
+  },
+  
+  emptyStatement: rule {
+    ';'
+    -> Ast.EmptyStatement()
+  },
+  
+  withStatement: rule {
+    id('with') '(' expression:subject ')' statement:stmt
+    !(Error.new('with statement not allowed'))
+  },
+  
+  
+  id: rule (expectedName) {
+    'identifier':name ?(name.text === expectedName) -> name
+  },
+  
+  variableIdentifier: rule {
+    'identifier':name ?(!name.reserved) -> name.text
+  },
+  
+  propertyName: rule {
+    | 'identifier':t -> t.text
+    | 'string':t     -> t.value
+    | 'number':t     -> t.text
+  },
+  
+  
+  expression: rule {
+    expressionWithNoInFlag(false)
+  },
+  
+  expressionWithNoInFlag: rule (noInFlag) {
+    delimited1[assignmentExpression(noInFlag), ',']:exprs
+    ( ?(exprs.length === 1)
+      -> exprs[0]
+    | -> Ast.CommaExpression(exprs)
+    )
+  },
+  
+  assignmentExpression: rule (noInFlag) {
+    | leftHandSideExpression:lhs
+      ( '=' assignmentExpression(noInFlag):rhs
+        -> Ast.Assignment(lhs, rhs)
+      | operatorAssignmentToken:op assignmentExpression(noInFlag):rhs
+        -> Ast.OperatorAssignment(op, lhs, rhs)
+      )
+    | conditionalExpression(noInFlag)
+  },
+  
+  operatorAssignmentToken: rule {
+    | 'operatorAssignment'
+    | divisionAssignment
+  },
+  
+  conditionalExpression: rule (noInFlag) {
+    logicalOrExpression(noInFlag):condition
+    ( '?' assignmentExpression(noInFlag):consiquent
+      ':' assignmentExpression(noInFlag):alternative
+      -> Ast.Conditional(condition, consiquent, alternative)
+    | -> condition
+    )
+  },
+  
+  logicalOrExpression: rule (noInFlag) {
+    leftAssociative['||', logicalAndExpression, noInFlag]
+  },
+  logicalAndExpression: rule (noInFlag) {
+    leftAssociative['&&', bitwiseOrExpression, noInFlag]
+  },
+  
+  bitwiseOrExpression: rule (noInFlag) {
+    leftAssociative['|', bitwiseXorExpression, noInFlag]
+  },
+  bitwiseXorExpression: rule (noInFlag) {
+    leftAssociative['^', bitwiseAndExpression, noInFlag]
+  },
+  bitwiseAndExpression: rule (noInFlag) {
+    leftAssociative['&', equalityExpression, noInFlag]
+  },
+  
+  equalityExpression: rule (noInFlag) {
+    leftAssociative[('==='|'!=='|'=='|'!='), relationalExpression, noInFlag]
+  },
+  relationalExpression: rule (noInFlag) {
+    leftAssociative[('<'|'<='|'>='|'>'|id('instanceof')|inToken(noInFlag)), shiftExpression]
+  },
+  
+  shiftExpression: rule {
+    leftAssociative[('<<'|'>>'|'>>>'), additiveExpression]
+  },
+  additiveExpression: rule {
+    leftAssociative[('+'|'-'), multiplicitiveExpression]
+  },
+  multiplicitiveExpression: rule {
+    leftAssociative[('*'|division|'%'), rangeExpression]
+  },
+  
+  rangeExpression: rule {
+    prefixExpression:expr
+    ( '..' (rangeInfinity | prefixExpression):rhs
+      -> Ast.InclusiveRange(expr, rhs)
+    | '...' (rangeInfinity | prefixExpression):rhs
+      -> Ast.ExclusiveRange(expr, rhs)
+    | -> expr
+    )
+  },
+  
+  prefixExpression: rule {
+    | id('delete') prefixExpression:expr -> Ast.Delete(expr)
+    | id('void')   prefixExpression:expr -> Ast.Void(expr)
+    | id('typeof') prefixExpression:expr -> Ast.Typeof(expr)
+    | ('++'|'--'|'+'|'-'|'~'|'!'):op prefixExpression
+      -> Ast.PrefixOperator(op.text, expr)
+    | postfixExpression
+  },
+  
+  postfixExpression: rule {
+    leftHandSideExpression:expr
+    ( ('++'|'--'):t ?(t.newlinePrecedes)
+      -> Ast.PostfixOperator(t.text, expr)
+    | -> expr
+    )
+  },
+  
+  
+  leftAssociative: rule (operand, operator, noInFlag) {
+    operand(noInFlag):expr
+    ( operator:op operand(noInFlag):rhs
+      !(expr = Ast.InfixOperator(op.text, expr, rhs))
+    )*
+    -> expr
+  },
+  rightAssociative: rule (operand, operator, noInFlag) {
+    operand(noInFlag):expr
+    ( operator:op rightAssociative(operand, operator, noInFlag):rhs
+      -> Ast.InfixOperator(op.text, expr, rhs)
+    | -> expr
+    )
+  },
+  
+  
+  leftHandSideExpression: rule {
+    | memberExpression
+    | callExpression
+  },
+  
+  secondaryExpression: rule {
+    ( id('new') secondaryExpression:ctor arguments?:args
+      -> Ast.New(ctor, args)
+    | functionExpression
+    | ruleExpression
+    | primaryExpression
+    ):expr
+    ( affixExpression(expr):expr )*
+    -> expr
+  },
+  
+  affixExpression: rule (subject) {
+    | arguments:args
+      -> Ast.Call(subject, args)
+    | '.' 'identifier':name arguments:args
+      -> Ast.MethodCall(subject, name.text, args)
+    | '.' 'identifier':name
+      -> Ast.Dot(subject, name.text)
+    | '[' expression:expr ']'
+      -> Ast.Subscript(subject, expr)
+  },
+  
+  
+  primaryExpression: rule {
+    | valueLiteral
+    | id('this') -> Ast.This()
+    | variableIdentifier:name -> Ast.Variable(name)
+    | arrayLiteral
+    | objectLiteral
+    | '(' expression:e ')' -> e
+  },
+  
+  valueLiteral: rule {
+    ( id('null')  -> null
+    | id('true')  -> true
+    | id('false') -> false
+    | 'number':n  -> n.value
+    | 'string':s  -> s.value
+    | 'regex':r   -> r.value
+    ):value
+    -> Ast.Literal(value)
+  },
+  
+  arrayLiteral: rule {
+    '[' delimited[arrayElement, ',']:elems ']'
+    -> Ast.Array(elems)
+  },
+  arrayElement: rule {
+    | assignmentExpression
+    | -> Ast.Elision()
+  },
+  
+  objectLiteral: rule {
+    '{' delimited[propertyDeclaration, ',']:decls ','? '}'
+    -> Ast.Object(decls)
+  },
+  
+  propertyDeclaration: rule {
+    | propertyName:name ':' assignmentExpression:expr
+      -> Ast.ValuePropertyDeclaration(name, expr)
+    | id('get') propertyName:name '(' ')' '{' functionBody:body '}'
+      -> Ast.GetPropertyDeclaration(name, body)
+    | id('set') propertyName:name '(' variableIdentifier:paramname ')' '{' functionBody:body '}'
+      -> Ast.SetPropertyDeclaration(name, paramname, body)
+  },
+  
+  
+  pattern: rule {
+    choicePattern
+  },
+  
+  choicePattern: rule {
+    '|'? returnPattern:p
+    ( ( '|' returnPattern )+:ps
+      ( '|'
+        -> Ast.ChoicePattern([p].concat(ps).concat([Ast.EmptyPattern()]))
+      | -> Ast.ChoicePattern([p].concat(ps))
+      )
+    | -> p
+    )
+  },
+  
+  returnPattern: rule {
+    | concatPattern:p
+      ( '->' leftHandSideExpression:expr
+        -> Ast.ConcatPattern([p, Ast.ActionPattern(Ast.ExpressionBody(expr))])
+      | '->' '{' jscodeBody:body '}'
+        -> Ast.ConcatPattern([p, Ast.ActionPattern(body)])
+      | -> p
+      )
+    | '->' leftHandSideExpression:expr
+      -> Ast.ActionPattern(Ast.ExpressionBody(expr))
+    | '->' '{' jscodeBody:body '}'
+      -> Ast.ActionPattern(body)
+  },
+  
+  concatPattern: rule {
+    prefixOperatorPattern:p
+    ( prefixOperatorPattern+:ps
+      -> Ast.ConcatPattern([p].concat(ps))
+    | -> p
+    )
+  },
+  
+  prefixOperatorPattern: rule {
+    | '~' prefixOperatorPattern:p -> Ast.NotPattern(p)
+    | '&' prefixOperatorPattern:p -> Ast.LookaheadPattern(p)
+    | '#' prefixOperatorPattern:p -> Ast.TokenOperatorPattern(p)
+    | postfixOperatorPattern
+  },
+  
+  postfixOperatorPattern: rule {
+    | applyPattern:p ( repeatOperatorPattern(p):p )* -> p
+    | ':' ~ws variableIdentifier:name
+      -> Ast.BindPattern(name, Ast.AnythingPattern())
+  },
+  
+  repeatOperatorPattern: rule (p) {
+    | '*' -> Ast.StarPattern(p)
+    | '+' -> Ast.PlusPattern(p)
+    | '?' -> Ast.OptionalPattern(p)
+    | ~ws ':' ~ws variableIdentifier:name
+      -> Ast.BindPattern(name, p)
+  },
+  
+  applyPattern: rule {
+    primaryPattern:p
+    ( ~ws arguments:args
+      !(p = Ast.ApplyPattern(p, args))
+    | ~ws patternArguments:args
+      !(p = Ast.ApplyPatternArgumentsPattern(p, args))
+    )*
+    -> p
+  },
+  patternArguments: rule {
+    '[' delimited[pattern, ',']:args ']' -> args
+  },
+  
+  primaryPattern: rule {
+    | predicatePattern
+    | actionPattern
+    | immediatePattern
+    | literalPattern
+    | variablePattern
+    | '(' pattern:p ')' -> p
+  },
+  
+  predicatePattern: rule {
+    '?' ~ws jscodeBody:body
+    -> Ast.PredicatePattern(body)
+  },
+  
+  actionPattern: rule {
+    '!' ~ws jscodeBody:body
+    -> Ast.ActionPattern(body)
+  },
+  
+  immediatePattern: rule {
+    | '%' ~ws leftHandSideExpression:expr
+      -> Ast.ImmediatePattern(Ast.ExpressionBody(expr))
+    | '%' ~ws jscodeBody:body
+      -> Ast.ImmediatePattern(body)
+  },
+  
+  literalPattern: rule {
+    | 'number':n -> Ast.NumberPattern(n.value)
+    | 'string':s -> Ast.StringPattern(s.value)
+  },
+  
+  variablePattern: rule {
+    variableIdentifier:name
+    -> Ast.VariablePattern(name)
+  },
+  
+  jscodeBody: rule {
+    | '(' expression:expr ')'
+      -> Ast.ExpressionBody(expr)
+    | '{' functionBody:stmts '}'
+      -> Ast.StatementsBody(stmts)
+  },
+  
+  
+  t: function (typename) {
+    var token = this.next();
+    if (token.is(typename)) {
+      this.updateFurthestToken(token);
+      return token;
+    }
+    else {
+      this.fail();
+    }
+  },
+  
+  inToken: rule (noInFlag) {
+    ?(!noInFlag) id('in')
+  },
+  
+  regex: function () {
+    try {
+      return this.t('regex');
+    }
+    catch (e) {
+      if (e === this.lexer.AmbiguousTokenFailure) {
+        // Only happens when parsing a new token...
+        assert(this.position >= this.tokens.length);
+        this.tokens.push(this.lexer.regex());
+      }
+      else {
+        throw e;
+      }
+    }
+  },
+  
+  division: function () {
+    try {
+      return this.t('/');
+    }
+    catch (e) {
+      if (e === this.lexer.AmbiguousTokenFailure) {
+        // Only happens when parsing a new token...
+        assert(this.position >= this.tokens.length);
+        this.tokens.push(this.lexer.division());
+      }
+      else {
+        throw e;
+      }
+    }
+  },
+  
+  divisionAssignment: function () {
+    try {
+      return this.t('/=');
+    }
+    catch (e) {
+      if (e === this.lexer.AmbiguousTokenFailure) {
+        // Only happens when parsing a new token...
+        assert(this.position >= this.tokens.length);
+        this.tokens.push(this.lexer.divisionAssignment());
+      }
+      else {
+        throw e;
+      }
+    }
+  },
+  
+  peekNext: function () {
+    return this.tokenAt(this.position);
+  },
+  
+  next: function () {
+    return this.tokenAt(this.position++);
+  },
+  
+  eof: rule {
+    'eof'
+  },
+  
+  tokenAt: function (position) {
+    var token;
+    
+    assert(position < this.tokens.length + 1);
+    if (position >= this.tokens.length) {
+      assert(this.tokens.isEmpty() || !this.tokens.last.is('eof'));
+      
+      this.tokens.push(this.lexer.nextToken());
+    }
+    
+    return this.tokens[position];
+  },
+  
+  stringPatternHandler: rule (string) {
+    t(string)
+  },
+  
+  ws: function () {
+    if (this.position === 0) {
+      return;
+    }
+    else if (this.t('eof')) {
+      return;
+    }
+    else {
+      var lastToken = this.tokenAt(this.state.position - 1);
+      var currentToken = this.peekNext();
+      if (lastToken.position + lastToken.length < currentToken.position) {
+        return;
+      }
+      else {
+        this.fail();
+      }
+    }
+  },
+  
+  updateFurthestToken: function (token) {
+    if (this.furthestToken.position <= token.position &&
+        this.furthestToken !== token) {
+      this.furthestToken = token;
+    }
+  },
+      
+
+});

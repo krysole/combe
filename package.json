@@ -16,6 +16,7 @@
   ],
   "bin": {
     "combec": "./bin/combec",
+    "newcombec": "./bin/newcombec",
     "newlang": "./bin/newlang"
   },
   "repository": {
