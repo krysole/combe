@@ -56,19 +56,25 @@ var CombeParser = module.exports = Class.new(JSParser, {
   
 }, {
   
+  get position()      { return this.state.position;  },
+  set position(value) { this.state.position = value; },
+  
+  get state()         { return this._state;  },
+  set state(value)    { this._state = value; },
+  
   emptyState: function () {
     return {
       position: 0,
       astTemplates: false
     };
   },
-  
   copyState: function () {
     return {
       position: this.state.position,
       astTemplates: this.state.astTemplates
     };
   },
+  
   
   primaryExpression: rule {
     | %JSParser.prototype.primaryExpression

@@ -24,20 +24,20 @@ var NewCombeLexer = require('./NewCombeLexer');
 
 var NewCombeParser = module.exports = Class.new(BaseParser, {
   
-  parseProgram: function (string) {
-    return this.parse(string, 'program');
+  parseProgram: function (string, filename) {
+    return this.parse(string, filename, 'program');
   },
   
-  parseExpression: function (string) {
-    return this.parse(string, 'expression');
+  parseExpression: function (string, filename) {
+    return this.parse(string, filename, 'expression');
   },
   
-  parseStatement: function (string) {
-    return this.parse(string, 'statement');
+  parseStatement: function (string, filename) {
+    return this.parse(string, filename, 'statement');
   },
   
-  parseSourceElement: function (string) {
-    return this.parse(string, 'sourceElement');
+  parseSourceElement: function (string, filename) {
+    return this.parse(string, filename, 'sourceElement');
   },
   
   parse: function (string, filename, rulename) {
@@ -57,9 +57,8 @@ var NewCombeParser = module.exports = Class.new(BaseParser, {
 }, {
   
   initialize: function (source, filename) {
-    BaseParser.prototype.initialize.call(this);
+    BaseParser.prototype.initialize.call(this, source);
     
-    this.source = source;
     this.filename = filename;
     
     this.lexer = NewCombeLexer.new(source, filename);

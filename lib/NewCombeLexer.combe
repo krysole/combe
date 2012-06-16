@@ -21,9 +21,10 @@ var TextParser = require('./TextParser');
 
 var NewCombeLexer = module.exports = Class.new(TextParser, {}, {
   
-  initialize: function (source) {
-    this.source = source;
+  initialize: function (source, filename) {
     TextParser.prototype.initialize.call(this, source);
+    
+    this.filename = filename;
   },
   
   
@@ -214,19 +215,5 @@ var NewCombeLexer = module.exports = Class.new(TextParser, {}, {
     
     return token;
   },
-  
-  
-  // Basic functionality
-  
-  emptyState: function () {
-    return 0; // Position only
-  },
-  
-  copyState: function () {
-    return this.position;
-  },
-  
-  get position() { return this._position; },
-  set position(value) { this._position = value; },
   
 });

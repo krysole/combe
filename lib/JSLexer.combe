@@ -60,6 +60,13 @@ var JSLexer = module.exports = Class.new(TextParser, {}, {
     };
   },
   
+  
+  get position()      { return this.state.position;  },
+  set position(value) { this.state.position = value; },
+  
+  get state()         { return this._state;  },
+  set state(value)    { this._state = value; },
+  
   emptyState: function () {
     return {
       position: 0,
@@ -67,7 +74,6 @@ var JSLexer = module.exports = Class.new(TextParser, {}, {
       precededByNewline: false
     };
   },
-  
   copyState: function () {
     return {
       position: this.state.position,
@@ -75,6 +81,7 @@ var JSLexer = module.exports = Class.new(TextParser, {}, {
       precededByNewline: this.state.precededByNewline
     };
   },
+  
   
   get ReservedWords() {
     return String.ReservedWords;
