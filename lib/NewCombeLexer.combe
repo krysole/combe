@@ -53,8 +53,8 @@ var NewCombeLexer = module.exports = Class.new(TextParser, {}, {
       !(token.reserved = true)
       ( ?(['return', 'break', 'continue', 'throw']) &ws:nl ?(nl)
         !(token.precedesNewline = true)
-      )
-    )
+      )?
+    )?
     -> token
   },
   
@@ -81,7 +81,7 @@ var NewCombeLexer = module.exports = Class.new(TextParser, {}, {
     | '*' | '%' | '~' | '?' | ':'
     ):text
     createToken(text):t
-    ( ?(nl) !(t.newlinePrecedes = true) )
+    ( ?(nl) !(t.newlinePrecedes = true) )?
     -> t
   },
   

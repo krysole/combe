@@ -19,6 +19,8 @@
 
 var combe = require('combe');
 
+var NewCombeCompiler = require('combe/lib/NewCombeCompiler');
+
 setTimeout(function () {
   if (process.argv.length < 3) {
     console.error('Usage: combec sourceFile [destFile]');
@@ -28,5 +30,5 @@ setTimeout(function () {
   var sourceFilename = process.argv[2];
   var destFilename = process.argv.length >= 3 ? process.argv[3] : null;
   
-  combe.compile(sourceFilename, destFilename);
+  NewCombeCompiler.compile(sourceFilename, destFilename);
 }, 0);
