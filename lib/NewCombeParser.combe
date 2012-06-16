@@ -384,7 +384,7 @@ var NewCombeParser = module.exports = Class.new(BaseParser, {
   
   postfixExpression: rule {
     secondaryExpression:expr
-    ( ('++'|'--'):t ?(t.newlinePrecedes)
+    ( ('++'|'--'):t ?(!t.newlinePrecedes)
       -> Ast.PostfixOperator(t.text, expr)
     | -> expr
     )
@@ -551,7 +551,8 @@ var NewCombeParser = module.exports = Class.new(BaseParser, {
   repeatOperatorPattern: rule (p) {
     | '*' -> Ast.StarPattern(p)
     | '+' -> Ast.PlusPattern(p)
-    | '?' -> Ast.OptionalPattern(p)
+    | '?' ~( ~ws ('('|'{') )
+      -> Ast.OptionalPattern(p)
     | ~ws ':' ~ws variableIdentifier:name
       -> Ast.BindPattern(name, p)
   },
