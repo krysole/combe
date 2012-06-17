@@ -1,0 +1,695 @@
+/*
+  The Metaphor Programming Language
+  
+  Copyright 2011 Lorenz Pretterhofer
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+'use strict';
+
+var combe = require('combe');
+var BaseParser = combe.BaseParser;
+
+var NewCombeLexer = require('./NewCombeLexer');
+
+var Ast = require('./Ast');
+
+var Parser = module.exports = Class.new(BaseParser, {
+  
+  parseFile: function (source, filename) {
+    return this.parse(source, filename, 'file');
+  },
+  
+  parse: function (source, filename, rulename) {
+    var rest = Array.slice(arguments, 3);
+    if (filename == null) filename = '(unnamed)';
+    
+    var parser = this.new(source, filename);
+    var result = parser.match.apply(parser, [rulename].concat(rest));
+    if (!result) {
+      var t = parser.tokens.last;
+      var lc = (t != null ? source.lineColumnAt(t.position).join(':') : '-1');
+      var text = (t != null ? '[' + t.text + '] ' : '');
+      throw Error.new('Combe/Newlang Parser Failed: Furthest position was ' + text + filename + ':' + lc);
+    }
+    return result;
+  },
+  
+}, {
+  
+  initialize: function (source, filename) {
+    if (filename == null) filename = '(unnamed)';
+    
+    this.source = source;
+    this.filename = filename;
+    BaseParser.prototype.initialize.call(this, source);
+    
+    this.lexer = NewCombeLexer.new(source, filename);
+    this.tokens = [];
+  },
+  
+  
+  
+  // Syntactic Rules
+  
+  file: rule {
+    leadingNewlines
+    delimited[statement, statementTerminator]:stmts ';'?
+    eof
+    -> Ast.File(Ast.Block(stmts))
+  },
+  
+  statement: rule {
+    | emptyStatement
+    | ifStatement
+    | tryCatchStatement
+    | expression
+  },
+  
+  expression: rule {
+    | ifExpression
+    | varExpression
+    | returnExpression
+    | throwExpression
+    | operatorExpression
+  },
+  
+  emptyStatement: rule {
+    &';'
+    -> Ast.Null()
+  },
+  
+  ifStatement: rule { // Handle layout rules
+    block[ id('if') expression:condition ]:consiquent statementTerminator
+    !(Ast.If(condition, consiquent, null)):ast:tail
+    
+    (
+      block[ id('else') id('if') expression:condition ]:consiquent statementTerminator
+      !(tail.alternative = Ast.If(condition, consiquent, null))
+      !(tail = tail.alternative)
+    )*
+    
+    (
+      block[ id('else') ]:alternative statementTerminator
+      !(tail.alternative = alternative)
+    )?
+    
+    id('end')
+    -> ast
+  },
+  
+  ifExpression: rule {
+    id('if') expression:condition
+    id('then') expression:consiquent
+    ( id('else') expression:alternative )?
+    -> Ast.If(condition, consiquent, alternative)
+  },
+  
+  tryCatchStatement: rule {
+    block[ id('try') ]:tryBlock statementTerminator
+    block[ id('catch') variableIdentifier:name ]:catchBlock statementTerminator
+    id('end')
+    -> Ast.TryCatch(tryBlock, name, catchBlock)
+  },
+  
+  varExpression: rule {
+    id('var') variableIdentifier:name ( op('=') expression:rvalue )?
+    -> Ast.Var(name, rvalue)
+  },
+  
+  returnExpression: rule {
+    id('return') expression?:arg
+    -> Ast.Return(arg)
+  },
+  
+  throwExpression: rule {
+    id('throw') expression?:arg
+    -> Ast.Throw(arg)
+  },
+  
+  
+  block: rule (header) {
+    layoutBlock[
+      header,
+      delimited[statement, statementTerminator]:stmts ';'?
+    ]
+    -> Ast.Block(stmts)
+  },
+  
+  
+  operatorExpression: rule {
+    assignmentExpression
+  },
+  
+  assignmentExpression: rule {
+    | lvalueExpression:lvalue op('=') assignmentExpression:rvalue
+      -> {
+        if (lvalue.is('VariableLookup')) {
+          return Ast.VariableAssignment(lvalue.name, rvalue);
+        }
+        else if (lvalue.is('PropertyLookup')) {
+          return Ast.PropertyAssignment(lvalue.object, lvalue.name, rvalue);
+        }
+        else if (lvalue.is('PrototypePropertyAssignment')) {
+          return Ast.PropertyPrototypeAssignment(lvalue.object, lvalue.name, rvalue);
+        }
+        else assert(false);
+      }
+    | logicalOperator
+  },
+  
+  lvalueExpression: rule {
+    | lvalueSecondaryExpression
+    | lvaluePrimaryExpression
+  },
+  
+  // Todo: Either add support for a subscript lvalue operation, or provide
+  // some other way for tersely getting and setting properties.
+  
+  lvalueSecondaryExpression: rule {
+    primaryExpression:expr ( lvalueSecondaryExpressionFragment(expr):expr )+
+    -> expr
+  },
+  
+  lvalueSecondaryExpressionFragment: rule (expr) {
+    | op('.') propertyName:name
+      -> Ast.PropertyLookup(expr, name)
+    | op(':') propertyName:name
+      -> Ast.PrototypePropertyLookup(expr, name)
+    | '[' ignoringNewlines[ expression:name ] ']'
+      -> Ast.PropertyLookup(expr, name)
+  },
+  
+  lvaluePrimaryExpression: rule {
+    variableLookup
+  },
+  
+  
+  logicalOperator: rule {
+    wordedLogicalOr
+  },
+  
+  wordedLogicalOr: rule {
+    wordedLogicalXor:expr
+    ( id('or') wordedLogicalXor:rhs
+      !(expr = Ast.Or(expr, rhs))
+    )*
+    -> expr
+  },
+  wordedLogicalXor: rule {
+    wordedLogicalAnd:expr
+    ( id('xor') wordedLogicalAnd:rhs
+      !(expr = Ast.Xor(expr, rhs))
+    )*
+    -> expr
+  },
+  wordedLogicalAnd: rule {
+    wordedLogicalNot:expr
+    ( id('and') wordedLogicalNot:rhs
+      !(expr = Ast.And(expr, rhs))
+    )*
+    -> expr
+  },
+  wordedLogicalNot: rule {
+    | id('not') wordedLogicalNot:expr
+      -> Ast.Not(expr)
+    | symbolicLogicalOr
+  },
+  
+  symbolicLogicalOr: rule {
+    symbolicLogicalXor:expr
+    ( op('||') symbolicLogicalXor:rhs
+      !(expr = Ast.Or(expr, rhs))
+    )*
+    -> expr
+  },
+  symbolicLogicalXor: rule {
+    symbolicLogicalAnd:expr
+    ( op('^^') symbolicLogicalAnd:rhs
+      !(expr = Ast.Xor(expr, rhs))
+    )*
+    -> expr
+  },
+  symbolicLogicalAnd: rule {
+    symbolicLogicalNot:expr
+    ( op('&&') symbolicLogicalNot:rhs
+      !(expr = Ast.And(expr, rhs))
+    )*
+    -> expr
+  },
+  symbolicLogicalNot: rule {
+    | op('!') symbolicLogicalNot:expr
+      -> Ast.Not(expr)
+    | equalityOperator
+  },
+  
+  equalityOperator: rule {
+    // Todo: Allow Math style sequences of equality operators (i.e., 0 <= i < length) 
+    comparisonOperator:expr
+    ( (op('==') | op('!=') | op('<=') | op('<') | op('>=') | op('>') ):opname
+      comparisonOperator:rhs
+      -> Ast.Operator(opname, expr, rhs)
+    | -> expr
+    )
+  },
+  
+  comparisonOperator: rule {
+    associationOperator:expr
+    ( op('<>'):opname association:rhs
+      -> Ast.Operator(opname, expr, rhs)
+    | -> expr
+    )
+  },
+  
+  associationOperator: rule {
+    | association
+    | bitwiseOr
+  },
+  association: rule {
+    | propertyName:lhs op(':') bitwiseOr:rhs
+      -> Ast.Association(lhs, rhs)
+    | bitwiseOr:lhs op('=>') bitwiseOr:rhs
+      -> Ast.Association(lhs, rhs)
+  },
+  
+  bitwiseOr: rule {
+    leftAssocOperator[bitwiseXor, op('|')]
+  },
+  bitwiseXor: rule {
+    leftAssocOperator[bitwiseAnd, op('^')]
+  },
+  bitwiseAnd: rule {
+    leftAssocOperator[shiftOperator, op('&')]
+  },
+  
+  shiftOperator: rule {
+    leftAssocOperator[additionOperator, ( op('<<') | op('>>') | op('>>>') )]
+  },
+  additionOperator: rule {
+    leftAssocOperator[multiplicationOperator, ( op('+') | op('-') )]
+  },
+  multiplicationOperator: rule {
+    leftAssocOperator[exponentiationOperator, ( op('*') | op('/') | op('//') | op('%') )]
+  },
+  exponentiationOperator: rule {
+    rightAssocOperator[prefixOperatorExpression, op('**')]
+  },
+  
+  leftAssocOperator: rule (term, operator) {
+    term:expr
+    ( operator:opname term:rhs
+      !(expr = Ast.Operator(opname, expr, rhs))
+    )*
+    -> expr
+  },
+  rightAssocOperator: rule (term, operator) {
+    term:expr
+    ( operator:opname rightAssocOperator(term, operator):rhs
+      -> Ast.Operator(opname, expr, rhs)
+    | -> expr
+    )
+  },
+  
+  prefixOperatorExpression: rule {
+    | ( op('+') | op('-') | op('~') ):opname prefixOperatorExpression:expr
+      -> Ast.PrefixOperator(opname, expr)
+    | secondaryExpression
+  },
+  
+  
+  secondaryExpression: rule {
+    primaryExpression:expr ( secondaryExpressionFragment(expr):expr )*
+    -> expr
+  },
+  
+  secondaryExpressionFragment: rule (expr) {
+    | op('.') propertyName:name argumentsList:ad
+      -> Ast.MethodCall(expr, name, ad.this, ad.arguments)
+    | op('.') propertyName:name
+      -> Ast.PropertyLookup(expr, name)
+    | op(':') propertyName:name argumentsList:ad
+      -> Ast.PrototypeMethodCall(expr, name, ad.this, ad.arguments)
+    | op(':') propertyName:name
+      -> Ast.PrototypePropertyLookup(expr, name)
+    | argumentsList:ad
+      -> Ast.Call(expr, ad.this, ad.arguments)
+    | '[' ignoringNewlines[ expression:name ] ']'
+      -> Ast.PropertyLookup(expr, name)
+    // | subscript:args
+    //   -> Ast.Subscript(expr, args)
+  },
+  
+  
+  argumentsList: rule {
+    '('
+    ignoringNewlines[
+      ( expression:t ';' -> t )?:t
+      delimited[expansion[expression], ',']:args ','?
+      ')'
+    ]
+    -> { this: t, arguments: args }
+  },
+  
+  subscript: rule {
+    '['
+    ignoringNewlines[
+      delimited[expansion[expression], ',']:args ','?
+      ']'
+    ]
+    -> args
+  },
+  
+  expansion: rule (alternative) {
+    | op('..') expression:expr
+      -> Ast.ExpandArguments(expr)
+    | alternative
+  },
+  
+  
+  primaryExpression: rule {
+    | psuedoVariable
+    | variableLookup
+    | stringLiteral
+    | numberLiteral
+    | objectLiteral
+    | functionLiteral
+    | subexpression
+  },
+  
+  psuedoVariable: rule {
+    | id('this')      -> Ast.This()
+    
+    | id('null')      -> Ast.Null()
+    | id('undefined') -> Ast.Undefined()
+    | id('true')      -> Ast.True()
+    | id('false')     -> Ast.False()
+  },
+  
+  variableLookup: rule {
+    variableIdentifier:name
+    -> Ast.VariableLookup(name)
+  },
+  
+  stringLiteral: rule {
+    string:s
+    -> Ast.String(s)
+  },
+  
+  numberLiteral: rule {
+    number:n
+    -> Ast.Number(n)
+  },
+  
+  objectLiteral: rule {
+    '{'
+    ignoringNewlines[
+      ( expression:proto ';' )?
+      delimited[propertyDeclaration, ',']:decls ','?
+      '}'
+    ]
+    -> Ast.Object(proto, decls)
+  },
+  
+  functionLiteral: rule {
+    | optParameter:pd op('->') expression:body
+      -> Ast.Function(pd.this, pd.parameters, body)
+    | functionBlock[ id('function') ]:fb
+      -> Ast.Function(fb.this, fb.parameters,fb.body)
+  },
+  
+  functionBlock: rule (header) {
+    | header optParameterList:pd op('->') expression:body
+      -> { this: pd.this, parameters: pd.parameters, body: body }
+    | block[ header optParameterList:pd ]:body statementTerminator
+      id('end')
+      -> { this: pd.this, parameters: pd.parameters, body: body }
+  },
+  
+  
+  subexpression: rule {
+    '(' ignoringNewlines[ expression:expr ')' ]
+    -> expr
+  },
+  
+  
+  optParameterList: rule {
+    parameterList?:pd
+    -> (pd != null ? pd : { this: null, parameters: [] })
+  },
+  parameterList: rule {
+    '('
+    ignoringNewlines[
+      ( parameter:t ';' )
+      delimited[contractionParameter, ',']:params ','?
+      ')'
+    ]
+    -> { this: t, parameters: params }
+  },
+  
+  contractionParameter: rule {
+    | op('..') variableIdentifier:name
+      -> Ast.ContractionParameter(name)
+    | parameter
+  },
+  
+  parameter: rule {
+    | variableIdentifier:name -> Ast.Parameter(name)
+    | id('_') -> Ast.IgnoredParameter()
+  },
+  
+  
+  propertyDeclaration: rule {
+    | valuePropertyDeclaration
+    | getPropertyDeclaration
+    | setPropertyDeclaration
+    | methodPropertyDeclaration
+    | describePropertyDeclaration
+  },
+  
+  valuePropertyDeclaration: rule {
+    propertyName:name op(':') expression:value
+    -> Ast.ValuePropertyDeclaration(name, value)
+  },
+  
+  getPropertyDeclaration: rule {
+    functionBlock[ id('get') propertyName:name ]:fb
+    -> Ast.GetPropertyDeclaration(name, fb.this, fb.parameters, fb.body)
+  },
+  
+  setPropertyDeclaration: rule {
+    functionBlock[ id('set') propertyName:name ]:fb
+    -> Ast.SetPropertyDeclaration(name, fb.this, fb.parameters, fb.body)
+  },
+  
+  methodPropertyDeclaration: rule {
+    functionBlock[ id('method') propertyName:name ]:fb
+    -> Ast.MethodPropertyDeclaration(name, fb.this, fb.parameters, fb.body)
+  },
+  
+  describePropertyDeclaration: rule {
+    id('describe') propertyName:name op(':') expression:dict
+    -> Ast.DescribePropertyDeclaration(name, dict)
+  },
+  
+  
+  propertyName: rule {
+    | identifier:name -> Ast.String(name)
+    | stringLiteral
+  },
+  
+  
+  
+  // Layout Handling
+  
+  leadingNewlines: function () {
+    var column = this.t('newline').column;
+    if (column !== 0) {
+      this.fail();
+    }
+  },
+  
+  statementTerminator: function () {
+    if (this.state.ignoreNewlines) {
+      this.t(';');
+      return;
+    }
+    else {
+      this._choice(function () {
+        this.t(';');
+        this._optional(function () {
+          var column = this.t('newline');
+          if (column === this.state.column) {
+            return;
+          }
+          else {
+            this.fail();
+          }
+        });
+      }, function () {
+        var column = this.t('newline');
+        if (column === this.state.column) {
+          return;
+        }
+        else {
+          this.fail();
+        }
+      });
+    }
+  },
+  
+  layoutBlock: function (header, body) {
+    var oldState = this.copyState();
+    this.state.allowContinuationLines = false;
+    this.state.ignoreNewlines = false;
+    
+    header.call(this);
+    
+    var column = this.t('newline').column;
+    if (column <= this.state.column) {
+      this.fail();
+    }
+    this.state.column = column;
+    this.state.allowContinuationLines = true;
+    
+    body.call(this);
+    
+    var dedentColumn = this.t('newline').column;
+    if (!oldState.ignoreNewlines || dedentColumn === oldState.column) {
+      this.fail();
+    }
+    this.state.allowContinuationLines = oldState.allowContinuationLines;
+    this.state.ignoreNewlines = oldState.ignoreNewlines;
+    this.state.column = oldState.column;
+  },
+  
+  ignoringNewlines: function (parser) {
+    var oldIgnoreNewlines = this.state.ignoreNewlines;
+    this.state.ignoreNewlines = true;
+    var result = parser.call(this);
+    this.state.ignoreNewlines = oldIgnoreNewlines;
+    return result;
+  },
+  
+  
+  
+  // Basic Parsing Functionality
+  
+  t: function (typename) {
+    var token = this.next();
+    
+    while (token.type === 'newline') {
+      if (this.state.ignoreNewlines) {
+        token = this.next();
+        continue;
+      }
+      else if (this.state.allowContinuationLines && 
+               i.column > this.state.column) {
+        token = this.next();
+        continue;
+      }
+      else {
+        break; // Statement delimiter or indent/dedent
+      }
+    }
+    
+    if (token.type === typename) {
+      return token;
+    }
+    else {
+      this.fail();
+    }
+  },
+  
+  id: rule (expectedName) {
+    'identifier':name ?(name === expectedName) -> name
+  },
+  
+  op: rule (expectedOpname) {
+    operator:opname ?(opname === expectedOpname) -> opname
+  },
+  
+  tokenAt: function (position) {
+    var token;
+    
+    assert(position < this.tokens.length + 1);
+    if (position >= this.tokens.length) {
+      assert(this.tokens.isEmpty() || this.tokens.last.type !== 'eof');
+      
+      this.tokens.push(this.lexer.nextToken());
+      // Todo: I need to find the right place to put the layout rule handling
+    }
+    
+    return this.tokens[position];
+  },
+  
+  peekNext: function () {
+    return this.tokenAt(this.position);
+  },
+  
+  next: function () {
+    return this.tokenAt(this.position++);
+  },
+  
+  eof: rule {
+    'eof'
+  },
+  
+  stringPatternHandler: rule (string) {
+    t(string)
+  },
+  
+  lineColumnString: function (position) {
+    if (position == null) position = this.position;
+    
+    return this.source.lineColumnAt(position).join(':');
+  },
+  
+  positionString: function (position) {
+    if (position == null) position = this.position;
+    
+    return this.filename + ':' + this.source.lineColumnAt(position).join(':');
+  },
+  
+  get position()      { return this.state.position;  },
+  set position(value) { this.state.position = value; },
+  
+  get state()         { return this._state;  },
+  set state(value)    { this._state = value; },
+  
+  emptyState: function () {
+    return {
+      position:               0,
+      ignoreNewlines:      false,
+      allowContinuationLines: true,
+      column:                 0,
+    };
+  },
+  copyState: function () {
+    return {
+      position:               this.state.position,
+      ignoreNewlines:         this.state.ignoreNewlines,
+      allowContinuationLines: this.state.allowContinuationLines,
+      column:                 this.state.column,
+    };
+  },
+  
+  log: function (name) {
+    var messages = Array.slice(arguments, 1);
+    var lc = this.source.lineColumnAt(this.position);
+    console.log('Parser2::log() '
+      + this.positionString() + ' - '
+      + messages.join('; ')
+    );
+  },
+  
+});

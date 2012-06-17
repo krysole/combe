@@ -1,0 +1,278 @@
+/*
+  The Metaphor Programming Language
+  
+  Copyright 2011 Lorenz Pretterhofer
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+'use strict';
+
+var combe = require('combe');
+var TextParser = combe.TextParser;
+
+var Token = Class.new(Object, {}, {
+  
+  initialize: function (typename, value, position, length, text) {
+    this.typename = typename;
+    this.value = value;
+    this.position = position;
+    this.length = length;
+    this.text = text;
+  },
+  
+  toString: function () {
+    return '[[Token ' + this.typename + ' ' + this.value + ' ' + this.text.quote() + ']]';
+  },
+  
+});
+
+var Lexer2 = module.exports = Class.new(TextParser, {}, {
+  
+  initialize: function (source, filename) {
+    if (filename == null) filename = '(unnamed)';
+    
+    this.source = source;
+    this.filename = filename;
+    this.furthestPosition = 0;
+    TextParser.prototype.initialize.call(this, source);
+  },
+  
+  nextToken: rule {
+    !(this.furthestPosition = this.position, this.isNewline = false)
+    ws?
+    
+    !(this.tokenPosition = this.position)
+    ( eofToken
+    | newlineToken
+    | identifier
+    | operator
+    | number
+    | string
+    )
+  },
+  
+  reset: function (position) {
+    this.position = position;
+  },
+  
+  createToken: function (typename, value) {
+    var text = this.source.slice(this.tokenPosition, this.position);
+    return Token.new(
+      typename,           // Typename
+      value,              // Value
+      this.tokenPosition, // Position
+      text.length,        // Length
+      text                // text
+    );
+  },
+  
+  
+  
+  // Lexical Parsing Rules
+  
+  eofToken: rule {
+    eof
+    createToken('eof')
+  },
+  
+  
+  newlineToken: function () {
+    if (this.isNewline) {
+      // We've already skipped all the whitespace and ruled out the eof condition
+      var column = this.position - this.lineStart;
+      return Token.new(
+        'newline',        // Typename
+        column,           // Value
+        this.lineStart,   // Position
+        column,           // Length
+        '<ws>'            // Text
+      );
+    }
+    else {
+      this.fail();
+    }
+  },
+  
+  
+  identifier: rule {
+    initialIdChar idChar*
+    createToken('identifier'):t
+    !{
+      if (this.InvalidVariableIdentifiers.include(t.text)) {
+        t.invalidVariableIdentifier = true;
+      }
+    }
+    -> t
+  },
+  
+  InvalidVariableIdentifiers: [
+    'this', 'true', 'false', 'null', 'undefined', '_',
+    
+    'or', 'xor', 'and', 'not',
+    
+    'if', 'then', 'else', 
+    'try', 'catch', 
+    'var', 'return', 'throw',
+    'do', 'end'
+  ],
+  
+  initialIdChar: rule { char('a'..'z', 'A'..'Z', '_', '$') },
+  idChar:        rule { char('a'..'z', 'A'..'Z', '_', '$', '0'..'9') },
+  
+  
+  operator: rule {
+    ( '<<' | '>>>' | '>>' | '<>' | '<=' | '>=' | '<' | '>'
+    | '!=' | '==' | '!' | '='
+    | '||' | '|' | '^^' | '^' | '&&' | '&'
+    | '->' | '=>' | '<-' | '..' | '.' | ':'
+    | '++' | '--' | '+' | '-' 
+    | '**' | '*' | '//' | '/' | '%' | '~'
+    )
+    createToken('operator')
+  },
+  
+  
+  number: rule {
+    | decimalNumber
+    | hexNumber
+  },
+  
+  decimalNumber: rule {
+    digit+ ('.' digit*)? (('e'|'E') digit+)? ~idChar
+    createToken('number'):t
+    !(t.value = parseFloat(t.text))
+    -> t
+  },
+  
+  hexNumber: rule {
+    ('0x'|'0X') matchedInput[ hexDigit+ ]:text ~idChar
+    createToken('number', parseInt(text, 16))
+  },
+  
+  digit:    rule { char('0'..'9') },
+  hexDigit: rule { char('0'..'9', 'a'..'f', 'A'..'F') },
+  
+  
+  string: rule {
+    ( '\'' (~'\'' stringChar)*:cs '\''
+    | '\"' (~'\"' stringChar)*:cs '\"'
+    )
+    createToken('string', cs.join(''))
+  },
+  
+  stringChar: rule {
+    | '\\' stringEscapeSequence
+    | ~newline char
+  },
+  
+  stringEscapeSequence: rule {
+    | '\'' -> '\''
+    | '\"' -> '\"'
+    | '\\' -> '\\'
+    | '0'  -> '\x00' // ^@  Null Character
+    | 'a'  -> '\x07' // ^G  Alarm/Bell
+    | 'b'  -> '\x08' // ^H  Backspace
+    | 't'  -> '\x09' // ^I  Tab
+    | 'n'  -> '\x0a' // ^J  Line Feed
+    | 'v'  -> '\x0b' // ^K  Vertical Tab
+    | 'f'  -> '\x0c' // ^L  Form Feed
+    | 'r'  -> '\x0d' // ^M  Carriage Return
+    | 'e'  -> '\x1b' // ^[  Escape
+    | 'x' repeat[hexDigit, %2]:hs -> String.fromCodepoint(hs.join(''))
+    | 'u' repeat[hexDigit, %4]:hs -> String.fromCodepoint(hs.join(''))
+    | 'u' '(' hexDigit*:hs ')' -> String.fromCodepoint(hs.join(''))
+    | error('Unsupported escape sequence')
+  },
+  
+  
+  
+  // Whitespace Handling
+  
+  ws: rule {
+    ( spaces | comment | newline )*
+  },
+  
+  comment: rule {
+    | delimitedComment
+    | lineComment
+  },
+  
+  delimitedComment: rule {
+    '{-' &( space | newline | eof | '-}' | delimitedComment )
+    ( ~'-}' ( delimitedComment | char ) )*
+    ( '-}' | eof )
+  },
+  
+  lineComment: rule {
+    '--' ( ~newline char )* &( newline | eof )
+  },
+  
+  newline:  rule {
+    ( '\r\n' | char('\r\n') )
+    !(this.lineStart = this.position, this.isNewline = true)
+  },
+  
+  spaces: rule { ' '+ },
+  
+  
+  
+  // Basic Parsing Functionality
+  
+  next: function () {
+    var c = TextParser.prototype.next.call(this);
+    this.furthestPosition = Math.max(
+      this.futhestPosition,
+      this.position
+    );
+    return c;
+  },
+  
+  nextIf: function (predicate) {
+    var c = TextParser.prototype.nextIf.call(this, predicate);
+    this.furthestPosition = Math.max(
+      this.furthestPosition,
+      this.position
+    );
+    return c;
+  },
+  
+  stringPatternHandler: rule (string) {
+    eachChar(string)
+  },
+  
+  tokenOperatorHandler: rule (parser) {
+    ws? parser
+  },
+  
+  lineColumnString: function (position) {
+    if (position == null) position = this.position;
+    
+    return this.source.lineColumnAt(position).join(':');
+  },
+  
+  positionString: function (position) {
+    if (position == null) position = this.position;
+    
+    return this.filename + ':' + this.source.lineColumnAt(position).join(':');
+  },
+  
+  log: function (name) {
+    var messages = Array.slice(arguments, 1);
+    var lc = this.source.lineColumnAt(this.position);
+    console.log('Lexer2::log() ' 
+      + this.positionString() + ' - ' 
+      + messages.join('; ')
+    );
+  },
+  
+});
