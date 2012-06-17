@@ -792,10 +792,6 @@ var Parser = module.exports = Class.new(TextParser, {
     &increasedIndentation
   },
   
-  ignoredLayout: rule (__forceNoMemoization__) {
-    ?(this.state.blocks.last.ignoreLayout) newline
-  },
-  
   currentIndentation: rule (__forceNoMemoization__) {
     !(this.state.blocks.last):b
     indentation:count ?(b.ignoreLayout || count === b.columnCount)

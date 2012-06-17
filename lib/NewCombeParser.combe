@@ -236,7 +236,7 @@ var NewCombeParser = module.exports = Class.new(BaseParser, {
   breakStatement: rule {
     id('break'):t
     ( ?(t.precedesNewline) ';'
-    | 'identifier':name ';'
+    | 'identifier'?:name ';'
     )
     -> Ast.BreakStatement(name)
   },
@@ -244,7 +244,7 @@ var NewCombeParser = module.exports = Class.new(BaseParser, {
   continueStatement: rule {
     id('continue'):t
     ( ?(t.precedesNewline) ';'
-    | 'identifier':name ';'
+    | 'identifier'?:name ';'
     )
     -> Ast.ContinueStatement(name)
   },
