@@ -22,8 +22,8 @@ var TextParser = combe.TextParser;
 
 var Token = Class.new(Object, {}, {
   
-  initialize: function (typename, value, position, length, text) {
-    this.typename = typename;
+  initialize: function (type, value, position, length, text) {
+    this.type = type;
     this.value = value;
     this.position = position;
     this.length = length;
@@ -31,12 +31,35 @@ var Token = Class.new(Object, {}, {
   },
   
   toString: function () {
-    return '[[Token ' + this.typename + ' ' + this.value + ' ' + this.text.quote() + ']]';
+    return '[[Token ' + this.type + ' ' + this.value + ' ' + this.text.quote() + ']]';
   },
   
 });
 
-var Lexer2 = module.exports = Class.new(TextParser, {}, {
+var Lexer2 = module.exports = Class.new(TextParser, {
+  
+  parseAllTokens: function (source, filename) {
+    var lexer = this.new(source, filename);
+    var tokens = [];
+    
+    try {
+      while (tokens.isEmpty() || tokens.last.type !== 'eof') {
+        tokens.push(lexer.nextToken());
+      }
+    }
+    catch (e) {
+      if (e == combe.BacktrackingException) {
+        throw Error.new('Lexer failed at ' + lexer.positionString());
+      }
+      else {
+        throw e;
+      }
+    }
+    
+    return tokens;
+  },
+  
+}, {
   
   initialize: function (source, filename) {
     if (filename == null) filename = '(unnamed)';
@@ -48,7 +71,7 @@ var Lexer2 = module.exports = Class.new(TextParser, {}, {
   },
   
   nextToken: rule {
-    !(this.furthestPosition = this.position, this.isNewline = false)
+    !(this.furthestPosition = this.position, this.isNewline = false, this.newlinePosition = null)
     ws?
     
     !(this.tokenPosition = this.position)
@@ -56,6 +79,7 @@ var Lexer2 = module.exports = Class.new(TextParser, {}, {
     | newlineToken
     | identifier
     | operator
+    | punctuation
     | number
     | string
     )
@@ -65,10 +89,10 @@ var Lexer2 = module.exports = Class.new(TextParser, {}, {
     this.position = position;
   },
   
-  createToken: function (typename, value) {
+  createToken: function (type, value) {
     var text = this.source.slice(this.tokenPosition, this.position);
     return Token.new(
-      typename,           // Typename
+      type,               // Type
       value,              // Value
       this.tokenPosition, // Position
       text.length,        // Length
@@ -91,12 +115,16 @@ var Lexer2 = module.exports = Class.new(TextParser, {}, {
       // We've already skipped all the whitespace and ruled out the eof condition
       var column = this.position - this.lineStart;
       return Token.new(
-        'newline',        // Typename
-        column,           // Value
-        this.lineStart,   // Position
-        column,           // Length
-        '<ws>'            // Text
+        'newline',            // Type
+        column,               // Value
+        this.newlinePosition, // Position
+        this.position,        // Length
+        '<newline>'           // Text
       );
+      // Todo: Have the position and length report the newline position and
+      // the length should run to the beginning of the next token.
+      // This way we can use the position to understand which line was terminated
+      // and respectively, how many lines were ignored.
     }
     else {
       this.fail();
@@ -139,6 +167,14 @@ var Lexer2 = module.exports = Class.new(TextParser, {}, {
     | '**' | '*' | '//' | '/' | '%' | '~'
     )
     createToken('operator')
+  },
+  
+  
+  punctuation: rule {
+    ( '(' | ')' | '[' | ']' | '{' | '}'
+    | ',' | ';'
+    ):text
+    createToken(text)
   },
   
   
@@ -208,7 +244,7 @@ var Lexer2 = module.exports = Class.new(TextParser, {}, {
   },
   
   delimitedComment: rule {
-    '{-' &( space | newline | eof | '-}' | delimitedComment )
+    '{-' &( spaces | newline | eof | '-}' | delimitedComment )
     ( ~'-}' ( delimitedComment | char ) )*
     ( '-}' | eof )
   },
@@ -218,8 +254,10 @@ var Lexer2 = module.exports = Class.new(TextParser, {}, {
   },
   
   newline:  rule {
+    !(this.position):startPos
     ( '\r\n' | char('\r\n') )
     !(this.lineStart = this.position, this.isNewline = true)
+    !{ if (this.newlinePosition == null) this.newlinePosition = startPos; }
   },
   
   spaces: rule { ' '+ },
@@ -268,9 +306,8 @@ var Lexer2 = module.exports = Class.new(TextParser, {}, {
   
   log: function (name) {
     var messages = Array.slice(arguments, 1);
-    var lc = this.source.lineColumnAt(this.position);
-    console.log('Lexer2::log() ' 
-      + this.positionString() + ' - ' 
+    console.log('Lexer2::log() '
+      + this.positionString() + ':' + name + ' - '
       + messages.join('; ')
     );
   },

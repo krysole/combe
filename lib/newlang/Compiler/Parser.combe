@@ -456,7 +456,7 @@ var Parser = module.exports = Class.new(TextParser, {
   
   contractionParameter: rule {
     | op('..') variableIdentifier:name
-      -> Ast.ContractParameters(name)
+      -> Ast.ContractionParameter(name)
     | parameter
   },
   

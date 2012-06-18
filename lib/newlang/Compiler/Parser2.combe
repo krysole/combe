@@ -20,7 +20,7 @@
 var combe = require('combe');
 var BaseParser = combe.BaseParser;
 
-var NewCombeLexer = require('./NewCombeLexer');
+var Lexer = require('./Lexer2');
 
 var Ast = require('./Ast');
 
@@ -54,7 +54,7 @@ var Parser = module.exports = Class.new(BaseParser, {
     this.filename = filename;
     BaseParser.prototype.initialize.call(this, source);
     
-    this.lexer = NewCombeLexer.new(source, filename);
+    this.lexer = Lexer.new(source, filename);
     this.tokens = [];
   },
   
@@ -90,17 +90,17 @@ var Parser = module.exports = Class.new(BaseParser, {
   },
   
   ifStatement: rule { // Handle layout rules
-    block[ id('if') expression:condition ]:consiquent statementTerminator
+    block[ id('if') expression:condition ]:consiquent
     !(Ast.If(condition, consiquent, null)):ast:tail
     
     (
-      block[ id('else') id('if') expression:condition ]:consiquent statementTerminator
+      block[ id('else') id('if') expression:condition ]:consiquent
       !(tail.alternative = Ast.If(condition, consiquent, null))
       !(tail = tail.alternative)
     )*
     
     (
-      block[ id('else') ]:alternative statementTerminator
+      block[ id('else') ]:alternative
       !(tail.alternative = alternative)
     )?
     
@@ -116,8 +116,8 @@ var Parser = module.exports = Class.new(BaseParser, {
   },
   
   tryCatchStatement: rule {
-    block[ id('try') ]:tryBlock statementTerminator
-    block[ id('catch') variableIdentifier:name ]:catchBlock statementTerminator
+    block[ id('try') ]:tryBlock
+    block[ id('catch') variableIdentifier:name ]:catchBlock
     id('end')
     -> Ast.TryCatch(tryBlock, name, catchBlock)
   },
@@ -143,7 +143,7 @@ var Parser = module.exports = Class.new(BaseParser, {
       header,
       delimited[statement, statementTerminator]:stmts ';'?
     ]
-    -> Ast.Block(stmts)
+    -> Ast.Block(stmts != null ? stmts : [])
   },
   
   
@@ -353,11 +353,11 @@ var Parser = module.exports = Class.new(BaseParser, {
   argumentsList: rule {
     '('
     ignoringNewlines[
-      ( expression:t ';' -> t )?:t
+      ( expression:expr ';' -> expr )?:_this
       delimited[expansion[expression], ',']:args ','?
       ')'
     ]
-    -> { this: t, arguments: args }
+    -> { this: _this, arguments: args }
   },
   
   subscript: rule {
@@ -401,19 +401,19 @@ var Parser = module.exports = Class.new(BaseParser, {
   },
   
   stringLiteral: rule {
-    string:s
-    -> Ast.String(s)
+    'string':s
+    -> Ast.String(s.value)
   },
   
   numberLiteral: rule {
-    number:n
-    -> Ast.Number(n)
+    'number':n
+    -> Ast.Number(n.value)
   },
   
   objectLiteral: rule {
     '{'
     ignoringNewlines[
-      ( expression:proto ';' )?
+      ( expression:expr ';' -> expr )?:proto
       delimited[propertyDeclaration, ',']:decls ','?
       '}'
     ]
@@ -421,7 +421,7 @@ var Parser = module.exports = Class.new(BaseParser, {
   },
   
   functionLiteral: rule {
-    | optParameter:pd op('->') expression:body
+    | optParameterList:pd op('->') expression:body
       -> Ast.Function(pd.this, pd.parameters, body)
     | functionBlock[ id('function') ]:fb
       -> Ast.Function(fb.this, fb.parameters,fb.body)
@@ -430,7 +430,7 @@ var Parser = module.exports = Class.new(BaseParser, {
   functionBlock: rule (header) {
     | header optParameterList:pd op('->') expression:body
       -> { this: pd.this, parameters: pd.parameters, body: body }
-    | block[ header optParameterList:pd ]:body statementTerminator
+    | block[ header optParameterList:pd ]:body
       id('end')
       -> { this: pd.this, parameters: pd.parameters, body: body }
   },
@@ -449,11 +449,11 @@ var Parser = module.exports = Class.new(BaseParser, {
   parameterList: rule {
     '('
     ignoringNewlines[
-      ( parameter:t ';' )
+      ( parameter:p ';' -> p )?:_this
       delimited[contractionParameter, ',']:params ','?
       ')'
     ]
-    -> { this: t, parameters: params }
+    -> { this: _this, parameters: params }
   },
   
   contractionParameter: rule {
@@ -503,7 +503,7 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   
   propertyName: rule {
-    | identifier:name -> Ast.String(name)
+    | 'identifier':name -> Ast.String(name.text)
     | stringLiteral
   },
   
@@ -512,7 +512,7 @@ var Parser = module.exports = Class.new(BaseParser, {
   // Layout Handling
   
   leadingNewlines: function () {
-    var column = this.t('newline').column;
+    var column = this.t('newline').value;
     if (column !== 0) {
       this.fail();
     }
@@ -527,7 +527,7 @@ var Parser = module.exports = Class.new(BaseParser, {
       this._choice(function () {
         this.t(';');
         this._optional(function () {
-          var column = this.t('newline');
+          var column = this.t('newline').value;
           if (column === this.state.column) {
             return;
           }
@@ -536,7 +536,7 @@ var Parser = module.exports = Class.new(BaseParser, {
           }
         });
       }, function () {
-        var column = this.t('newline');
+        var column = this.t('newline').value;
         if (column === this.state.column) {
           return;
         }
@@ -549,27 +549,57 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   layoutBlock: function (header, body) {
     var oldState = this.copyState();
+    var headerColumn = oldState.column;
     this.state.allowContinuationLines = false;
     this.state.ignoreNewlines = false;
+    if (oldState.ignoreNewlines) {
+      var headerColumn = this._optional(function () {
+        return this.t('newline').value;
+      });
+    }
     
     header.call(this);
     
-    var column = this.t('newline').column;
-    if (column <= this.state.column) {
+    var bodyColumn = this.t('newline').value;
+    if (headerColumn != null && bodyColumn < headerColumn) {
       this.fail();
     }
-    this.state.column = column;
-    this.state.allowContinuationLines = true;
-    
-    body.call(this);
-    
-    var dedentColumn = this.t('newline').column;
-    if (!oldState.ignoreNewlines || dedentColumn === oldState.column) {
-      this.fail();
+    else if (headerColumn != null && bodyColumn == headerColumn) {
+      // No body
+      
+      this.state.allowContinuationLines = oldState.allowContinuationLines;
+      this.state.ignoreNewlines = oldState.ignoreNewlines;
+      this.state.column = oldState.column;
     }
-    this.state.allowContinuationLines = oldState.allowContinuationLines;
-    this.state.ignoreNewlines = oldState.ignoreNewlines;
-    this.state.column = oldState.column;
+    else {
+      this.state.column = bodyColumn;
+      this.state.allowContinuationLines = true;
+    
+      this._choice(function () {
+        body.call(this);
+    
+        var dedentColumn = this.t('newline').value;
+        if (headerColumn != null && dedentColumn !== headerColumn ||
+            oldState.ignoreNewlines && dedentColumn >= bodyColumn) {
+          this.fail();
+        }
+        
+        this.state.allowContinuationLines = oldState.allowContinuationLines;
+        this.state.ignoreNewlines = oldState.ignoreNewlines;
+        this.state.column = oldState.column;
+      }, function () {
+        // No body
+        
+        if (headerColumn == null) { // We don't need to dedent to any particular level
+          this.state.allowContinuationLines = oldState.allowContinuationLines;
+          this.state.ignoreNewlines = oldState.ignoreNewlines;
+          this.state.column = oldState.column;
+        }
+        else {
+          this.fail();
+        }
+      });
+    }
   },
   
   ignoringNewlines: function (parser) {
@@ -593,7 +623,7 @@ var Parser = module.exports = Class.new(BaseParser, {
         continue;
       }
       else if (this.state.allowContinuationLines && 
-               i.column > this.state.column) {
+               token.value > this.state.column) {
         token = this.next();
         continue;
       }
@@ -611,11 +641,15 @@ var Parser = module.exports = Class.new(BaseParser, {
   },
   
   id: rule (expectedName) {
-    'identifier':name ?(name === expectedName) -> name
+    'identifier':name ?(name.text === expectedName) -> name.text
+  },
+  
+  variableIdentifier: rule {
+    'identifier':name ?(!name.invalidVariableIdentifier) -> name.text
   },
   
   op: rule (expectedOpname) {
-    operator:opname ?(opname === expectedOpname) -> opname
+    'operator':opname ?(opname.text === expectedOpname) -> opname.text
   },
   
   tokenAt: function (position) {
@@ -651,13 +685,17 @@ var Parser = module.exports = Class.new(BaseParser, {
   lineColumnString: function (position) {
     if (position == null) position = this.position;
     
-    return this.source.lineColumnAt(position).join(':');
+    var token = this.tokenAt(position);
+    
+    return this.source.lineColumnAt(token.position).join(':');
   },
   
   positionString: function (position) {
     if (position == null) position = this.position;
     
-    return this.filename + ':' + this.source.lineColumnAt(position).join(':');
+    var token = this.tokenAt(position);
+    
+    return this.filename + ':' + this.source.lineColumnAt(token.position).join(':');
   },
   
   get position()      { return this.state.position;  },
@@ -669,7 +707,7 @@ var Parser = module.exports = Class.new(BaseParser, {
   emptyState: function () {
     return {
       position:               0,
-      ignoreNewlines:      false,
+      ignoreNewlines:         false,
       allowContinuationLines: true,
       column:                 0,
     };
@@ -685,9 +723,8 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   log: function (name) {
     var messages = Array.slice(arguments, 1);
-    var lc = this.source.lineColumnAt(this.position);
     console.log('Parser2::log() '
-      + this.positionString() + ' - '
+      + this.positionString() + ':' + name + ' - '
       + messages.join('; ')
     );
   },
