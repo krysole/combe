@@ -18,46 +18,53 @@
 'use strict';
 
 var combe = require('combe');
-var TextParser = combe.TextParser;
+var BaseParser = combe.BaseParser;
+
+var Lexer = require('./Lexer');
 
 var Ast = require('./Ast');
 
-var Parser = module.exports = Class.new(TextParser, {
+var Parser = module.exports = Class.new(BaseParser, {
   
-  parseFile: function (source, filename) {
-    return this.parse(source, filename, 'file');
+  parseFile: function (source, filename, tokens) {
+    return this.parse(source, filename, tokens, 'file');
   },
   
-  parse: function (source, filename, rulename) {
-    var rest = Array.slice(arguments, 3);
+  parse: function (source, filename, tokens, rulename) {
+    var rest = Array.slice(arguments, 4);
     if (filename == null) filename = '(unnamed)';
     
-    var parser = this.new(source, filename);
+    var parser = this.new(source, filename, tokens);
     var result = parser.match.apply(parser, [rulename].concat(rest));
     if (!result) {
-      var lc = source.lineColumnAt(parser.furthestPosition);
-      throw Error.new('Combe/Newlang Parser Failed: Furthest position was ' + filename + ':' + lc[0] + ':' + lc[1]);
+      var t = parser.tokens.last;
+      var lc = (t != null ? source.lineColumnAt(t.position).join(':') : '-1');
+      var text = (t != null ? '[' + t.text + '] ' : '');
+      throw Error.new('Combe/Newlang Parser Failed: Furthest position was ' + text + filename + ':' + lc);
     }
     return result;
   },
   
 }, {
   
-  initialize: function (source, filename) {
+  initialize: function (source, filename, tokens) {
     if (filename == null) filename = '(unnamed)';
     
     this.source = source;
     this.filename = filename;
-    this.furthestPosition = 0;
-    TextParser.prototype.initialize.call(this, source);
+    BaseParser.prototype.initialize.call(this, source);
+    
+    this.lexer = Lexer.new(source, filename);
+    this.tokens = (tokens != null ? tokens : []);
   },
+  
   
   
   // Syntactic Rules
   
   file: rule {
-    blankline*
-    delimited[statement, statementTerminator]:stmts statementTerminator?
+    leadingNewlines
+    delimited[statement, statementTerminator]:stmts ';'?
     eof
     -> Ast.File(Ast.Block(stmts))
   },
@@ -78,35 +85,27 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   emptyStatement: rule {
-    &( ( spaces | comment )* ';' )
+    &';'
+    -> Ast.Null()
   },
   
-  ifStatement: rule {
-    specialBlock[
-      id('if') expression
-    ]:sb
-    !(Ast.If(sb.header, sb.body, null)):ast !(ast):tail
+  ifStatement: rule { // Handle layout rules
+    block[ id('if') expression:condition ]:consiquent
+    !(Ast.If(condition, consiquent, null)):ast:tail
+    
     (
-      specialBlock[
-        id('else') id('if') expression
-      ]:sb
-      !(tail.alternative = Ast.If(sb.header, sb.body, null)) !(tail.alternative):tail
+      block[ id('else') id('if') expression:condition ]:consiquent
+      !(tail.alternative = Ast.If(condition, consiquent, null))
+      !(tail = tail.alternative)
     )*
-    ( specialBlock[
-        id('else')
-      ]:sb
-      !(tail.alternative = sb.body)
-    | !(tail.alternative = Ast.Noop())
+    
+    (
+      block[ id('else') ]:alternative
+      !(tail.alternative = alternative)
     )?
+    
     id('end')
     -> ast
-  },
-  
-  tryCatchStatement: rule {
-    specialBlock[ id('try') ]:tryBlock
-    specialBlock[ id('catch') variableIdentifier:name ]:catchBlock
-    id('end')
-    -> Ast.TryCatch(tryBlock.body, name, catchBlock.body)
   },
   
   ifExpression: rule {
@@ -114,6 +113,13 @@ var Parser = module.exports = Class.new(TextParser, {
     id('then') expression:consiquent
     ( id('else') expression:alternative )?
     -> Ast.If(condition, consiquent, alternative)
+  },
+  
+  tryCatchStatement: rule {
+    block[ id('try') ]:tryBlock
+    block[ id('catch') variableIdentifier:name ]:catchBlock
+    id('end')
+    -> Ast.TryCatch(tryBlock, name, catchBlock)
   },
   
   varExpression: rule {
@@ -132,15 +138,12 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   
-  specialBlock: rule (header) {
-    blockHeader(header):h
-    
-    ( &increasedIndentation withIncreasedIndentation[
-        delimited[statement, statementTerminator]:stmts statementTerminator?
-      ]
-      -> { header: h, body: Ast.Block(stmts) }
-    | -> { header: h, body: Ast.Noop() }
-    )
+  block: rule (header) {
+    layoutBlock[
+      header,
+      delimited[statement, statementTerminator]:stmts ';'?
+    ]
+    -> Ast.Block(stmts != null ? stmts : [])
   },
   
   
@@ -158,13 +161,12 @@ var Parser = module.exports = Class.new(TextParser, {
           return Ast.PropertyAssignment(lvalue.object, lvalue.name, rvalue);
         }
         else if (lvalue.is('PrototypePropertyAssignment')) {
-          return Ast.PrototypePropertyAssignment(lvalue.object, lvalue.name, rvalue);
+          return Ast.PropertyPrototypeAssignment(lvalue.object, lvalue.name, rvalue);
         }
         else assert(false);
       }
     | logicalOperator
   },
-  
   
   lvalueExpression: rule {
     | lvalueSecondaryExpression
@@ -174,22 +176,22 @@ var Parser = module.exports = Class.new(TextParser, {
   // Todo: Either add support for a subscript lvalue operation, or provide
   // some other way for tersely getting and setting properties.
   
-  lvaluePrimaryExpression: rule {
-    variableLookup
-  },
-  
   lvalueSecondaryExpression: rule {
     primaryExpression:expr ( lvalueSecondaryExpressionFragment(expr):expr )+
     -> expr
   },
   
   lvalueSecondaryExpressionFragment: rule (expr) {
-    | op('.') propertyName:pname
-      -> Ast.PropertyLookup(expr, pname)
-    | op(':') propertyName:pname
-      -> Ast.PrototypePropertyLookup(expr, pname)
-    | #'[' ignoringIndentation[ expression:pname ] #']'
-      -> Ast.PropertyLookup(expr, pname)
+    | op('.') propertyName:name
+      -> Ast.PropertyLookup(expr, name)
+    | op(':') propertyName:name
+      -> Ast.PrototypePropertyLookup(expr, name)
+    | '[' ignoringNewlines[ expression:name ] ']'
+      -> Ast.PropertyLookup(expr, name)
+  },
+  
+  lvaluePrimaryExpression: rule {
+    variableLookup
   },
   
   
@@ -331,38 +333,38 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   secondaryExpressionFragment: rule (expr) {
-    | op('.') propertyName:pname argumentsList:ad
-      -> Ast.MethodCall(expr, pname, ad.this, ad.arguments)
-    | op('.') propertyName:pname
-      -> Ast.PropertyLookup(expr, pname)
-    | op(':') propertyName:pname argumentsList:ad
-      -> Ast.PrototypeMethodCall(expr, pname, ad.this, ad.arguments)
-    | op(':') propertyName:pname
-      -> Ast.PrototypePropertyLookup(expr, pname)
+    | op('.') propertyName:name argumentsList:ad
+      -> Ast.MethodCall(expr, name, ad.this, ad.arguments)
+    | op('.') propertyName:name
+      -> Ast.PropertyLookup(expr, name)
+    | op(':') propertyName:name argumentsList:ad
+      -> Ast.PrototypeMethodCall(expr, name, ad.this, ad.arguments)
+    | op(':') propertyName:name
+      -> Ast.PrototypePropertyLookup(expr, name)
     | argumentsList:ad
       -> Ast.Call(expr, ad.this, ad.arguments)
-    | #'[' ignoringIndentation[ expression:pname ] #']'
-      -> Ast.PropertyLookup(expr, pname)
+    | '[' ignoringNewlines[ expression:name ] ']'
+      -> Ast.PropertyLookup(expr, name)
     // | subscript:args
     //   -> Ast.Subscript(expr, args)
   },
   
   
   argumentsList: rule {
-    #'('
-    ignoringIndentation[
-      ( expression:t #';' -> t )?:t
-      delimited[expansion[expression], #',']:args #','?
-      #')'
+    '('
+    ignoringNewlines[
+      ( expression:expr ';' -> expr )?:_this
+      delimited[expansion[expression], ',']:args ','?
+      ')'
     ]
-    -> { this: t, arguments: args }
+    -> { this: _this, arguments: args }
   },
   
   subscript: rule {
-    #'['
-    ignoringIndentation[
-      delimited[expansion[expression], #',']:args #','?
-      #']'
+    '['
+    ignoringNewlines[
+      delimited[expansion[expression], ',']:args ','?
+      ']'
     ]
     -> args
   },
@@ -399,59 +401,59 @@ var Parser = module.exports = Class.new(TextParser, {
   },
   
   stringLiteral: rule {
-    string:s
-    -> Ast.String(s)
+    'string':s
+    -> Ast.String(s.value)
   },
   
   numberLiteral: rule {
-    number:n
-    -> Ast.Number(n)
+    'number':n
+    -> Ast.Number(n.value)
   },
   
   objectLiteral: rule {
-    #'{'
-    ignoringIndentation[
-      ( expression:proto #';' -> proto )?:proto
-      delimited[propertyDeclaration, #',']:pdecls #','? 
-      #'}'
+    '{'
+    ignoringNewlines[
+      ( expression:expr ';' -> expr )?:proto
+      delimited[propertyDeclaration, ',']:decls ','?
+      '}'
     ]
-    -> Ast.Object(proto, pdecls)
+    -> Ast.Object(proto, decls)
   },
   
   functionLiteral: rule {
     | optParameterList:pd op('->') expression:body
       -> Ast.Function(pd.this, pd.parameters, body)
     | functionBlock[ id('function') ]:fb
-      -> Ast.Function(fb.this, fb.parameters, fb.body)
+      -> Ast.Function(fb.this, fb.parameters,fb.body)
   },
   
   functionBlock: rule (header) {
     | header optParameterList:pd op('->') expression:body
-      -> { this: pd.this, parameters: pd.parameters, body: sb.body }
-    | specialBlock[ header optParameterList:pd ]:sb
+      -> { this: pd.this, parameters: pd.parameters, body: body }
+    | block[ header optParameterList:pd ]:body
       id('end')
-      -> { this: pd.this, parameters: pd.parameters, body: sb.body }
+      -> { this: pd.this, parameters: pd.parameters, body: body }
   },
-    
+  
   
   subexpression: rule {
-    #'(' ignoringIndentation[ expression:expr #')' ]
+    '(' ignoringNewlines[ expression:expr ')' ]
     -> expr
   },
   
   
   optParameterList: rule {
-    parameterList:pd
+    parameterList?:pd
     -> (pd != null ? pd : { this: null, parameters: [] })
   },
   parameterList: rule {
-    #'('
-    ignoringIndentation[
-      ( parameter:t #';' -> t )?:t
-      delimited[contractionParameter, #',']:params #','?
-      #')'
+    '('
+    ignoringNewlines[
+      ( parameter:p ';' -> p )?:_this
+      delimited[contractionParameter, ',']:params ','?
+      ')'
     ]
-    -> { this: t, parameters: params }
+    -> { this: _this, parameters: params }
   },
   
   contractionParameter: rule {
@@ -501,330 +503,230 @@ var Parser = module.exports = Class.new(TextParser, {
   
   
   propertyName: rule {
-    | identifier:name -> Ast.String(name)
+    | 'identifier':name -> Ast.String(name.text)
     | stringLiteral
   },
   
   
-  // Token rules
-  
-  InvalidVariableIdentifiers: [
-    'this', 'true', 'false', 'null', 'undefined', '_',
-    
-    'or', 'and', 'xor', 'not',
-    
-    'if', 'then', 'else',
-    'try', 'catch',
-    'var', 'return', 'throw',
-    'do', 'end'
-  ],
-  
-  variableIdentifier: rule {
-    identifier:name ?(!this.InvalidVariableIdentifiers.include(name)) -> name
-  },
-  
-  number: rule {
-    | decimalNumber
-    | hexNumber
-  },
-  
-  decimalNumber: rule {
-    ws?
-    matchedInput[ digit+ ('.' digit*)? (('e'|'E') digit+)? ]:text ~idChar
-    -> parseFloat(text)
-  },
-  
-  hexNumber: rule {
-    ws?
-    ('0x'|'0X') matchedInput[ hexDigit+ ]:text ~idChar
-    -> parseFloat(text)
-  },
-  
-  string: rule {
-    ws?
-    ( '\'' (~'\'' stringChar)*:cs '\''
-    | '\"' (~'\"' stringChar)*:cs '\"'
-    ) -> cs.join('')
-  },
-  
-  stringChar: rule (delimiter) {
-    | '\\' stringEscapeSequence
-    | ~newline char
-  },
-  
-  stringEscapeSequence: rule {
-    | '\'' -> '\''
-    | '\"' -> '\"'
-    | '\\' -> '\\'
-    | '0'  -> '\x00' // ^@  Null Character
-    | 'a'  -> '\x07' // ^G  Alarm/Bell
-    | 'b'  -> '\x08' // ^H  Backspace
-    | 't'  -> '\x09' // ^I  Tab
-    | 'n'  -> '\x0a' // ^J  Line Feed
-    | 'v'  -> '\x0b' // ^K  Vertical Tab
-    | 'f'  -> '\x0c' // ^L  Form Feed
-    | 'r'  -> '\x0d' // ^M  Carriage Return
-    | 'e'  -> '\x1b' // ^[  Escape
-    | 'x' repeat[hexDigit, %2]:hs -> String.fromCodepoint(hs.join(''))
-    | 'u' repeat[hexDigit, %4]:hs -> String.fromCodepoint(hs.join(''))
-    | 'u' '(' hexDigit*:hs ')' -> String.fromCodepoint(hs.join(''))
-    | error('Unsupported escape sequence')
-  },
-  
-  id: rule (expectedName) {
-    identifier:name ?(name === expectedName) -> name
-  },
-  
-  identifier: rule {
-    ws? matchedInput[initialIdChar idChar*]
-  },
-  
-  op: rule (expectedOpname) {
-    operator:opname ?(opname === expectedOpname) -> opname
-  },
-  
-  operator: rule {
-    ws?
-    ( '<<' | '>>>' | '>>' | '<>' | '<=' | '>=' | '<' | '>'
-    | '!=' | '==' | '!' | '='
-    | '||' | '|' | '^^' | '^' | '&&' | '&'
-    | '->' | '=>' | '<-' | '..' | '.' | ':'
-    | '+' | '-' | '**' | '*' | '//' | '/' | '%' | '~'
-    ):text
-    -> text
-  },
-  
-  comment: rule {
-    | delimitedComment
-    | lineComment
-  },
-  
-  delimitedComment: rule {
-    '{-' &(space | newline | eof | '-}')
-    ( ~'-}' (delimitedComment | char) )*
-    ('-}' | eof)
-  },
-  
-  lineComment: rule {
-    '--' (~newline char)* &( newline | eof )
-  },
-  
-  newline: rule { '\r\n' | '\n' | '\r' },
-  
-  digit: rule { char('0'..'9') },
-  
-  hexDigit: rule { char('0'..'9', 'a'..'f', 'A'..'F') },
-  
-  idChar:        rule { char('a'..'z', 'A'..'Z', '_', '$', '0'..'9') },
-  initialIdChar: rule { char('a'..'z', 'A'..'Z', '_', '$') },
-  
-  space: rule { ' ' },
-  spaces: rule { space+ },
-  
-  
-  // Basic Parser Functionality
-  
-  next: function () {
-    var c = TextParser.prototype.next.call(this);
-    this.furthestPosition = Math.max(
-      this.furthestPosition,
-      this.state.position
-    );
-    return c;
-  },
-  
-  nextIf: function (predicate) {
-    var c = TextParser.prototype.next.call(this);
-    if (predicate.call(this, c)) {
-      this.furthestPosition = Math.max(
-        this.furthestPosition,
-        this.state.position
-      );
-      return c;
-    }
-    else {
-      return this.fail();
-    }
-  },
-  
-  emptyState: function () {
-    return {
-      position: 0,
-      blocks: [
-        {
-          ignoreIndentation: false,
-          columnCount: 0,
-        }
-      ],
-    };
-  },
-  
-  copyState: function () {
-    return {
-      position: this.state.position,
-      blocks: this.state.blocks.copy(),
-    };
-  },
-  
-  stringPatternHandler: rule (string) {
-    eachChar(string)
-  },
-  
-  tokenOperatorHandler: rule (parser) {
-    ws? parser
-  },
-  
-  debuglog: function (name, index) {
-    var lc = this.source.lineColumnAt(this.state.position);
-    var output = 'Debug point ' + this.filename + ':' + lc[0] + ':' + lc[1] +
-      ' ' + name + ':' + index;
-    console.log(output);
-  },
-  
   
   // Layout Handling
   
-  // Rules:
-  //
-  // 1. Statement defines current indentation level, or inherits from the
-  //    block that contains it.
-  //
-  // 2. A statement is terminated if a newline followed by a statement line
-  //    (not a blank line) which is at the statements current level of
-  //    indentation, or is dedented further.
-  //
-  // 3. A statement is continued by a continuation line, if any non-empty line
-  //    of code is indented. This does not change the indentation level, and
-  //    the indentation of the continuation lines may vary, so long as they
-  //    are still further indented compared to the statements indentation level.
-  //
-  // 4. Any code explicitely delimited by parentheses, braces or brackets
-  //    will disable the layout rules for the host statement until the closing
-  //    delimiter is found. New indentation levels may still be created by
-  //    nesting blocks in the enclosed expressions.
-  //
-  // 5. A block closing delimiter must be dedented compared to the indentation
-  //    level of statements contained by the block, even if there is no 
-  //    indentation level associated with the statement containing the block.
-  //    Block closing delimiters must not be below a currently active indentation
-  //    level of the host statement.
-  
-  statementTerminator: rule {
-    | newlineStatementTerminator
-    | semicolonStatementTerminator
+  leadingNewlines: function () {
+    var column = this.t('newline').value;
+    if (column !== 0) {
+      this.fail();
+    }
   },
   
-  semicolonStatementTerminator: rule (__forceNoMemoization__) {
-    ( spaces | comment )* ';' ~( ( spaces | comment )* newline )
+  statementTerminator: function () {
+    if (this.state.ignoreNewlines) {
+      this.t(';');
+      return;
+    }
+    else {
+      this._choice(function () {
+        this.t(';');
+        this._optional(function () {
+          var column = this.t('newline').value;
+          if (column === this.state.column) {
+            return;
+          }
+          else {
+            this.fail();
+          }
+        });
+      }, function () {
+        var column = this.t('newline').value;
+        if (column === this.state.column) {
+          return;
+        }
+        else {
+          this.fail();
+        }
+      });
+    }
   },
   
-  newlineStatementTerminator: rule (__forceNoMemoization__) {
-    ( spaces | comment )* ';'? ( spaces | comment )* newline
-    blankline*
-    &( currentIndentation | decreasedIndentation | eof )
-  },
-  
-  blockHeaderTerminator: rule (__forceNoMemoization__) {
-    | semicolonStatementTerminator
-    | blockHeaderNewlineTerminator
-  },
-  
-  blockHeaderNewlineTerminator: rule (__forceNoMemoization__) {
-    ( spaces | comment )* ';'? ( spaces | comment )* newline
-    blankline*
-  },
-  
-  withIncreasedIndentation: rule (parser, __forceNoMemoization__) {
-    &increasedIndentation:count
-    !(this.state.blocks.push({
-      singleLine: false,
-      ignoreLayout: false,
-      columnCount: count
-    }))
+  layoutBlock: function (header, body) {
+    var oldState = this.copyState();
+    var headerColumn = oldState.column;
+    this.state.allowContinuationLines = false;
+    this.state.ignoreNewlines = false;
+    if (oldState.ignoreNewlines) {
+      var headerColumn = this._optional(function () {
+        return this.t('newline').value;
+      });
+    }
     
-    parser:result
+    header.call(this);
     
-    &decreasedIndentation !(this.state.blocks.pop())
-    &currentIndentation
+    var bodyColumn = this.t('newline').value;
+    if (headerColumn != null && bodyColumn < headerColumn) {
+      this.fail();
+    }
+    else if (headerColumn != null && bodyColumn == headerColumn) {
+      // No body
+      
+      this.state.allowContinuationLines = oldState.allowContinuationLines;
+      this.state.ignoreNewlines = oldState.ignoreNewlines;
+      this.state.column = oldState.column;
+    }
+    else {
+      this.state.column = bodyColumn;
+      this.state.allowContinuationLines = true;
     
-    -> result
-  },
-  
-  ignoringIndentation: rule (parser, __forceNoMemoization__) {
-    !(this.state.blocks.push({
-      singleLine: this.state.blocks.last.singleLine,
-      ignoreLayout: true,
-      columnCount: this.state.blocks.last.columnCount,
-    }))
-    parser:result
-    !(this.state.blocks.pop())
-    -> result
-  },
-  
-  blockHeader: rule (parser, __forceNoMemoization__) {
-    !(this.state.blocks.push({
-      singleLine: true,
-      ignoreLayout: this.state.blocks.last.ignoreLayout,
-      columnCount: this.state.blocks.last.columnCount,
-    }))
+      this._choice(function () {
+        body.call(this);
     
-    parser:result
+        var dedentColumn = this.t('newline').value;
+        if (headerColumn != null && dedentColumn !== headerColumn ||
+            oldState.ignoreNewlines && dedentColumn >= bodyColumn) {
+          this.fail();
+        }
+        
+        this.state.allowContinuationLines = oldState.allowContinuationLines;
+        this.state.ignoreNewlines = oldState.ignoreNewlines;
+        this.state.column = oldState.column;
+      }, function () {
+        // No body
+        
+        if (headerColumn == null) { // We don't need to dedent to any particular level
+          this.state.allowContinuationLines = oldState.allowContinuationLines;
+          this.state.ignoreNewlines = oldState.ignoreNewlines;
+          this.state.column = oldState.column;
+        }
+        else {
+          this.fail();
+        }
+      });
+    }
+  },
+  
+  ignoringNewlines: function (parser) {
+    var oldIgnoreNewlines = this.state.ignoreNewlines;
+    this.state.ignoreNewlines = true;
+    var result = parser.call(this);
+    this.state.ignoreNewlines = oldIgnoreNewlines;
+    return result;
+  },
+  
+  
+  
+  // Basic Parsing Functionality
+  
+  t: function (typename) {
+    var token = this.next();
     
-    !(this.state.blocks.pop())
+    while (token.type === 'newline') {
+      if (this.state.ignoreNewlines) {
+        token = this.next();
+        continue;
+      }
+      else if (this.state.allowContinuationLines && 
+               token.value > this.state.column) {
+        token = this.next();
+        continue;
+      }
+      else {
+        break; // Statement delimiter or indent/dedent
+      }
+    }
     
-    blockHeaderTerminator
+    if (token.type === typename) {
+      return token;
+    }
+    else {
+      this.fail();
+    }
+  },
+  
+  id: rule (expectedName) {
+    'identifier':name ?(name.text === expectedName) -> name.text
+  },
+  
+  variableIdentifier: rule {
+    'identifier':name ?(!name.invalidVariableIdentifier) -> name.text
+  },
+  
+  op: rule (expectedOpname) {
+    'operator':opname ?(opname.text === expectedOpname) -> opname.text
+  },
+  
+  tokenAt: function (position) {
+    var token;
     
-    -> result
+    assert(position < this.tokens.length + 1);
+    if (position >= this.tokens.length) {
+      assert(this.tokens.isEmpty() || this.tokens.last.type !== 'eof');
+      
+      this.tokens.push(this.lexer.nextToken());
+      // Todo: I need to find the right place to put the layout rule handling
+    }
+    
+    return this.tokens[position];
   },
   
-  ws: rule (__forceNoMemoization__) {
-    ( spaces | comment | continuationLine | ignoredNewline )*
+  peekNext: function () {
+    return this.tokenAt(this.position);
   },
   
-  ignoredNewline: rule (__forceNoMemoization__) {
-    ?(this.state.blocks.last.ignoreLayout) newline
-  },
-  
-  continuationLine: rule (__forceNoMemoization__) {
-    ?(!this.state.blocks.last.singleLine)
-    ( spaces | comment )* newline
-    blankline*
-    &increasedIndentation
-  },
-  
-  currentIndentation: rule (__forceNoMemoization__) {
-    !(this.state.blocks.last):b
-    indentation:count ?(b.ignoreLayout || count === b.columnCount)
-  },
-  
-  increasedIndentation: rule (__forceNoMemoization__) {
-    !(this.state.blocks.last):b
-    indentation:count ?(b.ignoreLayout || count > b.columnCount)
-    -> count
-  },
-  
-  decreasedIndentation: rule (__forceNoMemoization__) {
-    !(this.state.blocks.last):b
-    indentation:count ?(count < b.columnCount)
-    -> count
-  },
-  
-  indentation: rule {
-    !(0):count
-    ( spaces:s !(count + s.length):count
-    | comment // We completely disregard comments right now...
-    )*
-    -> count
-  },
-  
-  blankline: rule {
-    ( spaces | comment )* newline
+  next: function () {
+    return this.tokenAt(this.position++);
   },
   
   eof: rule {
-    ( spaces | comment | newline )* %TextParser.prototype.eof
+    'eof'
   },
   
-  // Todo: Add support layout sensitive delimited comment handling.
+  stringPatternHandler: rule (string) {
+    t(string)
+  },
+  
+  lineColumnString: function (position) {
+    if (position == null) position = this.position;
+    
+    var token = this.tokenAt(position);
+    
+    return this.source.lineColumnAt(token.position).join(':');
+  },
+  
+  positionString: function (position) {
+    if (position == null) position = this.position;
+    
+    var token = this.tokenAt(position);
+    
+    return this.filename + ':' + this.source.lineColumnAt(token.position).join(':');
+  },
+  
+  get position()      { return this.state.position;  },
+  set position(value) { this.state.position = value; },
+  
+  get state()         { return this._state;  },
+  set state(value)    { this._state = value; },
+  
+  emptyState: function () {
+    return {
+      position:               0,
+      ignoreNewlines:         false,
+      allowContinuationLines: true,
+      column:                 0,
+    };
+  },
+  copyState: function () {
+    return {
+      position:               this.state.position,
+      ignoreNewlines:         this.state.ignoreNewlines,
+      allowContinuationLines: this.state.allowContinuationLines,
+      column:                 this.state.column,
+    };
+  },
+  
+  log: function (name) {
+    var messages = Array.slice(arguments, 1);
+    console.log('Parser::log() '
+      + this.positionString() + ':' + name + ' - '
+      + messages.join('; ')
+    );
+  },
   
 });

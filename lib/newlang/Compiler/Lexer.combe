@@ -36,7 +36,7 @@ var Token = Class.new(Object, {}, {
   
 });
 
-var Lexer2 = module.exports = Class.new(TextParser, {
+var Lexer = module.exports = Class.new(TextParser, {
   
   parseAllTokens: function (source, filename) {
     var lexer = this.new(source, filename);
@@ -306,7 +306,7 @@ var Lexer2 = module.exports = Class.new(TextParser, {
   
   log: function (name) {
     var messages = Array.slice(arguments, 1);
-    console.log('Lexer2::log() '
+    console.log('Lexer::log() '
       + this.positionString() + ':' + name + ' - '
       + messages.join('; ')
     );
