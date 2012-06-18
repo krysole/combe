@@ -26,15 +26,15 @@ var Ast = require('./Ast');
 
 var Parser = module.exports = Class.new(BaseParser, {
   
-  parseFile: function (source, filename) {
-    return this.parse(source, filename, 'file');
+  parseFile: function (source, filename, tokens) {
+    return this.parse(source, filename, tokens, 'file');
   },
   
-  parse: function (source, filename, rulename) {
-    var rest = Array.slice(arguments, 3);
+  parse: function (source, filename, tokens, rulename) {
+    var rest = Array.slice(arguments, 4);
     if (filename == null) filename = '(unnamed)';
     
-    var parser = this.new(source, filename);
+    var parser = this.new(source, filename, tokens);
     var result = parser.match.apply(parser, [rulename].concat(rest));
     if (!result) {
       var t = parser.tokens.last;
@@ -47,7 +47,7 @@ var Parser = module.exports = Class.new(BaseParser, {
   
 }, {
   
-  initialize: function (source, filename) {
+  initialize: function (source, filename, tokens) {
     if (filename == null) filename = '(unnamed)';
     
     this.source = source;
@@ -55,7 +55,7 @@ var Parser = module.exports = Class.new(BaseParser, {
     BaseParser.prototype.initialize.call(this, source);
     
     this.lexer = Lexer.new(source, filename);
-    this.tokens = [];
+    this.tokens = (tokens != null ? tokens : []);
   },
   
   
