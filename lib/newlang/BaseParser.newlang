@@ -84,8 +84,6 @@ var BaseParser = module.exports = Class.new(Object, {}, {
     end
   end,
   
-  -- matchAll ommitted; not sure it was ever used anyway
-  
   method applyRule(rulename, ..args)
     var rule = self.getRule(rulename)
     return rule(self; ..args)
