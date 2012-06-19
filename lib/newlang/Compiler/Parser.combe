@@ -184,8 +184,6 @@ var Parser = module.exports = Class.new(BaseParser, {
   lvalueSecondaryExpressionFragment: rule (expr) {
     | op('.') propertyName:name
       -> Ast.PropertyLookup(expr, name)
-    | op(':') propertyName:name
-      -> Ast.PrototypePropertyLookup(expr, name)
     | '[' ignoringNewlines[ expression:name ] ']'
       -> Ast.PropertyLookup(expr, name)
   },
@@ -337,16 +335,10 @@ var Parser = module.exports = Class.new(BaseParser, {
       -> Ast.MethodCall(expr, name, ad.this, ad.arguments)
     | op('.') propertyName:name
       -> Ast.PropertyLookup(expr, name)
-    | op(':') propertyName:name argumentsList:ad
-      -> Ast.PrototypeMethodCall(expr, name, ad.this, ad.arguments)
-    | op(':') propertyName:name
-      -> Ast.PrototypePropertyLookup(expr, name)
     | argumentsList:ad
       -> Ast.Call(expr, ad.this, ad.arguments)
     | '[' ignoringNewlines[ expression:name ] ']'
       -> Ast.PropertyLookup(expr, name)
-    // | subscript:args
-    //   -> Ast.Subscript(expr, args)
   },
   
   
