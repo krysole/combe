@@ -160,8 +160,16 @@ var Parser = module.exports = Class.new(BaseParser, {
         else if (lvalue.is('PropertyLookup')) {
           return Ast.PropertyAssignment(lvalue.object, lvalue.name, rvalue);
         }
-        else if (lvalue.is('PrototypePropertyAssignment')) {
-          return Ast.PropertyPrototypeAssignment(lvalue.object, lvalue.name, rvalue);
+        else if (lvalue.is('MethodCall')) {
+          return Ast.MethodCallAssignment(
+            lvalue.object, lvalue.name + '=', lvalue.thisArgument, 
+            lvalue.arguments, rvalue
+          );
+        }
+        else if (lvalue.is('Subscript')) {
+          return Ast.SubscriptAssignemnt(
+            lvalue.object, lvalue.arguments, rvalue
+          );
         }
         else assert(false);
       }
@@ -173,23 +181,13 @@ var Parser = module.exports = Class.new(BaseParser, {
     | lvaluePrimaryExpression
   },
   
-  // Todo: Either add support for a subscript lvalue operation, or provide
-  // some other way for tersely getting and setting properties.
-  
   lvalueSecondaryExpression: rule {
-    primaryExpression:expr ( lvalueSecondaryExpressionFragment(expr):expr )+
+    primaryExpression:expr ( secondaryExpressionFragment(expr):expr )+
     -> expr
   },
   
-  lvalueSecondaryExpressionFragment: rule (expr) {
-    | op('.') propertyName:name
-      -> Ast.PropertyLookup(expr, name)
-    | '[' ignoringNewlines[ expression:name ] ']'
-      -> Ast.PropertyLookup(expr, name)
-  },
-  
   lvaluePrimaryExpression: rule {
-    variableLookup
+    | variableLookup
   },
   
   
@@ -334,11 +332,11 @@ var Parser = module.exports = Class.new(BaseParser, {
     | op('.') propertyName:name argumentsList:ad
       -> Ast.MethodCall(expr, name, ad.this, ad.arguments)
     | op('.') propertyName:name
-      -> Ast.PropertyLookup(expr, name)
+      -> Ast.MethodCall(expr, name, null, [])
     | argumentsList:ad
       -> Ast.Call(expr, ad.this, ad.arguments)
-    | '[' ignoringNewlines[ expression:name ] ']'
-      -> Ast.PropertyLookup(expr, name)
+    | subscript:args
+      -> Ast.Subscript(expr, args)
   },
   
   
