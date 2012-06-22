@@ -162,12 +162,12 @@ var Parser = module.exports = Class.new(BaseParser, {
         }
         else if (lvalue.is('MethodCall')) {
           return Ast.MethodCallAssignment(
-            lvalue.object, lvalue.name + '=', lvalue.thisArgument, 
+            lvalue.object, lvalue.name, lvalue.thisArgument, 
             lvalue.arguments, rvalue
           );
         }
         else if (lvalue.is('Subscript')) {
-          return Ast.SubscriptAssignemnt(
+          return Ast.SubscriptAssignment(
             lvalue.object, lvalue.arguments, rvalue
           );
         }
