@@ -70,23 +70,20 @@ var Parser = module.exports = Class.new(BaseParser, {
   },
   
   statement: rule {
-    | emptyStatement
     | ifStatement
     | tryCatchStatement
+    | defStatement
+    | functionStatement
     | expression
   },
   
   expression: rule {
     | ifExpression
+    | tryCatchExpression
     | varExpression
     | returnExpression
     | throwExpression
     | operatorExpression
-  },
-  
-  emptyStatement: rule {
-    &';'
-    -> Ast.Null()
   },
   
   ifStatement: rule { // Handle layout rules
@@ -122,6 +119,28 @@ var Parser = module.exports = Class.new(BaseParser, {
     -> Ast.TryCatch(tryBlock, name, catchBlock)
   },
   
+  functionStatement: rule {
+    | functionBlock[ id('def') propertyName:name ]:b
+      -> Ast.Function(name, b.parameters, b.body)
+    | functionBlock[ id('method') propertyName:name ]:b
+      -> Ast.Method(null, name, b.parameters, b.body)
+    | functionBlock[ id('method') methodDefLvalue:lval ]:b
+      -> Ast.Method(lval.object, lval.name, b.parameters, b.body)
+  },
+  
+  methodDefLvalue: rule (o) {
+    | op('.') propertyName:name &( optParameterList op('->') )
+      -> { object: o, name: name }
+    | op('.') propertyName:name &( optParameterList 
+        ?(!this.state.allowContinuationLines && !this.state.ignoreNewlines)
+        // In block header
+        newline
+      )
+      -> { object: o, name: name }
+    | ?(object != null) secondaryExpressionFragment(o):o methodDefLvalue(o)
+    | primaryExpression:o methodDefLvalue(o)
+  },
+  
   varExpression: rule {
     id('var') variableIdentifier:name ( op('=') expression:rvalue )?
     -> Ast.Var(name, rvalue)
@@ -146,6 +165,14 @@ var Parser = module.exports = Class.new(BaseParser, {
     -> Ast.Block(stmts != null ? stmts : [])
   },
   
+  functionBlock: rule (header) {
+    | header optParameterList:p op('->') expression:body
+      -> Ast.Function(null, p, body)
+    | block[ header optParameterList:p ]:body
+      id('end')
+      -> Ast.Function(null, p, body)
+  },
+  
   
   operatorExpression: rule {
     assignmentExpression
@@ -157,19 +184,13 @@ var Parser = module.exports = Class.new(BaseParser, {
         if (lvalue.is('VariableLookup')) {
           return Ast.VariableAssignment(lvalue.name, rvalue);
         }
-        else if (lvalue.is('PropertyLookup')) {
-          return Ast.PropertyAssignment(lvalue.object, lvalue.name, rvalue);
-        }
         else if (lvalue.is('MethodCall')) {
-          return Ast.MethodCallAssignment(
-            lvalue.object, lvalue.name, lvalue.thisArgument, 
-            lvalue.arguments, rvalue
-          );
+          lvalue.arguments.rvalue = rvalue;
+          return lvalue;
         }
         else if (lvalue.is('Subscript')) {
-          return Ast.SubscriptAssignment(
-            lvalue.object, lvalue.arguments, rvalue
-          );
+          lvalue.arguments.rvalue = rvalue;
+          return lvalue;
         }
         else assert(false);
       }
@@ -329,40 +350,48 @@ var Parser = module.exports = Class.new(BaseParser, {
   },
   
   secondaryExpressionFragment: rule (expr) {
-    | op('.') propertyName:name argumentsList:ad
-      -> Ast.MethodCall(expr, name, ad.this, ad.arguments)
-    | op('.') propertyName:name
-      -> Ast.MethodCall(expr, name, null, [])
-    | argumentsList:ad
-      -> Ast.Call(expr, ad.this, ad.arguments)
-    | subscript:args
-      -> Ast.Subscript(expr, args)
+    | op('.') propertyName:name optArgumentsList:a
+      -> Ast.MethodCall(expr, name, a)
+    | argumentsList:a
+      -> Ast.Call(expr, a)
+    | subscriptArguments:a
+      -> Ast.Subscript(expr, a)
   },
   
-  
+  optArgumentsList: rule {
+    | argumentsList
+    | -> Ast.Arguments(null, [], null, null)
+  },
   argumentsList: rule {
     '('
     ignoringNewlines[
-      ( expression:expr ';' -> expr )?:_this
-      delimited[expansion[expression], ',']:args ','?
+      ( expression:expr ';' -> expr )?:ta
+      delimited[mainArgument, ',']:main ','?
       ')'
     ]
-    -> { this: _this, arguments: args }
+    functionBlock[ id('do') ]?:b
+    -> Ast.Arguments(ta, main, b, null)
   },
-  
-  subscript: rule {
+  subscriptArguments: rule {
     '['
     ignoringNewlines[
-      delimited[expansion[expression], ',']:args ','?
+      delimited[mainArgument, ',']:main ','?
       ']'
     ]
-    -> args
+    -> Ast.Arguments(null, main, null, null)
   },
-  
-  expansion: rule (alternative) {
-    | op('..') expression:expr
-      -> Ast.ExpandArguments(expr)
-    | alternative
+  mainArgument: rule {
+    | expansionArgument
+    | blockArgument
+    | expression
+  },
+  blockArgument: rule {
+    op('&') expression:expr
+    -> Ast.BlockArgument(expr)
+  },
+  expansionArgument: rule {
+    op('..') expression:expr
+    -> Ast.ExpansionArgument(expr)
   },
   
   
@@ -400,29 +429,13 @@ var Parser = module.exports = Class.new(BaseParser, {
     -> Ast.Number(n.value)
   },
   
-  objectLiteral: rule {
-    '{'
-    ignoringNewlines[
-      ( expression:expr ';' -> expr )?:proto
-      delimited[propertyDeclaration, ',']:decls ','?
-      '}'
-    ]
-    -> Ast.Object(proto, decls)
-  },
-  
   functionLiteral: rule {
-    | optParameterList:pd op('->') expression:body
-      -> Ast.Function(pd.this, pd.parameters, body)
-    | functionBlock[ id('function') ]:fb
-      -> Ast.Function(fb.this, fb.parameters,fb.body)
-  },
-  
-  functionBlock: rule (header) {
-    | header optParameterList:pd op('->') expression:body
-      -> { this: pd.this, parameters: pd.parameters, body: body }
-    | block[ header optParameterList:pd ]:body
-      id('end')
-      -> { this: pd.this, parameters: pd.parameters, body: body }
+    | optParameterList:p op('->') expression:body
+      -> Ast.Function(null, p, body)
+    | functionBlock[ id('def') ]:fb
+      -> Ast.Function(null, fb.parameters, fb.body)
+    | functionBlock[ id('method') ]:fb
+      -> Ast.Method(null, null, fb.parameters, fb.body)
   },
   
   
@@ -433,62 +446,36 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   
   optParameterList: rule {
-    parameterList?:pd
-    -> (pd != null ? pd : { this: null, parameters: [] })
+    | parameterList
+    | -> Ast.Parameters(null, [], null, null)
   },
   parameterList: rule {
     '('
     ignoringNewlines[
-      ( parameter:p ';' -> p )?:_this
-      delimited[contractionParameter, ',']:params ','?
+      ( parameter:p ';' -> p )?:tp
+      delimited[mainParameter, ',']:main ','?
       ')'
     ]
-    -> { this: _this, parameters: params }
+    ( op('=') parameter )?:rp
+    -> Ast.Parameters(tp, main, bp, rp)
   },
   
-  contractionParameter: rule {
-    | op('..') variableIdentifier:name
-      -> Ast.ContractionParameter(name)
+  mainParameter: rule {
+    | contractionParameter
+    | blockParameter
     | parameter
   },
-  
+  contractionParameter: rule {
+    op('..') variableIdentifier:name
+    -> Ast.ContractionParameter(name)
+  },
+  blockParameter: rule {
+    op('&') variableIdentifier:name
+    -> Ast.BlockParameter(name)
+  },
   parameter: rule {
     | variableIdentifier:name -> Ast.Parameter(name)
     | id('_') -> Ast.IgnoredParameter()
-  },
-  
-  
-  propertyDeclaration: rule {
-    | valuePropertyDeclaration
-    | getPropertyDeclaration
-    | setPropertyDeclaration
-    | methodPropertyDeclaration
-    | describePropertyDeclaration
-  },
-  
-  valuePropertyDeclaration: rule {
-    propertyName:name op(':') expression:value
-    -> Ast.ValuePropertyDeclaration(name, value)
-  },
-  
-  getPropertyDeclaration: rule {
-    functionBlock[ id('get') propertyName:name ]:fb
-    -> Ast.GetPropertyDeclaration(name, fb.this, fb.parameters, fb.body)
-  },
-  
-  setPropertyDeclaration: rule {
-    functionBlock[ id('set') propertyName:name ]:fb
-    -> Ast.SetPropertyDeclaration(name, fb.this, fb.parameters, fb.body)
-  },
-  
-  methodPropertyDeclaration: rule {
-    functionBlock[ id('method') propertyName:name ]:fb
-    -> Ast.MethodPropertyDeclaration(name, fb.this, fb.parameters, fb.body)
-  },
-  
-  describePropertyDeclaration: rule {
-    id('describe') propertyName:name op(':') expression:dict
-    -> Ast.DescribePropertyDeclaration(name, dict)
   },
   
   
@@ -538,6 +525,12 @@ var Parser = module.exports = Class.new(BaseParser, {
   },
   
   layoutBlock: function (header, body) {
+    if (!this.state.allowContinuationLines && !this.state.ignoreNewlines) {
+      // We're already in a layoutBlock header, nesting isn't allowed unless
+      // contained in layout ignoring delimiters like subexpressions.
+      this.fail();
+    }
+    
     var oldState = this.copyState();
     var headerColumn = oldState.column;
     this.state.allowContinuationLines = false;
@@ -650,7 +643,6 @@ var Parser = module.exports = Class.new(BaseParser, {
       assert(this.tokens.isEmpty() || this.tokens.last.type !== 'eof');
       
       this.tokens.push(this.lexer.nextToken());
-      // Todo: I need to find the right place to put the layout rule handling
     }
     
     return this.tokens[position];
