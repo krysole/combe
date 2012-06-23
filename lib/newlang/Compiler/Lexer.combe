@@ -118,13 +118,9 @@ var Lexer = module.exports = Class.new(TextParser, {
         'newline',            // Type
         column,               // Value
         this.newlinePosition, // Position
-        this.position,        // Length
+        this.position - this.newlinePosition, // Length
         '<newline>'           // Text
       );
-      // Todo: Have the position and length report the newline position and
-      // the length should run to the beginning of the next token.
-      // This way we can use the position to understand which line was terminated
-      // and respectively, how many lines were ignored.
     }
     else {
       this.fail();
