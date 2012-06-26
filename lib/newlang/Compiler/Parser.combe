@@ -120,12 +120,12 @@ var Parser = module.exports = Class.new(BaseParser, {
   },
   
   functionStatement: rule {
-    | functionBlock[ id('def') propertyName:name ]:b
-      -> Ast.Function(name, b.parameters, b.body)
+    | functionBlock[ id('def') propertyName:name ]:b ?(b.rvalue == null)
+      -> Ast.Function(name, b.this, b.parameters, b.body)
     | functionBlock[ id('method') propertyName:name ]:b
-      -> Ast.Method(null, name, b.parameters, b.body)
+      -> Ast.Method(null, name, b.this, b.parameters, b.rvalue, b.body)
     | functionBlock[ id('method') methodDefLvalue:lval ]:b
-      -> Ast.Method(lval.object, lval.name, b.parameters, b.body)
+      -> Ast.Method(lval.object, lval.name, b.this, b.parameters, b.rvalue, b.body)
   },
   
   methodDefLvalue: rule (o) {
@@ -167,10 +167,14 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   functionBlock: rule (header) {
     | header optParameterList:p op('->') expression:body
-      -> Ast.Function(null, p, body)
+      !(Ast.Function(null, p.this, p.parameters, body)):result
+      !(result.rvalue = p.rvalue)
+      -> result
     | block[ header optParameterList:p ]:body
       id('end')
-      -> Ast.Function(null, p, body)
+      !(Ast.Function(null, p.this, p.parameter, body)):result
+      !(result.rvalue = p.rvalue)
+      -> result
   },
   
   
@@ -185,11 +189,11 @@ var Parser = module.exports = Class.new(BaseParser, {
           return Ast.VariableAssignment(lvalue.name, rvalue);
         }
         else if (lvalue.is('MethodCall')) {
-          lvalue.arguments.rvalue = rvalue;
+          lvalue.rvalue = rvalue;
           return lvalue;
         }
         else if (lvalue.is('Subscript')) {
-          lvalue.arguments.rvalue = rvalue;
+          lvalue.rvalue = rvalue;
           return lvalue;
         }
         else assert(false);
@@ -350,44 +354,39 @@ var Parser = module.exports = Class.new(BaseParser, {
   },
   
   secondaryExpressionFragment: rule (expr) {
-    | op('.') propertyName:name optArgumentsList:a
-      -> Ast.MethodCall(expr, name, a)
-    | argumentsList:a
-      -> Ast.Call(expr, a)
+    | op('.') propertyName:name optArgumentList:a
+      -> Ast.MethodCall(expr, name, a.this, a.arguments, a.block)
+    | argumentList:a
+      -> Ast.Call(expr, a.this, a.arguments, a.block)
     | subscriptArguments:a
       -> Ast.Subscript(expr, a)
   },
   
-  optArgumentsList: rule {
-    | argumentsList
+  optArgumentList: rule {
+    | argumentList
     | -> Ast.Arguments(null, [], null, null)
   },
-  argumentsList: rule {
+  argumentList: rule {
     '('
     ignoringNewlines[
       ( expression:expr ';' -> expr )?:ta
-      delimited[mainArgument, ',']:main ','?
+      delimited[argument, ',']:args ','?
       ')'
     ]
     functionBlock[ id('do') ]?:b
-    -> Ast.Arguments(ta, main, b, null)
+    -> { this: ta, arguments:args, block: b }
   },
   subscriptArguments: rule {
     '['
     ignoringNewlines[
-      delimited[mainArgument, ',']:main ','?
+      delimited[mainArgument, ',']:args ','?
       ']'
     ]
-    -> Ast.Arguments(null, main, null, null)
+    -> args
   },
-  mainArgument: rule {
+  argument: rule {
     | expansionArgument
-    | blockArgument
     | expression
-  },
-  blockArgument: rule {
-    op('&') expression:expr
-    -> Ast.BlockArgument(expr)
   },
   expansionArgument: rule {
     op('..') expression:expr
@@ -430,12 +429,12 @@ var Parser = module.exports = Class.new(BaseParser, {
   },
   
   functionLiteral: rule {
-    | optParameterList:p op('->') expression:body
-      -> Ast.Function(null, p, body)
-    | functionBlock[ id('def') ]:fb
-      -> Ast.Function(null, fb.parameters, fb.body)
+    | optParameterList:p op('->') expression:body ?(p.rvalue == null)
+      -> Ast.Function(null, p.this, p.parameters, body)
+    | functionBlock[ id('def') ]:fb ?(p.rvalue == null)
+      -> Ast.Function(null, fb.this, fb.parameters, fb.body)
     | functionBlock[ id('method') ]:fb
-      -> Ast.Method(null, null, fb.parameters, fb.body)
+      -> Ast.Method(null, null, fb.this, fb.parameters, fb.rvalue, fb.body)
   },
   
   
@@ -447,33 +446,28 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   optParameterList: rule {
     | parameterList
-    | -> Ast.Parameters(null, [], null)
+    | -> { this: null, parameters: [], rvalue: null }
   },
   parameterList: rule {
     '('
     ignoringNewlines[
-      ( parameter:p ';' -> p )?:tp
-      delimited[mainParameter, ',']:main ','?
+      ( simpleParameter:p ';' -> p )?:tp
+      delimited[parameter, ',']:ps ','?
       ')'
     ]
     ( op('=') parameter )?:rp
-    -> Ast.Parameters(tp, main, rp)
+    -> { this: tp, parameters: ps, rvalue: rp }
   },
   
-  mainParameter: rule {
+  parameter: rule {
     | contractionParameter
-    | blockParameter
-    | parameter
+    | simpleParameter
   },
   contractionParameter: rule {
     op('..') variableIdentifier:name
     -> Ast.ContractionParameter(name)
   },
-  blockParameter: rule {
-    op('&') variableIdentifier:name
-    -> Ast.BlockParameter(name)
-  },
-  parameter: rule {
+  simpleParameter: rule {
     | variableIdentifier:name -> Ast.Parameter(name)
     | id('_') -> Ast.IgnoredParameter()
   },
