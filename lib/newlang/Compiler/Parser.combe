@@ -143,7 +143,7 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   varExpression: rule {
     id('var') variableIdentifier:name ( op('=') expression:rvalue )?
-    -> Ast.Var(name, rvalue)
+    -> Ast.DeclareVariable(name, rvalue)
   },
   
   returnExpression: rule {
@@ -275,7 +275,7 @@ var Parser = module.exports = Class.new(BaseParser, {
     comparisonOperator:expr
     ( (op('==') | op('!=') | op('<=') | op('<') | op('>=') | op('>') ):opname
       comparisonOperator:rhs
-      -> Ast.Operator(opname, expr, rhs)
+      -> Ast.InfixOperator(opname, expr, rhs)
     | -> expr
     )
   },
@@ -283,7 +283,7 @@ var Parser = module.exports = Class.new(BaseParser, {
   comparisonOperator: rule {
     associationOperator:expr
     ( op('<>'):opname association:rhs
-      -> Ast.Operator(opname, expr, rhs)
+      -> Ast.InfixOperator(opname, expr, rhs)
     | -> expr
     )
   },
@@ -325,14 +325,14 @@ var Parser = module.exports = Class.new(BaseParser, {
   leftAssocOperator: rule (term, operator) {
     term:expr
     ( operator:opname term:rhs
-      !(expr = Ast.Operator(opname, expr, rhs))
+      !(expr = Ast.InfixOperator(opname, expr, rhs))
     )*
     -> expr
   },
   rightAssocOperator: rule (term, operator) {
     term:expr
     ( operator:opname rightAssocOperator(term, operator):rhs
-      -> Ast.Operator(opname, expr, rhs)
+      -> Ast.InfixOperator(opname, expr, rhs)
     | -> expr
     )
   },
@@ -447,7 +447,7 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   optParameterList: rule {
     | parameterList
-    | -> Ast.Parameters(null, [], null, null)
+    | -> Ast.Parameters(null, [], null)
   },
   parameterList: rule {
     '('
@@ -457,7 +457,7 @@ var Parser = module.exports = Class.new(BaseParser, {
       ')'
     ]
     ( op('=') parameter )?:rp
-    -> Ast.Parameters(tp, main, bp, rp)
+    -> Ast.Parameters(tp, main, rp)
   },
   
   mainParameter: rule {
