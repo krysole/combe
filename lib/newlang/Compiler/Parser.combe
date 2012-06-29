@@ -77,11 +77,13 @@ var Parser = module.exports = Class.new(BaseParser, {
     | expression
   },
   
-  expression: rule {
+  expression: rule { // Todo: Add break and continue statements for blocks.
     | ifExpression
     | tryCatchExpression
     | varExpression
     | returnExpression
+    | breakExpression
+    | continueExpression
     | throwExpression
     | operatorExpression
   },
@@ -149,6 +151,16 @@ var Parser = module.exports = Class.new(BaseParser, {
   returnExpression: rule {
     id('return') expression?:arg
     -> Ast.Return(arg)
+  },
+  
+  breakExpression: rule {
+    id('break') expression?:arg
+    -> Ast.Break(arg)
+  },
+  
+  continueExpression: rule {
+    id('continue') expression?:arg
+    -> Ast.Continue(arg)
   },
   
   throwExpression: rule {
@@ -430,7 +442,9 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   functionLiteral: rule {
     | optParameterList:p op('->') expression:body ?(p.rvalue == null)
-      -> Ast.Function(null, p.this, p.parameters, body)
+      -> Ast.Block(p.this, p.parameters, body)
+    | functionBlock[ id('do') ]:fb ?(p.rvalue == null)
+      -> Ast.Block(fb.this, fb.parameters, fb.body)
     | functionBlock[ id('def') ]:fb ?(p.rvalue == null)
       -> Ast.Function(null, fb.this, fb.parameters, fb.body)
     | functionBlock[ id('method') ]:fb

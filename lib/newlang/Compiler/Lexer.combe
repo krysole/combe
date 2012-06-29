@@ -145,12 +145,11 @@ var Lexer = module.exports = Class.new(TextParser, {
     'or', 'xor', 'and', 'not',
     
     'if', 'then', 'else', 
-    'def',
-    'new',
+    'def', 'method', 
     'try', 'catch', 
     'do', 'end',
     
-    'var', 'return', 'throw'
+    'var', 'return', 'break', 'continue', 'throw'
   ],
   
   initialIdChar: rule { char('a'..'z', 'A'..'Z', '_', '$') },
