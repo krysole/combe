@@ -71,6 +71,8 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   statement: rule {
     | ifStatement
+    | whileStatement
+    | doWhileStatement
     | tryCatchStatement
     | defStatement
     | functionStatement
@@ -79,6 +81,8 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   expression: rule { // Todo: Add break and continue statements for blocks.
     | ifExpression
+    | whileExpression
+    | doWhileExpression
     | tryCatchExpression
     | varExpression
     | returnExpression
@@ -88,7 +92,7 @@ var Parser = module.exports = Class.new(BaseParser, {
     | operatorExpression
   },
   
-  ifStatement: rule { // Handle layout rules
+  ifStatement: rule {
     block[ id('if') expression:condition ]:consiquent
     !(Ast.If(condition, consiquent, null)):ast:tail
     
@@ -112,6 +116,30 @@ var Parser = module.exports = Class.new(BaseParser, {
     id('then') expression:consiquent
     ( id('else') expression:alternative )?
     -> Ast.If(condition, consiquent, alternative)
+  },
+  
+  whileStatement: rule {
+    block[ id('while') expression:condition ]:body
+    id('end')
+    -> Ast.While(condition, body)
+  },
+  
+  whileExpression: rule {
+    id('while') expression:condition
+    id('do') expression:body
+    -> Ast.While(condition, body)
+  },
+  
+  doWhileStatement: rule {
+    block[ id('do') ]:body
+    id('while') expression:condition
+    -> Ast.DoWhile(body, condition)
+  },
+  
+  doWhileExpression: rule {
+    id('do') expression:body
+    id('while') expression:condition
+    -> Ast.DoWhile(body, condition)
   },
   
   tryCatchStatement: rule {
