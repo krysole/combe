@@ -66,7 +66,7 @@ var Parser = module.exports = Class.new(BaseParser, {
     leadingNewlines
     delimited[statement, statementTerminator]:stmts ';'?
     eof
-    -> Ast.File(Ast.Block(stmts))
+    -> Ast.File(Ast.Sequence(stmts))
   },
   
   statement: rule {
@@ -202,7 +202,7 @@ var Parser = module.exports = Class.new(BaseParser, {
       header,
       delimited[statement, statementTerminator]:stmts ';'?
     ]
-    -> Ast.Block(stmts != null ? stmts : [])
+    -> Ast.Sequence(stmts != null ? stmts : [])
   },
   
   functionBlock: rule (header) {
