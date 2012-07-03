@@ -228,6 +228,9 @@ var Parser = module.exports = Class.new(BaseParser, {
         if (lvalue.is('VariableLookup')) {
           return Ast.VariableAssignment(lvalue.name, rvalue);
         }
+        else if (lvalue.is('PropertyLookup')) {
+          return Ast.PropertyAssignment(lvalue.object, lvalue.name, rvalue);
+        }
         else if (lvalue.is('MethodCall')) {
           lvalue.rvalue = rvalue;
           return lvalue;
@@ -396,6 +399,8 @@ var Parser = module.exports = Class.new(BaseParser, {
   secondaryExpressionFragment: rule (expr) {
     | op('.') propertyName:name optArgumentList:a
       -> Ast.MethodCall(expr, name, a.this, a.arguments, a.block)
+    | op('@') propertyName:name
+      -> Ast.PropertyLookup(expr, name)
     | argumentList:a
       -> Ast.Call(expr, a.this, a.arguments, a.block)
     | subscriptArguments:a
