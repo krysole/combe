@@ -74,7 +74,6 @@ var Parser = module.exports = Class.new(BaseParser, {
     | whileStatement
     | doWhileStatement
     | tryCatchStatement
-    | defStatement
     | functionStatement
     | expression
   },
@@ -83,7 +82,6 @@ var Parser = module.exports = Class.new(BaseParser, {
     | ifExpression
     | whileExpression
     | doWhileExpression
-    | tryCatchExpression
     | varExpression
     | returnExpression
     | breakExpression
@@ -126,7 +124,7 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   whileExpression: rule {
     id('while') expression:condition
-    id('do') expression:body
+    id('end') expression:body
     -> Ast.While(condition, body)
   },
   
@@ -167,7 +165,7 @@ var Parser = module.exports = Class.new(BaseParser, {
         newline
       )
       -> { object: o, name: name }
-    | ?(object != null) secondaryExpressionFragment(o):o methodDefLvalue(o)
+    | ?(o != null) secondaryExpressionFragment(o):o methodDefLvalue(o)
     | primaryExpression:o methodDefLvalue(o)
   },
   
@@ -207,12 +205,12 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   functionBlock: rule (header) {
     | header optParameterList:p op('->') expression:body
-      !(Ast.Function(null, p.this, p.parameters, body)):result
+      !(Ast.Block(p.this, p.parameters, body)):result
       !(result.rvalue = p.rvalue)
       -> result
     | block[ header optParameterList:p ]:body
       id('end')
-      !(Ast.Function(null, p.this, p.parameter, body)):result
+      !(Ast.Block(p.this, p.parameters, body)):result
       !(result.rvalue = p.rvalue)
       -> result
   },
@@ -409,7 +407,9 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   optArgumentList: rule {
     | argumentList
-    | -> Ast.Arguments(null, [], null, null)
+    | functionBlock[ id('do') ]:b
+      -> { this: null, arguments: [], block: b }
+    | -> { this: null, arguments: [], block: null }
   },
   argumentList: rule {
     '('
@@ -419,12 +419,12 @@ var Parser = module.exports = Class.new(BaseParser, {
       ')'
     ]
     functionBlock[ id('do') ]?:b
-    -> { this: ta, arguments:args, block: b }
+    -> { this: ta, arguments: args, block: b }
   },
   subscriptArguments: rule {
     '['
     ignoringNewlines[
-      delimited[mainArgument, ',']:args ','?
+      delimited[argument, ',']:args ','?
       ']'
     ]
     -> args
@@ -444,7 +444,6 @@ var Parser = module.exports = Class.new(BaseParser, {
     | variableLookup
     | stringLiteral
     | numberLiteral
-    | objectLiteral
     | functionLiteral
     | subexpression
   },
@@ -493,6 +492,8 @@ var Parser = module.exports = Class.new(BaseParser, {
   
   optParameterList: rule {
     | parameterList
+    | op('=') parameter:rp
+      -> { this: null, parameters: [], rvalue: rp }
     | -> { this: null, parameters: [], rvalue: null }
   },
   parameterList: rule {

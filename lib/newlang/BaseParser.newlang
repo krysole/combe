@@ -16,7 +16,7 @@
   limitations under the License.
 -}
 
-return Object.extend('BaseParser') do
+return Object.extend('BaseParser') do(self;)
   
   method initialize(source)
     self@_source = source
@@ -320,7 +320,7 @@ return Object.extend('BaseParser') do
     var startPosition = self.position
     parser.call(self)
     var endPosition = self.position
-    return self.source.slice(start, end)
+    return self.source.slice(startPosition, endPosition)
   end
   
 end
