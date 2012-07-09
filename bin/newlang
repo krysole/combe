@@ -18,16 +18,113 @@
 //
 
 var combe = require('combe');
-// var __combe = require('combe/lib/newlang/__combe');
-var NewlangCompiler = require('combe/lib/newlang/Compiler');
+
+var ensure = function (value) {
+  assert(value != null);
+  assert(value !== '');
+  return value;
+};
 
 setTimeout(function () {
-  if (process.argv.length < 2) {
-    console.error('Usage: combec sourceFile');
-    return;
+  if (process.argv.length <= 2) {
+    console.error('Usage: newlang [-c] sourceFile');
+    process.exit(1);
   }
   
-  var sourceFilename = process.argv[2];
+  var options = {};
+  var argv = [].pushAll(process.argv);
+  var node = argv.shift();
+  var command = argv.shift();
+  while (!argv.isEmpty()) {
+    var arg = argv.shift();
+    
+    if (arg == null || arg === '') {
+      continue;
+    }
+    else if (arg.match(/^(-c|--compile)$/)) {
+      assert(!options.execute);
+      options.compile = true;
+      options.source = ensure(argv.shift());
+    }
+    else if (arg.match(/^(-o|--output|--out)$/)) {
+      options.output = ensure(argv.shift());
+    }
+    else if (arg.match(/^(-e|--execute|--exec)$/)) {
+      assert(!options.compile);
+      options.execute = true;
+      options.source = ensure(argv.shift());
+    }
+    else if (arg.match(/^(--all-intermediates)$/)) {
+      if (options.compilerIntermediates != null) {
+        options.compilerIntemediates.all = true;
+      }
+      else {
+        options.compilerIntermediates = { all: true };
+      }
+    }
+    else if (arg.match(/^(--ast)$/)) {
+      if (options.compilerIntermediates == null) {
+        options.compilerIntermediates = {};
+      }
+      options.compilerIntermediates.ast = true;
+    }
+    else if (arg.match(/^(--no-cache)$/)) {
+      options.noCache = true;
+    }
+    else if (arg.match(/^--$/)) {
+      assert(!options.compile);
+      if (!options.execute) {
+        options.execute = true;
+        options.source = ensure(argv.shift());
+      }
+      options.argv = argv;
+      break;
+    }
+    else if (arg.match(/^-/)) {
+      if (options.execute) {
+        options.argv.push(arg);
+      }
+      else {
+        console.error('unsupported argument: ' + arg);
+        process.exit(1);
+      }
+    }
+    else {
+      assert(!options.compile);
+      if (options.execute) {
+        options.argv.push(arg);
+      }
+      else {
+        options.execute = true;
+        options.source = arg;
+        options.argv = [];
+      }
+    }
+  }
   
-  NewlangCompiler.compileAndCacheFile(sourceFilename);
+  
+  if (options.compile) {
+    var Compiler = require('combe/lib/newlang/Compiler');
+    
+    var output = options.output;
+    if (output == null) {
+      output = options.source + '.js';
+    }
+    if (options.noCache) {
+      output = null;
+    }
+    
+    Compiler.compileFile(options.source, output, options.compilerIntermediates);
+  }
+  else if (options.execute) {
+    var Runtime = require('combe/lib/newlang/Runtime');
+    
+    assert(options.output == null);
+    NewlangRuntime.cacheCompilerOutput = !options.noCache;
+    NewlangRuntime.execute(options.source);
+  }
+  else {
+    console.error('Usage: newlang [-c] sourceFile');
+    process.exit(1);
+  }
 }, 0);
