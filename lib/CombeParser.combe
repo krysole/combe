@@ -19,10 +19,10 @@
 
 var BaseParser = require('./BaseParser');
 
-var Ast = require('./NewCombeAst');
-var NewCombeLexer = require('./NewCombeLexer');
+var Ast = require('./CombeAst');
+var CombeLexer = require('./CombeLexer');
 
-var NewCombeParser = module.exports = Class.new(BaseParser, {
+var CombeParser = module.exports = Class.new(BaseParser, {
   
   parseProgram: function (source, filename) {
     return this.parse(source, filename, 'program');
@@ -50,7 +50,7 @@ var NewCombeParser = module.exports = Class.new(BaseParser, {
       var t = parser.tokens.last;
       var lc = (t != null ? source.lineColumnAt(t.position).join(':') : '-1');
       var text = (t != null ? '[' + t.text + '] ' : '');
-      throw Error.new('NewCombe Parser Failed: Furthest token was ' + text + filename + ':' + lc);
+      throw Error.new('Combe Parser Failed: Furthest token was ' + text + filename + ':' + lc);
     }
     return result;
   },
@@ -62,7 +62,7 @@ var NewCombeParser = module.exports = Class.new(BaseParser, {
     
     this.filename = filename;
     
-    this.lexer = NewCombeLexer.new(source, filename);
+    this.lexer = CombeLexer.new(source, filename);
     this.tokens = [];
     this.furthestToken = { position: 0, text: '<<notoken>>' };
   },

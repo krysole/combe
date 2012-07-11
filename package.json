@@ -1,13 +1,13 @@
 {
+  "name": "combe",
+  "description": "A Parsing Language for JavaScript",
+  "version": "0.2.6",
+  "homepage": "http://github.com/krysole/combe",
   "author": {
     "name": "Lorenz Pretterhofer",
     "email": "krysole@alexicalmistake.com",
     "url": "http://alexicalmistake.com/"
   },
-  "name": "combe",
-  "description": "A Parsing Language for JavaScript",
-  "version": "0.2.5",
-  "homepage": "http://github.com/krysole/combe",
   "licenses": [
     {
       "type": "Apache License, Version 2.0",
@@ -16,14 +16,12 @@
   ],
   "bin": {
     "combec": "./bin/combec",
-    "newcombec": "./bin/newcombec",
-    "newlang": "./bin/newlang"
   },
   "repository": {
     "type": "git",
     "url": "git://github.com/krysole/combe.git"
   },
   "engines": {
-    "node": ">=0.5"
+    "node": "0.8.x"
   }
 }
