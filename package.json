@@ -1,7 +1,7 @@
 {
   "name": "combe",
-  "description": "A Parsing Language for JavaScript",
-  "version": "0.2.6",
+  "description": "A Reworked JavaScript Language with Pattern Matching",
+  "version": "0.3.0",
   "homepage": "http://github.com/krysole/combe",
   "maintainers": [
     {
@@ -12,12 +12,12 @@
   ],
   "licenses": [
     {
-      "type": "Apache License, Version 2.0",
-      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+      "type": "ISC",
+      "url": "http://www.opensource.org/licenses/ISC"
     }
   ],
   "bin": {
-    "combec": "./bin/combec"
+    "combec": "./bin/newcombec"
   },
   "repository": {
     "type": "git",

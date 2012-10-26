@@ -21,7 +21,7 @@ var combe = require('combe');
 
 setTimeout(function () {
   if (process.argv.length < 3) {
-    console.error('Usage: combec sourceFile [destFile]');
+    console.error('Usage: newcombec sourceFile [destFile]');
     return;
   }
   
