@@ -301,8 +301,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   operatorAssignmentToken: rule {
-    | 'operatorAssignment'
-    | divisionAssignment
+    'operatorAssignment'
   },
   
   conditionalExpression: rule (noInFlag) {
@@ -345,7 +344,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     leftAssociative[multiplicitiveExpression, ('+'|'-')]
   },
   multiplicitiveExpression: rule {
-    leftAssociative[rangeExpression, ('*'|division|'%')]
+    leftAssociative[rangeExpression, ('*'|'/'|'%')]
   },
   
   rangeExpression: rule {
@@ -614,54 +613,6 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   
   inToken: rule (noInFlag) {
     ?(!noInFlag) id('in')
-  },
-  
-  regex: function () {
-    try {
-      return this.t('regex');
-    }
-    catch (e) {
-      if (e === this.lexer.AmbiguousTokenFailure) {
-        // Only happens when parsing a new token...
-        assert(this.position >= this.tokens.length);
-        this.tokens.push(this.lexer.regex());
-      }
-      else {
-        throw e;
-      }
-    }
-  },
-  
-  division: function () {
-    try {
-      return this.t('/');
-    }
-    catch (e) {
-      if (e === this.lexer.AmbiguousTokenFailure) {
-        // Only happens when parsing a new token...
-        assert(this.position >= this.tokens.length);
-        this.tokens.push(this.lexer.division());
-      }
-      else {
-        throw e;
-      }
-    }
-  },
-  
-  divisionAssignment: function () {
-    try {
-      return this.t('/=');
-    }
-    catch (e) {
-      if (e === this.lexer.AmbiguousTokenFailure) {
-        // Only happens when parsing a new token...
-        assert(this.position >= this.tokens.length);
-        this.tokens.push(this.lexer.divisionAssignment());
-      }
-      else {
-        throw e;
-      }
-    }
   },
   
   peekNext: function () {
