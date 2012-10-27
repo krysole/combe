@@ -1,5 +1,5 @@
 {
-  "name": "combe",
+  "name": "newcombe",
   "description": "A Reworked JavaScript Language with Pattern Matching",
   "version": "0.3.0",
   "homepage": "http://github.com/krysole/combe",
@@ -17,7 +17,7 @@
     }
   ],
   "bin": {
-    "combec": "./bin/newcombec"
+    "newcombec": "./bin/newcombec"
   },
   "repository": {
     "type": "git",
