@@ -218,34 +218,22 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   throwStatement: rule {
-    id('throw'):t
-    ( ?(t.precedesNewline) ';'
-    | expression?:expr ';'
-    )
+    id('throw'):t expression?:expr ';'
     -> Ast.ThrowStatement(expr)
   },
   
   returnStatement: rule {
-    id('return'):t
-    ( ?(t.precedesNewline) ';'
-    | expression?:expr ';'
-    )
+    id('return'):t expression?:expr ';'
     -> Ast.ReturnStatement(expr)
   },
   
   breakStatement: rule {
-    id('break'):t
-    ( ?(t.precedesNewline) ';'
-    | 'identifier'?:name ';'
-    )
+    id('break'):t 'identifier'?:name ';'
     -> Ast.BreakStatement(name)
   },
   
   continueStatement: rule {
-    id('continue'):t
-    ( ?(t.precedesNewline) ';'
-    | 'identifier'?:name ';'
-    )
+    id('continue'):t 'identifier'?:name ';'
     -> Ast.ContinueStatement(name)
   },
   
@@ -384,8 +372,8 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   
   postfixExpression: rule {
     secondaryExpression:expr
-    ( ('++'|'--'):t ?(!t.newlinePrecedes)
-      -> Ast.PostfixOperator(t.text, expr)
+    ( ('++'|'--'):op
+      -> Ast.PostfixOperator(op.text, expr)
     | -> expr
     )
   },
