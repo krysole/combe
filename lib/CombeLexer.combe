@@ -53,9 +53,12 @@ var CombeLexer = module.exports = Class.new(TextParser, {}, {
     -> token
   },
   
-  ReservedWords: String.ReservedWords.concat([
-    'rule'
-  ]),
+  ReservedWords: [
+    'if', 'else', 'while', 'do', 'for',
+    'for', 'break', 'continue', 
+    'try', 'catch', 'finally',
+    'this', 'null', 'undefined', 'true', 'false'
+  ],
 
   
   operatorAssignment: rule {
