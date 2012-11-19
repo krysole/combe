@@ -32,12 +32,12 @@ var CombeLexer = module.exports = Class.new(TextParser, {}, {
   
   
   nextToken: rule {
-    ws?:nl !(this.initialTokenPosition = this.position)
+    ws? !(this.initialTokenPosition = this.position)
     
     ( identifier
     | number
     | operatorAssignment
-    | punctuation(nl)
+    | punctuation
     | string
     | regex
     | eof createToken('eof')
@@ -69,13 +69,14 @@ var CombeLexer = module.exports = Class.new(TextParser, {}, {
   },
   
   
-  punctuation: rule (nl) {
+  punctuation: rule {
     ( '{' | '}' | '(' | ')' | '[' | ']' | ';' | ','
     | '<<' | '>>>' | '>>' | '<=' | '>=' | '<' | '>'
     | '===' | '!==' | '==' | '!=' | '!' | '='
     | '...' | '..' | '.' ~digit -> '.'
     | '->' | '#'
-    | '&&' | '||' | '&' | '|' | '++' | '--' | '+' | '-'
+    | '&&' | '||' | '^^' | '&' | '|' | '^'
+    | '++' | '--' | '+' | '-'
     | '*' | '/' | '%' | '~' | '?' | ':'
     ):text
     createToken(text)

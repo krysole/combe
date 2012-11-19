@@ -235,7 +235,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   equalityExpression: rule {
-    leftAssociative[relationalExpression, ('=='|'!=')]
+    leftAssociative[relationalExpression, ('=='|'!='|'==='|'!==')]
   },
   relationalExpression: rule {
     leftAssociative[bitwiseOrExpression, ('<'|'<='|'>='|'>')]
