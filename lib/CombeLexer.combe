@@ -17,23 +17,89 @@
 //
 'use strict';
 
-var TextParser = require('./TextParser');
+var combe = require('combe');
 
-var CombeLexer = module.exports = Class.new(TextParser, {}, {
+var TextParser = combe.TextParser;
+
+var Token = Class.new(Object, {}, {
+  
+  initialize: function (type, value, position, length, text) {
+    this.type = type;
+    this.value = value;
+    this.position = position;
+    this.length = length;
+    this.text = text;
+  },
+  
+  toString: function () {
+    return '[[Token ' + this.type + ' ' + this.value + ' ' + this.text.quote() + ']]';
+  },
+  
+  is: function (typename) {
+    return this.type === typename;
+  },
+  
+});
+
+
+var CombeLexer = module.exports = Class.new(TextParser, {
+  
+  allTokens: function (source, filename) {
+    var lexer = this.new(source, filename);
+    var tokens = [];
+    
+    try {
+      while (tokens.isEmpty() || !tokens.last.is('eof')) {
+        tokens.push(lexer.nextToken());
+      }
+    }
+    catch (e) {
+      if (e === combe.BacktrackingException) {
+        throw Error.new('Lexer failed at ' + lexer.positionString());
+      }
+      else {
+        throw e;
+      }
+    }
+    
+    return tokens;
+  },
+  
+}, {
   
   initialize: function (source, filename) {
+    if (filename == null) filename = '(unnamed)';
+    
     TextParser.prototype.initialize.call(this, source);
     
+    this.source = source;
     this.filename = filename;
+    this.furthestPosition = 0;
+  },
+  
+  reset: function (position) {
+    if (position == null) position = 0;
+    
+    this.position = position;
+  },
+  
+  createToken: function (type, value) {
+    var text = this.source.slice(this.initialTokenPosition, this.position);
+    return Token.new(
+      type,
+      value,
+      this.tokenPosition,
+      text.length,
+      text
+    );
   },
   
   
-  AmbiguousTokenFailure: Object.unique('AmbiguousTokenFailure'),
-  
-  
   nextToken: rule {
-    ws? !(this.initialTokenPosition = this.position)
+    !(this.furthestPosition = this.position)
+    ws?
     
+    !(this.initialTokenPosition = this.position)
     ( identifier
     | number
     | operatorAssignment
@@ -47,7 +113,7 @@ var CombeLexer = module.exports = Class.new(TextParser, {}, {
   
   
   identifier: rule {
-    initialIdChar idChar*:text
+    initialIdChar idChar*
     createToken('identifier'):token
     !(token.reserved = this.ReservedWords.include(token.text))
     -> token
@@ -64,7 +130,7 @@ var CombeLexer = module.exports = Class.new(TextParser, {}, {
   operatorAssignment: rule {
     ( '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^='
     | '<<=' | '>>>=' | '>>='
-    ):text
+    )
     createToken('operatorAssignment')
   },
   
@@ -124,7 +190,7 @@ var CombeLexer = module.exports = Class.new(TextParser, {}, {
   stringChar: rule {
     | '\\' stringEscapeSequence
     | '\\' newline -> ''
-    | ~newline sourceChar
+    | ~newline char
   },
   
   stringEscapeSequence: rule {
@@ -140,7 +206,7 @@ var CombeLexer = module.exports = Class.new(TextParser, {}, {
     | '0' ~digit -> '\0'
     | 'x' repeat[hexDigit, %2]:hs -> String.fromCodepoint(hs.join(''))
     | 'u' repeat[hexDigit, %4]:hs -> String.fromCodepoint(hs.join(''))
-    | ~(newline | digit) sourceChar
+    | ~(newline | digit) char
   },
   
   
@@ -150,9 +216,9 @@ var CombeLexer = module.exports = Class.new(TextParser, {}, {
   },
   
   regexChar: rule {
-    | '\\' ~newline sourceChar
+    | '\\' ~newline char
     | regexCharacterClass
-    | ~( '/' | newline ) sourceChar
+    | ~( '/' | newline ) char
   },
   
   regexCharacterClass: rule {
@@ -160,8 +226,8 @@ var CombeLexer = module.exports = Class.new(TextParser, {}, {
   },
   
   regexCharacterClassChar: rule {
-    | '\\' ~newline sourceChar
-    | ~(']' | newline) sourceChar
+    | '\\' ~newline char
+    | ~(']' | newline) char
   },
   
   
@@ -173,32 +239,54 @@ var CombeLexer = module.exports = Class.new(TextParser, {}, {
   hexDigit:      rule { char('0'..'9', 'a'..'f', 'A'..'F') },
   
   ws: rule {
-    ( spaces | newline | comment )+
+    ( spaces | comment | newline )+
   },
   
   spaces:        rule { char(' \t\v\f\u00a0\u200c\u200d\ufeff') },
   newline:       rule { '\r\n' | char('\n\r\u2028\u2029') },
   
-  sourceChar:    rule { char },
-  
   comment: rule {
-    | '//' (~newline sourceChar)* (newline | eof)
-    | '/*' (~'*/' sourceChar)* '*/'
+    | '//' (~newline char)* (newline | eof)
+    | '/*' (~'*/' char)* '*/'
   },
   
   
-  createToken: function (type, value) {
-    var text = this.slice(this.initialTokenPosition, this.position);
+  next: function () {
+    var c = TextParser.prototype.next.call(this);
+    this.furthestPosition = Math.max(
+      this.furthestPosition,
+      this.position
+    );
+    return c;
+  },
+  
+  nextIf: function () {
+    var c = TextParser.prototype.nextIf.call(this, predicate);
+    this.furthestPosition = Math.max(
+      this.furthestPosition,
+      this.position
+    );
+    return c;
+  },
+  
+  lineColumnString: function (position) {
+    if (position == null) position = this.position;
     
-    var token = {
-      type: type,
-      value: value,
-      text: text,
-      position: this.initialTokenPosition,
-      length: this.position - this.initialTokenPosition,
-    };
-    
-    return token;
+    return this.source.lineColumnAt(position).join(':');
+  },
+  
+  positionString: function (position) {
+    return this.filename + ':' + this.lineColumnString(position);
+  },
+  
+  log: function (name) {
+    var additionalMessages = Array.slice(arguments, 1);
+    var out = 'CombeLexer::log() ' + this.positionString() + ':' + name;
+    if (additionalMessages.length > 0) {
+      out += '; ';
+      out += messages.join('; ');
+    }
+    console.error(out);
   },
   
 });
