@@ -1,7 +1,7 @@
 {
-  "name": "newcombe",
-  "description": "A Reworked JavaScript Language with Pattern Matching",
-  "version": "0.3.0",
+  "name": "combe-newcombe",
+  "description": "Improved JavaScript with Pattern Matching",
+  "version": "0.5.0",
   "homepage": "http://github.com/krysole/combe",
   "maintainers": [
     {
@@ -17,7 +17,7 @@
     }
   ],
   "bin": {
-    "newcombec": "./bin/newcombec"
+    "newcombebc": "./bin/newcombebc"
   },
   "repository": {
     "type": "git",

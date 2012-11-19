@@ -1,5 +1,5 @@
-Combe - A Reworked JavaScript Language with Pattern Matching
-============================================================
+Combe - Improved JavaScript with Pattern Matching
+=================================================
 
 LICENSE
 -------
