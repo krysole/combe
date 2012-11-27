@@ -20,8 +20,38 @@ var combe = require('combe');
 
 var BootstrapCompiler = module.exports = {
   
-  compile: function (sourceFilename, destinationFilename) {
+  compileFile: function (sourceFilename, destinationFilename) {
     // Todo...
+  },
+  
+  compileScript: function (source, filename) {
+    if (this.hasHashbangLine(source)) {
+      source = this.removeHashbangLine(source);
+      var hashbangLine = this.getHashbangLine(source);
+    }
+    
+    var parser = CombeParser.new();
+    parser.parseScript(source, filename);
+    
+    // Todo...
+  },
+  
+  hashbangRegex: /^#![^\r\n]*(\r\n|\r|\n)/,
+  
+  hasHashbangLine: function (source) {
+    return source.match(this.hashbangRegex) != null;
+  },
+  
+  removeHashbangLine: function (source) {
+    return source.replace(this.hashbangRegex, '');
+  },
+  
+  getHashbangLine: function (source) {
+    var hashbangLine = source.match(this.hashbangRegex);
+    if (hashbangLine == null) {
+      throw Error.new('No hashbang line found in string');
+    }
+    return hashbangLine;
   },
   
 };

@@ -326,11 +326,19 @@ var CombeParser = module.exports = Class.new(BaseParser, {
       return this.assignmentExpression();
     }));
   }),
+  lvalueTypes: [
+    "Variable",
+    "State",
+    "Subscript"
+  ],
   assignmentExpression: (function () {
-    return this.memoize("eA+75GhKOMrYVVfzIIlZGw", (function () {
+    return this.memoize("/uyeCorGDNBet1xsExcngw", (function () {
       var lhs, rhs, op;
       return this._choice((function () {
         lhs = this.secondaryExpression();
+        this._predicate((function () {
+          return this.lvalueTypes.include(lhs.type);
+        }));
         return this._choice((function () {
           this.stringPatternHandler("=");
           rhs = this.expression();

@@ -23,7 +23,7 @@ var Ast = combe.Ast;
 var CombeAst = module.exports = Class.new(Ast, {
   
   Types: {
-    Script:                 ['body'],
+    Script:                 ['statements'],
     
     DefStatement:           ['name', 'parameters', 'body'],
     VarStatement:           ['declarations'],
@@ -38,6 +38,7 @@ var CombeAst = module.exports = Class.new(Ast, {
     ForDeclaringExpression: ['declarations', 'condition', 'increment', 'body'],
     TryCatchExpression:     ['tryBody', 'catchVariable', 'catchBody', 'finallyBody'],
     ThrowExpression:        ['argument'],
+    ReturnExpression:       ['argument'],
     BreakExpression:        [],
     ContinueExpression:     [],
     SequenceExpression:     ['expressions'],

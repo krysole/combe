@@ -221,8 +221,14 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     assignmentExpression
   },
   
+  // Todo: Add support for assignment methods
+  lvalueTypes: [
+    'Variable', 'State', 'Subscript'
+  ],
+  
   assignmentExpression: rule {
     | secondaryExpression:lhs
+      ?(this.lvalueTypes.include(lhs.type))
       ( '=' expression:rhs
         -> Ast.Assignment(lhs, rhs)
       | 'operatorAssignment':op expression:rhs
