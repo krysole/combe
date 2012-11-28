@@ -51,7 +51,18 @@ var CombeAstToJS = module.exports = Class.new(Object, {
       '"use strict";\n',
       '(function () {\n',
         'var __combe = require("newcombe/Runtime/__combe");\n',
-        stmts,
+        'var __combe$break = __combe.break;\n',
+        'var __combe$continue = __combe.continue;\n',
+        'var Range = __combe.Range;\n',
+        '__combe$this = null;\n',
+        '__combe$return = null;\n',
+        'try {\n'
+          stmts,
+        '}\n',
+        'catch (e) {\n',
+          'if (__combe$return === e) return __combe$return;\n',
+          'throw e;\n',
+        '}\n',
       '})()'
     ];
   },
@@ -114,9 +125,16 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     ast.code = [
       '(function () {\n',
         'while (', ast.condition.code, ') {\n',
-          body,
+          'try {\n',
+            body,
+          '}\n',
+          'catch (e) {\n',
+            'if (e === __combe$break) break;\n',
+            'if (e === __combe$continue) continue;\n',
+            'throw e;\n',
+          '}\n',
         '}\n',
-      '})'
+      '})()'
     ];
   },
   
@@ -128,9 +146,16 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     ast.code = [
       '(function () {\n',
         'do {\n',
-          body,
+          'try {\n',
+            body,
+          '}\n',
+          'catch (e) {\n',
+            'if (e === __combe$break) break;\n',
+            'if (e === __combe$continue) continue;\n',
+            'throw e;\n',
+          '}\n',
         '} while (', ast.condition.code, ');\n',
-      '})'
+      '})()'
     ];
   },
   
@@ -148,19 +173,21 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     ast.code = [
       '(function () {\n',
         'for (', init, '; ', cond, '; ', inc, ') {\n',
-          body,
+          'try {\n',
+            body,
+          '}\n',
+          'catch (e) {\n',
+            'if (e === __combe$break) break;\n',
+            'if (e === __combe$continue) continue;\n',
+            'throw e;\n',
+          '}\n',
         '}\n',
-      '})'
+      '})()'
     ];
   },
   
   visitForDeclaringExpression: function (ast) { // [ declarations, condition, increment, body ]
     ast.visitChildren(this);
-    
-    assert(false);
-    
-    // Todo: Handle break and continue, which must be handled in a different
-    // way compared to the other JS equivelant loops.
     
     var decls = ['var ', ast.declarations.map(function (decl) {
       return decl.code;
@@ -187,6 +214,21 @@ var CombeAstToJS = module.exports = Class.new(Object, {
         'while (', cond, ') {\n',
           body,
           inc, ';\n';
+        '}\n',
+      '})(', inits, ')'
+    ];
+    
+    ast.code = [
+      '(function (', names, ') {\n',
+        'while (', cond, ') {\n',
+          'try {\n',
+            body,
+          '}\n',
+          'catch (e) {\n',
+            'if (e === __combe$break) break;\n',
+            'if (e !== __combe$continue) throw e;\n',
+          '}\n',
+          inc, ';\n',
         '}\n',
       '})(', inits, ')'
     ];
@@ -222,7 +264,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
         tryFragment,
         catchFragment,
         finallyBody,
-      '})'
+      '})()'
     ];
   },
   
@@ -230,18 +272,28 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     ast.visitChildren(this);
     
     ast.code = [
-      '__combe.throw(', ast.argument.code, ')'
+      '(function () { throw ', ast.argument.code, '; })()'
+    ];
+  },
+  
+  visitReturnExpression: function (ast) { // [ argument ]
+    ast.visitChildren(this);
+    
+    ast.code = [
+      '(function () { throw (__combe$return = { value: ', ast.argument.code, ' }); })()'
     ];
   },
   
   visitBreakExpression: function (ast) { // [ ]
-    // Todo...
-    assert(false);
+    ast.code = [
+      '(function () { throw __combe$break; })()'
+    ];
   },
   
   visitContinueExpression: function (ast) { // [ ]
-    // Todo...
-    assert(false);
+    ast.code = [
+      '(function () { throw __combe$continue; })()'
+    ];
   },
   
   visitSequenceExpression: function (ast) { // [ expressions ]
@@ -379,7 +431,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
   },
   
   visitThis: function (ast) { // [ ]
-    ast.code = '$this';
+    ast.code = '__combe$this';
   },
   
   visitVariable: function (ast) { // [ name ]
@@ -423,7 +475,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     ast.visitChildren(this);
     
     var prologue = [
-      'var $object = {};\n'
+      'var __combe$object = {};\n'
     ];
     
     var decls = ast.properties.map(function (pdecl) {
@@ -431,7 +483,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     });
     
     var epilogue = [
-      'return $object;\n';
+      'return __combe$object;\n';
     ];
     
     ast.code = [
@@ -439,7 +491,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
         prologue,
         decls,
         epilogue,
-      '})'
+      '})()'
     ];
   },
   
@@ -451,8 +503,15 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     
     ast.code = [
       '(function (', params, ') {\n',
-        '$object = this;\n',
-        'return ', ast.body.code, ';\n',
+        '__combe$this = this;\n',
+        '__combe$return = null;\n',
+        'try {\n'
+          'return ', ast.body.code, ';\n',
+        '}\n',
+        'catch (e) {\n',
+          'if (e === __combe$return) return __combe$return;\n',
+          'throw e;\n',
+        '}\n',
       '})'
     ];
   },
@@ -481,7 +540,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     ast.code = [
       '(function () {\n',
         stmts, // no default result
-      '})'
+      '})()'
     ];
   },
   
@@ -491,7 +550,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     
     ast.code = [
       '__combe.defineValueProperty(', 
-        '$object, ',
+        '__combe$object, ',
         ast.name.quote(), ', ',
         ast.value.code,
       ')'
@@ -503,7 +562,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     
     ast.code = [
       '__combe.defineGetProperty(', 
-        '$object, ',
+        '__combe$object, ',
         ast.name.quote(), ', ',
         ast.value.code,
       ')'
@@ -515,7 +574,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     
     ast.code = [
       '__combe.defineSetProperty(',
-        '$object, ',
+        '__combe$object, ',
         ast.name.quote(), ', ',
         ast.value.code,
       ')'
@@ -527,7 +586,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     
     ast.code = [
       '__combe.defineProperty(', 
-        '$object, ',
+        '__combe$object, ',
         ast.name.quote(), ', ',
         ast.value.code,
       ')'
@@ -555,7 +614,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
         return [
           '(function () {\n',
             stmts,
-          '})'
+          '})()'
         ];
       }
     }
@@ -569,7 +628,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
   gensym: function (name) {
     if (name == null) name = 'unnamed';
     
-    return 'gensym$' + name + this.gensymIndex++;
+    return '__combe$gensym$' + name + this.gensymIndex++;
   },
   
 });
