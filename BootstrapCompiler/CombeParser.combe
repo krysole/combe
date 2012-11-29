@@ -39,7 +39,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
 }, {
   
   parseScript: function (source, filename) {
-    return this.parse(source, filename, 'file');
+    return this.parse(source, filename, 'script');
   },
   
   parse: function (source, filename, rulename) {
@@ -49,7 +49,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     this.source = source;
     this.filename = filename;
     
-    this.lexer = Lexer.new(source, filename);
+    this.lexer = CombeLexer.new(source, filename);
     this.tokens = [];
     
     this.ast = this.match.apply(this, [rulename].concat(rest));
@@ -68,7 +68,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     
     this.lexer = CombeLexer.new(source, filename);
     this.tokens = [];
-    this.furthestToken = { position: 0, text: '<<notoken>>' };
+    this.furthestPosition = -1;
   },
   
   
@@ -127,7 +127,6 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     | returnExpression
     | breakExpression
     | continueExpression
-    | debuggerExpression
     
     | operatorExpression
   },
@@ -165,9 +164,10 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     id('try') body:tryBody
     ( id('catch') '(' variableIdentifier:catchBinding ')' body:catchBody
       ( id('finally') body:finallyBody )?
+      -> Ast.TryCatchExpression(tryBody, catchBinding, catchBody, finallyBody)
     | id('finally') body:finallyBody
+      -> Ast.TryCatchExpression(tryBody, null, null, finallyBody)
     )
-    -> Ast.TryCatchExpression(tryBody, catchBinding, catchBody, finallyBody)
   },
   
   throwExpression: rule {
@@ -435,6 +435,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   t: function (typename) {
     var token = this.next();
     if (token.type === typename) {
+      this.furthestPosition = Math.max(this.furthestPosition, this.position);
       return token;
     }
     else {
@@ -475,25 +476,28 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   lineColumnString: function (position) {
     if (position == null) position = this.position;
     
-    var token = this.tokenAt(position);
+    if (position != -1) {
+      var token = this.tokenAt(position);
     
-    return this.source.lineColumnAt(token.position).join(':');
+      return this.source.lineColumnAt(token.position).join(':');
+    }
+    else {
+      return '-:-';
+    }
   },
   
   positionString: function (position) {
-    if (position == null) position = this.position;
+    var lcs = this.lineColumnString(position);
     
-    var token = this.tokenAt(position);
-    
-    return this.filename + ':' + this.source.lineColumnAt(token.position).join(':');
+    return this.filename + ':' + lcs;
   },
   
   log: function (name) {
     var additionalMessages = Array.slice(arguments, 1);
     var out = 'CombeParser::log() ' + this.positionString() + ':' + name;
     if (additionalMessages.length > 0) {
-      out += '; ';
-      out += messages.join('; ');
+      out = out + '; ';
+      out = out + additionalMessages.join('; ');
     }
     console.error(out);
   },    

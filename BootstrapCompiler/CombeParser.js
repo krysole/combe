@@ -15,14 +15,14 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   })
 }, {
   parseScript: (function (source, filename) {
-    return this.parse(source, filename, "file");
+    return this.parse(source, filename, "script");
   }),
   parse: (function (source, filename, rulename) {
     var rest = Array.slice(arguments, 3);
     if (filename == null) filename = "(unnamed)";
     this.source = source;
     this.filename = filename;
-    this.lexer = Lexer.new(source, filename);
+    this.lexer = CombeLexer.new(source, filename);
     this.tokens = [
       /* elision */
     ];
@@ -41,10 +41,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     this.tokens = [
       /* elision */
     ];
-    this.furthestToken = {
-      position: 0,
-      text: "<<notoken>>"
-    };
+    this.furthestPosition = -1;
   }),
   script: (function () {
     return this.memoize("OT9yiGFgpmDKjenwxZ9GbA", (function () {
@@ -126,8 +123,8 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   expression: (function () {
-    return this.memoize("kN4B7DesMeO+vTYPQ0rExA", (function () {
-      return this._choice(this.ifExpression, this.whileExpression, this.doWhileExpression, this.forExpression, this.tryCatchExpression, this.throwExpression, this.returnExpression, this.breakExpression, this.continueExpression, this.debuggerExpression, this.operatorExpression);
+    return this.memoize("Z5CiEoR2fMibqhavbkeKJg", (function () {
+      return this._choice(this.ifExpression, this.whileExpression, this.doWhileExpression, this.forExpression, this.tryCatchExpression, this.throwExpression, this.returnExpression, this.breakExpression, this.continueExpression, this.operatorExpression);
     }));
   }),
   ifExpression: (function () {
@@ -209,26 +206,27 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   tryCatchExpression: (function () {
-    return this.memoize("p/fP2+BLT1Gny/LibrYNcg", (function () {
+    return this.memoize("8oIeGDtbG91KtHWb7babsg", (function () {
       var tryBody, catchBinding, catchBody, finallyBody;
       return (function () {
         this.id("try");
         tryBody = this.body();
-        this._choice((function () {
+        return this._choice((function () {
           this.id("catch");
           this.stringPatternHandler("(");
           catchBinding = this.variableIdentifier();
           this.stringPatternHandler(")");
           catchBody = this.body();
-          return this._optional((function () {
+          this._optional((function () {
             this.id("finally");
             return finallyBody = this.body();
           }));
+          return Ast.TryCatchExpression(tryBody, catchBinding, catchBody, finallyBody);
         }), (function () {
           this.id("finally");
-          return finallyBody = this.body();
+          finallyBody = this.body();
+          return Ast.TryCatchExpression(tryBody, null, null, finallyBody);
         }));
-        return Ast.TryCatchExpression(tryBody, catchBinding, catchBody, finallyBody);
       }).call(this);
     }));
   }),
@@ -814,6 +812,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   t: (function (typename) {
     var token = this.next();
     if (token.type === typename) {
+      this.furthestPosition = Math.max(this.furthestPosition, this.position);
       return token;
     }
     else {
@@ -845,20 +844,24 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   }),
   lineColumnString: (function (position) {
     if (position == null) position = this.position;
-    var token = this.tokenAt(position);
-    return this.source.lineColumnAt(token.position).join(":");
+    if (position != -1) {
+      var token = this.tokenAt(position);
+      return this.source.lineColumnAt(token.position).join(":");
+    }
+    else {
+      return "-:-";
+    }
   }),
   positionString: (function (position) {
-    if (position == null) position = this.position;
-    var token = this.tokenAt(position);
-    return (this.filename + ":") + this.source.lineColumnAt(token.position).join(":");
+    var lcs = this.lineColumnString(position);
+    return (this.filename + ":") + lcs;
   }),
   log: (function (name) {
     var additionalMessages = Array.slice(arguments, 1);
     var out = (("CombeParser::log() " + this.positionString()) + ":") + name;
     if (additionalMessages.length > 0) {
-      out [object Object]= "; ";
-      out [object Object]= messages.join("; ");
+      out = out + "; ";
+      out = out + additionalMessages.join("; ");
     }
     console.error(out);
   })

@@ -52,15 +52,15 @@ var CombeLexer = module.exports = Class.new(TextParser, {
     this.position = position;
   }),
   createToken: (function (type, value) {
-    var text = this.source.slice(this.initialTokenPosition, this.position);
+    var text = this.source.slice(this.tokenPosition, this.position);
     return Token.new(type, value, this.tokenPosition, text.length, text);
   }),
   nextToken: (function () {
-    return this.memoize("ZApiV7BwAJpXWFI6HwqvrA", (function () {
+    return this.memoize("V65sYLFwD2A/Bq3jBCQMKg", (function () {
       return (function () {
         this.furthestPosition = this.position;
         this._optional(this.ws);
-        this.initialTokenPosition = this.position;
+        this.tokenPosition = this.position;
         return this._choice(this.identifier, this.number, this.operatorAssignment, this.punctuation, this.string, this.regex, (function () {
           this.eof();
           return this.createToken("eof");
@@ -83,6 +83,8 @@ var CombeLexer = module.exports = Class.new(TextParser, {
     }));
   }),
   ReservedWords: [
+    "var",
+    "def",
     "if",
     "else",
     "while",
@@ -534,8 +536,8 @@ var CombeLexer = module.exports = Class.new(TextParser, {
     var additionalMessages = Array.slice(arguments, 1);
     var out = (("CombeLexer::log() " + this.positionString()) + ":") + name;
     if (additionalMessages.length > 0) {
-      out [object Object]= "; ";
-      out [object Object]= messages.join("; ");
+      out = out + "; ";
+      out = out + messages.join("; ");
     }
     console.error(out);
   })

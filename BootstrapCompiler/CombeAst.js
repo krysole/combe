@@ -49,7 +49,7 @@ var CombeAst = module.exports = Class.new(Ast, {
     PostfixOperator:        ['name', 'argument'],
     InfixOperator:          ['name', 'lhs', 'rhs'],
 
-    Call:                   ['subject', 'arguments'],
+    Call:                   ['function', 'arguments'],
     Subscript:              ['subject', 'arguments'],
     State:                  ['subject', 'name'],    
     MethodCall:             ['subject', 'name', 'arguments'],

@@ -29,8 +29,8 @@ var BootstrapCompiler = module.exports = {
   
   shouldOutputIntermediates: false,
   
-  compileFile: function (filename) {
-    var source = fs.readFileSync(sourceFilename, 'utf8');
+  compile: function (filename) {
+    var source = fs.readFileSync(filename, 'utf8');
     
     var hashbang = this.getHashbangLine(source);
     source = this.removeHashbangLine(source);
@@ -40,7 +40,7 @@ var BootstrapCompiler = module.exports = {
     this.writeIntermediate(filename, 'tokens', parser.tokens);
     this.writeIntermediate(filename, 'ast', parser.ast);
     
-    var jsiolist = CombeAstToJS.TranslateToIOList(parser.ast);
+    var jsiolist = CombeAstToJS.translateToIOList(parser.ast);
     this.writeIntermediate(filename, 'iolist', jsiolist);
     
     var jstext = Array.deepJoinIOList(jsiolist);
