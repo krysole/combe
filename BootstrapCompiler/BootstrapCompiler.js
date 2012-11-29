@@ -18,22 +18,42 @@
 'use strict';
 var combe = require('combe');
 
+var fs = require('fs');
+var inspect = require('util').inspect;
+
+var CombeLexer = require('./CombeLexer');
+var CombeParser = require('./CombeParser');
+var CombeAstToJS = require('./CombeAstToJS');
+
 var BootstrapCompiler = module.exports = {
   
-  compileFile: function (sourceFilename, destinationFilename) {
-    // Todo...
-  },
+  shouldOutputIntermediates: false,
   
-  compileScript: function (source, filename) {
-    if (this.hasHashbangLine(source)) {
-      source = this.removeHashbangLine(source);
-      var hashbangLine = this.getHashbangLine(source);
-    }
+  compileFile: function (filename) {
+    var source = fs.readFileSync(sourceFilename, 'utf8');
+    
+    var hashbang = this.getHashbangLine(source);
+    source = this.removeHashbangLine(source);
     
     var parser = CombeParser.new();
     parser.parseScript(source, filename);
+    this.writeIntermediate(filename, 'tokens', parser.tokens);
+    this.writeIntermediate(filename, 'ast', parser.ast);
     
-    // Todo...
+    var jsiolist = CombeAstToJS.TranslateToIOList(parser.ast);
+    this.writeIntermediate(filename, 'iolist', jsiolist);
+    
+    var jstext = Array.deepJoinIOList(jsiolist);
+    
+    fs.writeFileSync(filename + '.js', jstext);
+  },
+  
+  writeIntermediate: function (baseFilename, name, object) {
+    if (this.shouldOutputIntermediates) {
+      var filename = baseFilename + '.' + name + '~';
+      var output = inspect(object, false, null);
+      fs.writeFileSync(filename, output);
+    }
   },
   
   hashbangRegex: /^#![^\r\n]*(\r\n|\r|\n)/,
@@ -47,11 +67,7 @@ var BootstrapCompiler = module.exports = {
   },
   
   getHashbangLine: function (source) {
-    var hashbangLine = source.match(this.hashbangRegex);
-    if (hashbangLine == null) {
-      throw Error.new('No hashbang line found in string');
-    }
-    return hashbangLine;
+    return source.match(this.hashbangRegex);
   },
   
 };

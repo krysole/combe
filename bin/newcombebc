@@ -20,13 +20,13 @@
 var BootstrapCompiler = require('newcombe/BootstrapCompiler');
 
 setTimeout(function () {
-  if (process.argv.length < 3) {
-    console.error('Usage: newcombebc sourceFile [destFile]');
+  if (process.argv.length < 2 + 1) { // argv: node newcombebc ...
+    console.error('Usage: newcombebc filename');
     return;
   }
   
   var sourceFilename = process.argv[2];
-  var destFilename = process.argv.length >= 3 ? process.argv[3] : null;
   
-  BootstrapCompiler.compile(sourceFilename, destFilename);
+  BootstrapCompiler.shouldOutputIntermediates = true;
+  BootstrapCompiler.compile(sourceFilename);
 }, 0);
