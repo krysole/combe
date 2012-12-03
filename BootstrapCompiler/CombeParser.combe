@@ -293,7 +293,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     )
   },
   rangeInfinity: rule {
-    '*' -> Ast.Null()
+    '*' -> Ast.Literal(null)
   },
   
   prefixExpression: rule {
@@ -388,7 +388,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   arrayElement: rule {
     | expression
-    | -> Ast.Null() // Elision
+    | -> Ast.Literal(null) // Elision
   },
   
   objectLiteral: rule {

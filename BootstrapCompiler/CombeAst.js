@@ -56,7 +56,6 @@ var CombeAst = module.exports = Class.new(Ast, {
     
     InclusiveRange:         ['lhs', 'rhs'],
     ExclusiveRange:         ['lhs', 'rhs'],
-    Null:                   [],
     This:                   [],
     Variable:               ['name'],
     Literal:                ['value'],
