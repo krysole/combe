@@ -12,6 +12,5 @@
 .project
 .settings
 
-# Newlang compiler output
-*.newlang.astdump
-*.newlang.js
+# Combe compiler output
+*.combe.js
