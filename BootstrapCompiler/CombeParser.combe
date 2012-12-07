@@ -464,7 +464,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   prefixOperatorPattern: rule {
-    | '~' prefixOperatorPattern:p -> Ast.ComplementPatern(p)
+    | '~' prefixOperatorPattern:p -> Ast.NotPatern(p)
     | '&' prefixOperatorPattern:p -> Ast.LookaheadPattern(p)
     | '#' prefixOperatorPattern:p -> Ast.HashOperatorPattern(p)
     | postfixOperatorPattern
@@ -475,7 +475,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     ( '*' !(p = Ast.RepeatPattern(p))
     | '+' !(p = Ast.NonZeroRepeatPattern(p))
     | '?' !(p = Ast.OptionalPattern(p))
-    | ':' !(p = Ast.BindPattern(p))
+    | ':' variableIdentifier:name !(p = Ast.BindPattern(p, name))
     )*
     -> e
   },
@@ -485,7 +485,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     ( arguments:args
       !(p = Ast.CallPattern(p, args))
     | patternArguments:args
-      !(p = Ast.CallPatternWithPatternArguments(p, args))
+      !(p = Ast.CallWithPatternArgumentsPattern(p, args))
     )*
     -> p
   },

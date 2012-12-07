@@ -531,6 +531,10 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     ];
   },
   
+  visitRule: function (ast) { // [ parameters, body ]
+    assert(false); // Todo...
+  },
+  
   
   visitVariableDeclaration: function (ast) { // [ name, expression ]
     ast.visitChildren(this);
@@ -606,6 +610,70 @@ var CombeAstToJS = module.exports = Class.new(Object, {
         ast.value.code,
       ')'
     ];
+  },
+  
+  visitChoicePattern: function (ast) { // [ patterns ]
+    assert(false); // Todo...
+  },
+  
+  visitSequencePattern: function (ast) { // [ patterns ]
+    assert(false); // Todo...
+  },
+  
+  visitNotPattern: function (ast) { // [ pattern ]
+    assert(false); // Todo...
+  },
+  
+  visitLookaheadPattern: function (ast) { // [ pattern ]
+    assert(false); // Todo...
+  },
+  
+  visitHashOperatorPattern: function (ast) { // [ pattern ]
+    assert(false); // Todo...
+  },
+  
+  visitRepeatPattern: function (ast) { // [ pattern ]
+    assert(false); // Todo...
+  },
+  
+  visitNonZeroRepeatPattern: function (ast) { // [ pattern ]
+    assert(false); // Todo...
+  },
+  
+  visitOptionalPattern: function (ast) { // [ pattern ]
+    assert(false); // Todo...
+  },
+  
+  visitBindPattern: function (ast) { // [ pattern, name ]
+    assert(false); // Todo...
+  },
+  
+  visitCallPattern: function (ast) { // [ pattern, arguments ]
+    assert(false); // Todo...
+  },
+  
+  visitCallWithPatternArgumentsPattern: function (ast) { // [ pattern, arguments ]
+    assert(false); // Todo...
+  },
+  
+  visitPredicatePattern: function (ast) { // [ body ]
+    assert(false); // Todo...
+  },
+  
+  visitActionPattern: function (ast) { // [ body ]
+    assert(false); // Todo...
+  },
+  
+  visitImmediateActionPattern: function (ast) { // [ body ]
+    assert(false); // Todo...
+  },
+  
+  visitStringPattern: function (ast) { // [ body ]
+    assert(false); // Todo...
+  },
+  
+  visitVariablePattern: function (ast) { // [ name ]
+    assert(false); // Todo...
   },
   
   

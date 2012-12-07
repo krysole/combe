@@ -64,6 +64,7 @@ var CombeAst = module.exports = Class.new(Ast, {
     
     
     Function:               ['parameters', 'body'],
+    Rule:                   ['parameters', 'body'],
     
     VariableDeclaration:    ['name', 'expression'],
     
@@ -73,6 +74,28 @@ var CombeAst = module.exports = Class.new(Ast, {
     GetProperty:            ['name', 'value'],
     SetProperty:            ['name', 'value'],
     DescribeProperty:       ['name', 'value'],
+    
+    
+    ChoicePattern:          ['patterns'],
+    SequencePattern:        ['patterns'],
+    
+    NotPattern:             ['pattern'],
+    LookaheadPattern:       ['pattern'],
+    HashOperatorPattern:    ['pattern'],
+    
+    RepeatPattern:          ['pattern'],
+    NonZeroRepeatPattern:   ['pattern'],
+    OptionalPattern:        ['pattern'],
+    BindPattern:            ['pattern', 'name'],
+    
+    CallPattern:            ['pattern', 'arguments'],
+    CallWithPatternArgumentsPattern: ['pattern', 'arguments'],
+    
+    PredicatePattern:       ['body'],
+    ActionPattern:          ['body'],
+    ImmediateActionPattern: ['body'],
+    StringPattern:          ['value'],
+    VariablePattern:        ['name'],
   },
   
 }, {});
