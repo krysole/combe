@@ -83,16 +83,10 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   statement: rule {
-    | defStatement
     | varStatement
     
     | expressionStatement
     | emptyStatement
-  },
-  
-  defStatement: rule {
-    id('def') variableIdentifier:name parameters:args functionBody:stmts
-    -> Ast.DefStatement(name, args, stmts)
   },
   
   varStatement: rule {
@@ -106,7 +100,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   expressionStatement: rule {
-    ~( id('function') ) expression:expr
+    expression:expr
     -> Ast.ExpressionStatement(expr)
   },
   
@@ -121,6 +115,9 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     | doWhileExpression
     | forExpression
     
+    // Todo: Add a 'doExpression' which is just for creating a new lexical
+    // block scope.
+    
     | tryCatchExpression
     | throwExpression
     
@@ -132,18 +129,18 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   ifExpression: rule {
-    id('if') '(' expression:condition ')' body?:consiquent
-    ( ?(consiquent != null) id('else') body:alternative )?
+    id('if') '(' expression:condition ')' expressionBody?:consiquent
+    ( ?(consiquent != null) id('else') expressionBody:alternative )?
     -> Ast.IfExpression(condition, consiquent, alternative)
   },
   
   whileExpression: rule {
-    id('while') '(' expression:condition ')' body?:b
+    id('while') '(' expression:condition ')' expressionBody?:b
     -> Ast.WhileExpression(condition, b)
   },
   
   doWhileExpression: rule {
-    id('do') body:b id('while') '(' expression:condition ')'
+    id('do') expressionBody:b id('while') '(' expression:condition ')'
     -> Ast.DoWhileExpression(b, condition)
   },
   
@@ -151,21 +148,21 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     | id('for') '('
         expression?:initExpr ';' 
         expression?:condExpr ';'
-        expression?:incExpr ')' body?:b
+        expression?:incExpr ')' expressionBody?:b
       -> Ast.ForExpression(initExpr, condExpr, incExpr, b)
     | id('for') '('
         id('var') delimited1[variableDeclaration, ',']:decls ';'
         expression?:condExpr ';'
-        expression?:incExpr ')' body?:b
+        expression?:incExpr ')' expressionBody?:b
       -> Ast.ForDeclaringExpression(decls, condExpr, incExpr, b)
   },
   
   tryCatchExpression: rule {
-    id('try') body:tryBody
-    ( id('catch') '(' variableIdentifier:catchBinding ')' body:catchBody
-      ( id('finally') body:finallyBody )?
+    id('try') expressionBody:tryBody
+    ( id('catch') '(' variableIdentifier:catchBinding ')' expressionBody:catchBody
+      ( id('finally') expressionBody:finallyBody )?
       -> Ast.TryCatchExpression(tryBody, catchBinding, catchBody, finallyBody)
-    | id('finally') body:finallyBody
+    | id('finally') expressionBody:finallyBody
       -> Ast.TryCatchExpression(tryBody, null, null, finallyBody)
     )
   },
@@ -191,7 +188,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   
-  body: rule {
+  expressionBody: rule {
     | expression
     | block
   },
@@ -200,20 +197,9 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     '{' terminatedStatement*:stmts '}'
     -> Ast.Block(stmts)
   },
-  
-  
-  id: rule (expectedName) {
-    'identifier':name ?(name.text === expectedName) -> name
-  },
-  
-  variableIdentifier: rule {
-    'identifier':name ?(!name.reserved) -> name.text
-  },
-  
-  propertyName: rule {
-    | 'identifier':t -> t.text
-    | 'string':t     -> t.value
-    | 'number':t     -> t.text
+  blockContents: rule {
+    terminatedStatements*:stmts
+    -> Ast.Block(stmts)
   },
   
   
@@ -366,6 +352,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     | arrayLiteral
     | objectLiteral
     | functionLiteral
+    | ruleLiteral
     | subexpression
   },
   
@@ -413,10 +400,21 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   functionLiteral: rule {
-    | parameters?:params '->' (expression | block):stmts
-      -> Ast.Function(params, stmts)
-    | variableIdentifier:p '->' (expression | block):stmts
-      -> Ast.Function([p], stmts)
+    | parameters?:params '->' expression:e
+      -> Ast.Function(params, e)
+    | variableIdentifier:p '->' expression:e
+      -> Ast.Function([p], e)
+    | id('function') parameters?:params functionBody:body
+      -> Ast.Function(params, body)
+  },
+  
+  ruleLiteral: rule {
+    | id('rule') parameters?:params ruleBody:body
+      -> Ast.Rule(params, body)
+  },
+  ruleBody: rule {
+    | '{' pattern:p '}' -> p
+    | operatorPattern
   },
   
   subexpression: rule {
@@ -429,6 +427,120 @@ var CombeParser = module.exports = Class.new(BaseParser, {
       -> exprs[0]
     | -> Ast.SequenceExpression(exprs)
     )
+  },
+  
+  
+  pattern: rule {
+    choicePattern
+  },
+  
+  choicePattern: rule {
+    '|'? returnPattern:p
+    ( '|' returnPattern:p2
+      !(p = Ast.ChoicePattern([p, p2]))
+    )*
+    -> p
+  },
+  
+  returnPattern: rule {
+    | sequencePattern:p
+      ( '->' actionBody:e
+        -> Ast.SequencePattern([p, Ast.ActionPattern(e)])
+      | -> p
+      )
+    | '->' actionBody:e
+      -> Ast.ActionPattern(e)
+  },
+  
+  sequencePattern: rule {
+    delimited1[operatorPattern, ',']:ps
+    ( ?(ps.length > 1) -> ps
+    | -> ps[0]
+    )
+  },
+  
+  operatorPattern: rule {
+    prefixOperatorPattern
+  },
+  
+  prefixOperatorPattern: rule {
+    | '~' prefixOperatorPattern:p -> Ast.ComplementPatern(p)
+    | '&' prefixOperatorPattern:p -> Ast.LookaheadPattern(p)
+    | '#' prefixOperatorPattern:p -> Ast.HashOperatorPattern(p)
+    | postfixOperatorPattern
+  },
+  
+  postfixOperatorPattern: rule {
+    callPattern:p
+    ( '*' !(p = Ast.RepeatPattern(p))
+    | '+' !(p = Ast.NonZeroRepeatPattern(p))
+    | '?' !(p = Ast.OptionalPattern(p))
+    | ':' !(p = Ast.BindPattern(p))
+    )*
+    -> e
+  },
+  
+  callPattern: rule {
+    primaryPattern:p
+    ( arguments:args
+      !(p = Ast.CallPattern(p, args))
+    | patternArguments:args
+      !(p = Ast.CallPatternWithPatternArguments(p, args))
+    )*
+    -> p
+  },
+  patternArguments: rule {
+    '[' delimited[pattern, ',']:args ']' -> args
+  },
+  
+  primaryPattern: rule {
+    | predicatePattern
+    | actionPattern
+    | immediateActionPattern
+    | stringPattern
+    | variablePattern
+    | '(' pattern:p ')' -> p
+  },
+  
+  predicatePattern: rule {
+    '?' actionBody:e -> Ast.PredicatePattern(e)
+  },
+  
+  actionPattern: rule {
+    '!' actionBody:e -> Ast.ActionPattern(e)
+  },
+  
+  immediateActionPattern: rule {
+    '%' actionBody:e -> Ast.ImmediateActionPattern(e)
+  },
+  
+  actionBody: rule {
+    | secondaryExpression
+    | '(' expression:e ')' -> e
+    | block
+  },
+  
+  stringPattern: rule {
+    | 'string':s -> Ast.StringPattern(s.value)
+  },
+  
+  variablePattern: rule {
+    variableIdentifier:name -> Ast.VariablePattern(name)
+  },
+  
+  
+  id: rule (expectedName) {
+    'identifier':name ?(name.text === expectedName) -> name
+  },
+  
+  variableIdentifier: rule {
+    'identifier':name ?(!name.reserved) -> name.text
+  },
+  
+  propertyName: rule {
+    | 'identifier':t -> t.text
+    | 'string':t     -> t.value
+    | 'number':t     -> t.text
   },
   
   

@@ -120,7 +120,8 @@ var CombeLexer = module.exports = Class.new(TextParser, {
   },
   
   ReservedWords: [
-    'var', 'def',
+    'var',
+    'function', 'rule',
     'if', 'else', 'while', 'do', 'for',
     'for', 'break', 'continue', 
     'try', 'catch', 'finally',

@@ -64,20 +64,8 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   statement: (function () {
-    return this.memoize("9Y7DbE990yiB96BNPAsmGg", (function () {
-      return this._choice(this.defStatement, this.varStatement, this.expressionStatement, this.emptyStatement);
-    }));
-  }),
-  defStatement: (function () {
-    return this.memoize("QvKEF3SwJwhp1q5jOagtnA", (function () {
-      var name, args, stmts;
-      return (function () {
-        this.id("def");
-        name = this.variableIdentifier();
-        args = this.parameters();
-        stmts = this.functionBody();
-        return Ast.DefStatement(name, args, stmts);
-      }).call(this);
+    return this.memoize("UrSoUy/ryRMuI72RNQdTeQ", (function () {
+      return this._choice(this.varStatement, this.expressionStatement, this.emptyStatement);
     }));
   }),
   varStatement: (function () {
@@ -106,12 +94,9 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   expressionStatement: (function () {
-    return this.memoize("L1h5C/y43otqrde9ZHxsMg", (function () {
+    return this.memoize("URE02SfduULQ15Ca3742bw", (function () {
       var expr;
       return (function () {
-        this._not((function () {
-          return this.id("function");
-        }));
         expr = this.expression();
         return Ast.ExpressionStatement(expr);
       }).call(this);
@@ -128,44 +113,44 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   ifExpression: (function () {
-    return this.memoize("fCp7oBTOykbSBtWHxL8B/Q", (function () {
+    return this.memoize("Uu8KLECe4f9+BWw5WgQjjA", (function () {
       var condition, consiquent, alternative;
       return (function () {
         this.id("if");
         this.stringPatternHandler("(");
         condition = this.expression();
         this.stringPatternHandler(")");
-        consiquent = this._optional(this.body);
+        consiquent = this._optional(this.expressionBody);
         this._optional((function () {
           this._predicate((function () {
             return consiquent != null;
           }));
           this.id("else");
-          return alternative = this.body();
+          return alternative = this.expressionBody();
         }));
         return Ast.IfExpression(condition, consiquent, alternative);
       }).call(this);
     }));
   }),
   whileExpression: (function () {
-    return this.memoize("/3ZE9R42GeLIdXJN1wVaug", (function () {
+    return this.memoize("EmIkvGXhSYPlH4ULWCAjuw", (function () {
       var condition, b;
       return (function () {
         this.id("while");
         this.stringPatternHandler("(");
         condition = this.expression();
         this.stringPatternHandler(")");
-        b = this._optional(this.body);
+        b = this._optional(this.expressionBody);
         return Ast.WhileExpression(condition, b);
       }).call(this);
     }));
   }),
   doWhileExpression: (function () {
-    return this.memoize("5DWeOrB220dRU9O+OOHmjg", (function () {
+    return this.memoize("f+423DQmGO1joRhyCg5cyQ", (function () {
       var b, condition;
       return (function () {
         this.id("do");
-        b = this.body();
+        b = this.expressionBody();
         this.id("while");
         this.stringPatternHandler("(");
         condition = this.expression();
@@ -175,7 +160,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   forExpression: (function () {
-    return this.memoize("LOIGvLjw1YOfgXX5qliEgQ", (function () {
+    return this.memoize("e0F/bdOGnP0xPQe464Iy6w", (function () {
       var initExpr, condExpr, incExpr, b, decls;
       return this._choice((function () {
         this.id("for");
@@ -186,7 +171,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
         this.stringPatternHandler(";");
         incExpr = this._optional(this.expression);
         this.stringPatternHandler(")");
-        b = this._optional(this.body);
+        b = this._optional(this.expressionBody);
         return Ast.ForExpression(initExpr, condExpr, incExpr, b);
       }), (function () {
         this.id("for");
@@ -200,31 +185,31 @@ var CombeParser = module.exports = Class.new(BaseParser, {
         this.stringPatternHandler(";");
         incExpr = this._optional(this.expression);
         this.stringPatternHandler(")");
-        b = this._optional(this.body);
+        b = this._optional(this.expressionBody);
         return Ast.ForDeclaringExpression(decls, condExpr, incExpr, b);
       }));
     }));
   }),
   tryCatchExpression: (function () {
-    return this.memoize("8oIeGDtbG91KtHWb7babsg", (function () {
+    return this.memoize("q/7YH2y9HJkmY/3/ZqymvA", (function () {
       var tryBody, catchBinding, catchBody, finallyBody;
       return (function () {
         this.id("try");
-        tryBody = this.body();
+        tryBody = this.expressionBody();
         return this._choice((function () {
           this.id("catch");
           this.stringPatternHandler("(");
           catchBinding = this.variableIdentifier();
           this.stringPatternHandler(")");
-          catchBody = this.body();
+          catchBody = this.expressionBody();
           this._optional((function () {
             this.id("finally");
-            return finallyBody = this.body();
+            return finallyBody = this.expressionBody();
           }));
           return Ast.TryCatchExpression(tryBody, catchBinding, catchBody, finallyBody);
         }), (function () {
           this.id("finally");
-          finallyBody = this.body();
+          finallyBody = this.expressionBody();
           return Ast.TryCatchExpression(tryBody, null, null, finallyBody);
         }));
       }).call(this);
@@ -266,7 +251,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
       }).call(this);
     }));
   }),
-  body: (function () {
+  expressionBody: (function () {
     return this.memoize("zlZIeapj9KOVyg2A9RF4TA", (function () {
       return this._choice(this.expression, this.block);
     }));
@@ -282,41 +267,13 @@ var CombeParser = module.exports = Class.new(BaseParser, {
       }).call(this);
     }));
   }),
-  id: (function (expectedName) {
-    var name;
-    return (function () {
-      name = this.stringPatternHandler("identifier");
-      this._predicate((function () {
-        return name.text === expectedName;
-      }));
-      return name;
-    }).call(this);
-  }),
-  variableIdentifier: (function () {
-    return this.memoize("QxlNh+fLm4qBg2bNdWraVQ", (function () {
-      var name;
+  blockContents: (function () {
+    return this.memoize("YdcnNmjlv/z9RyHxaAtbTg", (function () {
+      var stmts;
       return (function () {
-        name = this.stringPatternHandler("identifier");
-        this._predicate((function () {
-          return !name.reserved;
-        }));
-        return name.text;
+        stmts = this._repeat(this.terminatedStatements);
+        return Ast.Block(stmts);
       }).call(this);
-    }));
-  }),
-  propertyName: (function () {
-    return this.memoize("xBv1pNM82lnnQuAFtpaH8Q", (function () {
-      var t;
-      return this._choice((function () {
-        t = this.stringPatternHandler("identifier");
-        return t.text;
-      }), (function () {
-        t = this.stringPatternHandler("string");
-        return t.value;
-      }), (function () {
-        t = this.stringPatternHandler("number");
-        return t.text;
-      }));
     }));
   }),
   operatorExpression: (function () {
@@ -495,10 +452,10 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   rangeInfinity: (function () {
-    return this.memoize("eTQAcwlAqfW9uDkMbWsj+A", (function () {
+    return this.memoize("9s4Du/g5JiJK5rSvkoKE0w", (function () {
       return (function () {
         this.stringPatternHandler("*");
-        return Ast.Null();
+        return Ast.Literal(null);
       }).call(this);
     }));
   }),
@@ -637,7 +594,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   primaryExpression: (function () {
-    return this.memoize("njsx//xJftz33He8CneSVg", (function () {
+    return this.memoize("wA0bD6uF3e8aIQipSlfGXw", (function () {
       var name;
       return this._choice(this.valueLiteral, (function () {
         this.id("this");
@@ -645,7 +602,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
       }), (function () {
         name = this.variableIdentifier();
         return Ast.Variable(name);
-      }), this.arrayLiteral, this.objectLiteral, this.functionLiteral, this.subexpression);
+      }), this.arrayLiteral, this.objectLiteral, this.functionLiteral, this.ruleLiteral, this.subexpression);
     }));
   }),
   valueLiteral: (function () {
@@ -698,9 +655,9 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   arrayElement: (function () {
-    return this.memoize("ljiwame9wGaEVLx8cxympg", (function () {
+    return this.memoize("sWUORPIGOExIvaBXSSoHzA", (function () {
       return this._choice(this.expression, (function () {
-        return Ast.Null();
+        return Ast.Literal(null);
       }));
     }));
   }),
@@ -760,21 +717,48 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   functionLiteral: (function () {
-    return this.memoize("Ja6BZ7Dl4CnuYfiRlWWQ3A", (function () {
-      var params, stmts, p;
+    return this.memoize("oKyWD/3cnF74ZV+q6BmcqA", (function () {
+      var params, e, p, body;
       return this._choice((function () {
         params = this._optional(this.parameters);
         this.stringPatternHandler("->");
-        stmts = this._choice(this.expression, this.block);
-        return Ast.Function(params, stmts);
+        e = this.expression();
+        return Ast.Function(params, e);
       }), (function () {
         p = this.variableIdentifier();
         this.stringPatternHandler("->");
-        stmts = this._choice(this.expression, this.block);
+        e = this.expression();
         return Ast.Function([
           p
-        ], stmts);
+        ], e);
+      }), (function () {
+        this.id("function");
+        params = this._optional(this.parameters);
+        body = this.functionBody();
+        return Ast.Function(params, body);
       }));
+    }));
+  }),
+  ruleLiteral: (function () {
+    return this.memoize("rp3rkzPrNoZ+zV6ysY0qsw", (function () {
+      var params, body;
+      return (function () {
+        this.id("rule");
+        params = this._optional(this.parameters);
+        body = this.ruleBody();
+        return Ast.Rule(params, body);
+      }).call(this);
+    }));
+  }),
+  ruleBody: (function () {
+    return this.memoize("Xd3Fc3PTICJjhVHtrcNyqg", (function () {
+      var p;
+      return this._choice((function () {
+        this.stringPatternHandler("{");
+        p = this.pattern();
+        this.stringPatternHandler("}");
+        return p;
+      }), this.operatorPattern);
     }));
   }),
   subexpression: (function () {
@@ -807,6 +791,256 @@ var CombeParser = module.exports = Class.new(BaseParser, {
           return Ast.SequenceExpression(exprs);
         }));
       }).call(this);
+    }));
+  }),
+  pattern: (function () {
+    return this.memoize("ZCwT4GIOysyO8lvu5uGAPQ", (function () {
+      return this.choicePattern();
+    }));
+  }),
+  choicePattern: (function () {
+    return this.memoize("DyXtggM/gzbIXzEhmwCIfw", (function () {
+      var p, p2;
+      return (function () {
+        this._optional((function () {
+          return this.stringPatternHandler("|");
+        }));
+        p = this.returnPattern();
+        this._repeat((function () {
+          this.stringPatternHandler("|");
+          p2 = this.returnPattern();
+          return p = Ast.ChoicePattern([
+            p,
+            p2
+          ]);
+        }));
+        return p;
+      }).call(this);
+    }));
+  }),
+  returnPattern: (function () {
+    return this.memoize("oVRDcjO5giXEdgSPQ+0jHg", (function () {
+      var p, e;
+      return this._choice((function () {
+        p = this.sequencePattern();
+        return this._choice((function () {
+          this.stringPatternHandler("->");
+          e = this.actionBody();
+          return Ast.SequencePattern([
+            p,
+            Ast.ActionPattern(e)
+          ]);
+        }), (function () {
+          return p;
+        }));
+      }), (function () {
+        this.stringPatternHandler("->");
+        e = this.actionBody();
+        return Ast.ActionPattern(e);
+      }));
+    }));
+  }),
+  sequencePattern: (function () {
+    return this.memoize("2Qk1QezQ8dRfxFhNOCdqUQ", (function () {
+      var ps;
+      return (function () {
+        ps = this.delimited1(this.operatorPattern, (function () {
+          return this.stringPatternHandler(",");
+        }));
+        return this._choice((function () {
+          this._predicate((function () {
+            return ps.length > 1;
+          }));
+          return ps;
+        }), (function () {
+          return ps[0];
+        }));
+      }).call(this);
+    }));
+  }),
+  operatorPattern: (function () {
+    return this.memoize("HDU1NXV2ur2CuMsWI7UPrg", (function () {
+      return this.prefixOperatorPattern();
+    }));
+  }),
+  prefixOperatorPattern: (function () {
+    return this.memoize("mJxXZJ5OY2AZ1I2VPHNFow", (function () {
+      var p;
+      return this._choice((function () {
+        this.stringPatternHandler("~");
+        p = this.prefixOperatorPattern();
+        return Ast.ComplementPatern(p);
+      }), (function () {
+        this.stringPatternHandler("&");
+        p = this.prefixOperatorPattern();
+        return Ast.LookaheadPattern(p);
+      }), (function () {
+        this.stringPatternHandler("#");
+        p = this.prefixOperatorPattern();
+        return Ast.HashOperatorPattern(p);
+      }), this.postfixOperatorPattern);
+    }));
+  }),
+  postfixOperatorPattern: (function () {
+    return this.memoize("dVBuq7nH0hjXXdCTm8E5vg", (function () {
+      var p;
+      return (function () {
+        p = this.callPattern();
+        this._repeat((function () {
+          return this._choice((function () {
+            this.stringPatternHandler("*");
+            return p = Ast.RepeatPattern(p);
+          }), (function () {
+            this.stringPatternHandler("+");
+            return p = Ast.NonZeroRepeatPattern(p);
+          }), (function () {
+            this.stringPatternHandler("?");
+            return p = Ast.OptionalPattern(p);
+          }), (function () {
+            this.stringPatternHandler(":");
+            return p = Ast.BindPattern(p);
+          }));
+        }));
+        return e;
+      }).call(this);
+    }));
+  }),
+  callPattern: (function () {
+    return this.memoize("618RZ3+oYXFv5HTqqX5dHQ", (function () {
+      var p, args;
+      return (function () {
+        p = this.primaryPattern();
+        this._repeat((function () {
+          return this._choice((function () {
+            args = this.arguments();
+            return p = Ast.CallPattern(p, args);
+          }), (function () {
+            args = this.patternArguments();
+            return p = Ast.CallPatternWithPatternArguments(p, args);
+          }));
+        }));
+        return p;
+      }).call(this);
+    }));
+  }),
+  patternArguments: (function () {
+    return this.memoize("P4Yz212LFQk+mU/O+9fJNw", (function () {
+      var args;
+      return (function () {
+        this.stringPatternHandler("[");
+        args = this.delimited(this.pattern, (function () {
+          return this.stringPatternHandler(",");
+        }));
+        this.stringPatternHandler("]");
+        return args;
+      }).call(this);
+    }));
+  }),
+  primaryPattern: (function () {
+    return this.memoize("90C3JEoQafvFVkEoEajTHQ", (function () {
+      var p;
+      return this._choice(this.predicatePattern, this.actionPattern, this.immediateActionPattern, this.stringPattern, this.variablePattern, (function () {
+        this.stringPatternHandler("(");
+        p = this.pattern();
+        this.stringPatternHandler(")");
+        return p;
+      }));
+    }));
+  }),
+  predicatePattern: (function () {
+    return this.memoize("5MGQDkXNAv208JjVW0AtGQ", (function () {
+      var e;
+      return (function () {
+        this.stringPatternHandler("?");
+        e = this.actionBody();
+        return Ast.PredicatePattern(e);
+      }).call(this);
+    }));
+  }),
+  actionPattern: (function () {
+    return this.memoize("tOcF3G4pd/Gjn9RiguEA6w", (function () {
+      var e;
+      return (function () {
+        this.stringPatternHandler("!");
+        e = this.actionBody();
+        return Ast.ActionPattern(e);
+      }).call(this);
+    }));
+  }),
+  immediateActionPattern: (function () {
+    return this.memoize("GkHyBeTDJ0/05UQSR0Aoug", (function () {
+      var e;
+      return (function () {
+        this.stringPatternHandler("%");
+        e = this.actionBody();
+        return Ast.ImmediateActionPattern(e);
+      }).call(this);
+    }));
+  }),
+  actionBody: (function () {
+    return this.memoize("4jw1AwB71c9peRe8nokN5w", (function () {
+      var e;
+      return this._choice(this.secondaryExpression, (function () {
+        this.stringPatternHandler("(");
+        e = this.expression();
+        this.stringPatternHandler(")");
+        return e;
+      }), this.block);
+    }));
+  }),
+  stringPattern: (function () {
+    return this.memoize("96Bk8YcQ93lrwdt2wP9vsg", (function () {
+      var s;
+      return (function () {
+        s = this.stringPatternHandler("string");
+        return Ast.StringPattern(s.value);
+      }).call(this);
+    }));
+  }),
+  variablePattern: (function () {
+    return this.memoize("Cz4VgqP/XTfT4C8txw81yA", (function () {
+      var name;
+      return (function () {
+        name = this.variableIdentifier();
+        return Ast.VariablePattern(name);
+      }).call(this);
+    }));
+  }),
+  id: (function (expectedName) {
+    var name;
+    return (function () {
+      name = this.stringPatternHandler("identifier");
+      this._predicate((function () {
+        return name.text === expectedName;
+      }));
+      return name;
+    }).call(this);
+  }),
+  variableIdentifier: (function () {
+    return this.memoize("QxlNh+fLm4qBg2bNdWraVQ", (function () {
+      var name;
+      return (function () {
+        name = this.stringPatternHandler("identifier");
+        this._predicate((function () {
+          return !name.reserved;
+        }));
+        return name.text;
+      }).call(this);
+    }));
+  }),
+  propertyName: (function () {
+    return this.memoize("xBv1pNM82lnnQuAFtpaH8Q", (function () {
+      var t;
+      return this._choice((function () {
+        t = this.stringPatternHandler("identifier");
+        return t.text;
+      }), (function () {
+        t = this.stringPatternHandler("string");
+        return t.value;
+      }), (function () {
+        t = this.stringPatternHandler("number");
+        return t.text;
+      }));
     }));
   }),
   t: (function (typename) {

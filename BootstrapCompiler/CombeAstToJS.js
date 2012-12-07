@@ -57,7 +57,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
           stmts,
         '}\n',
         'catch (__combe$e) {\n',
-          'if (__combe$e === __combe$return) return __combe$return;\n',
+          'if (__combe$e === __combe$return) return __combe$return.value;\n',
           'throw __combe$e;\n',
         '}\n',
       '})()'
@@ -388,7 +388,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
   visitState: function (ast) { // [ subject, name ]
     ast.visitChildren(this);
     
-    var name = '@' + ast.name;
+    var name = ('@' + ast.name).quote();
     
     ast.code = [
       ast.subject.code, '[', name, ']'
@@ -502,17 +502,29 @@ var CombeAstToJS = module.exports = Class.new(Object, {
   visitFunction: function (ast) { // [ parameters, body ]
     ast.visitChildren(this);
     
-    var params = ast.parameters.interpolate(', ');
+    if (ast.parameters == null) {
+      var params = null;
+      var argsvar = null;
+    }
+    else if (typeof ast.parameters === 'string') {
+      var params = null;
+      var argsvar = ['var ', ast.parameters, ' = Array.prototype.slice.call(arguments);\n'];
+    }
+    else {
+      var params = ast.parameters.interpolate(', ');
+      var argsvar = null;
+    }
     
     ast.code = [
       '(function (', params, ') {\n',
         'var __combe$this = this;\n',
         'var __combe$return = null;\n',
+        argsvar,
         'try {\n',
           'return ', ast.body.code, ';\n',
         '}\n',
         'catch (__combe$e) {\n',
-          'if (__combe$e === __combe$return) return __combe$return;\n',
+          'if (__combe$e === __combe$return) return __combe$return.value;\n',
           'throw __combe$e;\n',
         '}\n',
       '})'

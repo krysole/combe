@@ -84,7 +84,8 @@ var CombeLexer = module.exports = Class.new(TextParser, {
   }),
   ReservedWords: [
     "var",
-    "def",
+    "function",
+    "rule",
     "if",
     "else",
     "while",
@@ -537,7 +538,7 @@ var CombeLexer = module.exports = Class.new(TextParser, {
     var out = (("CombeLexer::log() " + this.positionString()) + ":") + name;
     if (additionalMessages.length > 0) {
       out = out + "; ";
-      out = out + messages.join("; ");
+      out = out + additionalMessages.join("; ");
     }
     console.error(out);
   })

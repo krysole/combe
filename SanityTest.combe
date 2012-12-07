@@ -70,13 +70,13 @@ assert(false !== null);
 assert(null !== undefined); // different from above
 
 console.log('Check 5 - basic function definition/call');
-def fn() {
+var fn = function () {
   return 'Hello world';
 };
 assert(fn() == 'Hello world');
 
 console.log('Check 6 - basic try/catch');
-def fn() {
+var fn = function () {
   throw 42;
 };
 try {
