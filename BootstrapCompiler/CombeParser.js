@@ -283,8 +283,8 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   }),
   lvalueTypes: [
     "Variable",
-    "State",
-    "Subscript"
+    "Subscript",
+    "Dot"
   ],
   assignmentExpression: (function () {
     return this.memoize("/uyeCorGDNBet1xsExcngw", (function () {
@@ -549,14 +549,14 @@ var CombeParser = module.exports = Class.new(BaseParser, {
       this.stringPatternHandler("]");
       return Ast.Subscript(subject, args);
     }), (function () {
-      this.stringPatternHandler("@");
+      this.stringPatternHandler(".");
       name = this.stringPatternHandler("identifier");
-      return Ast.State(subject, name);
+      args = this.arguments();
+      return Ast.MethodCall(subject, name.text, args);
     }), (function () {
       this.stringPatternHandler(".");
       name = this.stringPatternHandler("identifier");
-      args = this._optional(this.arguments);
-      return Ast.MethodCall(subject, name.text, args);
+      return Ast.Dot(subject, name.text);
     }));
   }),
   arguments: (function () {
@@ -864,12 +864,12 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   prefixOperatorPattern: (function () {
-    return this.memoize("mJxXZJ5OY2AZ1I2VPHNFow", (function () {
+    return this.memoize("dQYTwFDadjWNi33wTnXUiA", (function () {
       var p;
       return this._choice((function () {
         this.stringPatternHandler("~");
         p = this.prefixOperatorPattern();
-        return Ast.ComplementPatern(p);
+        return Ast.NotPatern(p);
       }), (function () {
         this.stringPatternHandler("&");
         p = this.prefixOperatorPattern();
@@ -882,8 +882,8 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   postfixOperatorPattern: (function () {
-    return this.memoize("dVBuq7nH0hjXXdCTm8E5vg", (function () {
-      var p;
+    return this.memoize("4Z5naTQWIwAG0EEBrwEk3g", (function () {
+      var p, name;
       return (function () {
         p = this.callPattern();
         this._repeat((function () {
@@ -898,7 +898,8 @@ var CombeParser = module.exports = Class.new(BaseParser, {
             return p = Ast.OptionalPattern(p);
           }), (function () {
             this.stringPatternHandler(":");
-            return p = Ast.BindPattern(p);
+            name = this.variableIdentifier();
+            return p = Ast.BindPattern(p, name);
           }));
         }));
         return e;
@@ -906,7 +907,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   callPattern: (function () {
-    return this.memoize("618RZ3+oYXFv5HTqqX5dHQ", (function () {
+    return this.memoize("J86GsTxszq/1tE8mPd/Dmg", (function () {
       var p, args;
       return (function () {
         p = this.primaryPattern();
@@ -916,7 +917,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
             return p = Ast.CallPattern(p, args);
           }), (function () {
             args = this.patternArguments();
-            return p = Ast.CallPatternWithPatternArguments(p, args);
+            return p = Ast.CallWithPatternArgumentsPattern(p, args);
           }));
         }));
         return p;

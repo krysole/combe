@@ -209,7 +209,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   
   // Todo: Add support for assignment methods
   lvalueTypes: [
-    'Variable', 'State', 'Subscript'
+    'Variable', 'Subscript', 'Dot'
   ],
   
   assignmentExpression: rule {
@@ -324,10 +324,10 @@ var CombeParser = module.exports = Class.new(BaseParser, {
       -> Ast.Call(subject, args)
     | '[' delimited[expression, ',']:args ']'
       -> Ast.Subscript(subject, args)
-    | '@' 'identifier':name
-      -> Ast.State(subject, name)
-    | '.' 'identifier':name arguments?:args
+    | '.' 'identifier':name arguments:args
       -> Ast.MethodCall(subject, name.text, args)
+    | '.' 'identifier':name
+      -> Ast.Dot(subject, name.text)
   },
   
   

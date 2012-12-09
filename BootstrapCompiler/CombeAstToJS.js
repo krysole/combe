@@ -19,10 +19,12 @@
 var combe = require('combe');
 
 var Ast = require('./CombeAst');
+var AnalyseScoping = require('./AnalyseScoping');
 
 var CombeAstToJS = module.exports = Class.new(Object, {
   
   translate: function (ast) {
+    AnalyseScoping.analyse(ast);
     return Array.deepJoinIOList(this.translateToIOList(ast));
   },
   
@@ -385,18 +387,11 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     ];
   },
   
-  visitState: function (ast) { // [ subject, name ]
-    ast.visitChildren(this);
-    
-    var name = ('@' + ast.name).quote();
-    
-    ast.code = [
-      ast.subject.code, '[', name, ']'
-    ];
-  },
-  
   visitMethodCall: function (ast) { // [ subject, name, arguments ]
     ast.visitChildren(this);
+    
+    // Todo: Change this to use a gensym'd variable as the subject and subscripting
+    // when the name isn't compatable with JS '.'.
     
     var args = ast.arguments.map(function (arg) {
       return arg.code;
@@ -404,6 +399,16 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     
     ast.code = [
       ast.subject.code, '.', ast.name, '(', args, ')'
+    ];
+  },
+  
+  visitDot: function (ast) { // [ subject, name ]
+    ast.visitChildren(this);
+    
+    // Todo: Find a way to tell if the name is simple enough to use '.' instead.
+    
+    ast.code = [
+      ast.subject.code, '[', ast.name.quote(), ']'
     ];
   },
   
@@ -482,7 +487,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     ];
     
     var decls = ast.properties.map(function (pdecl) {
-      return pdecl.code + ';\n';
+      return [pdecl.code, ';\n'];
     });
     
     var epilogue = [

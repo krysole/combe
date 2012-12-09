@@ -51,8 +51,8 @@ var CombeAst = module.exports = Class.new(Ast, {
 
     Call:                   ['function', 'arguments'],
     Subscript:              ['subject', 'arguments'],
-    State:                  ['subject', 'name'],    
     MethodCall:             ['subject', 'name', 'arguments'],
+    Dot:                    ['subject', 'name'],
     
     InclusiveRange:         ['lhs', 'rhs'],
     ExclusiveRange:         ['lhs', 'rhs'],

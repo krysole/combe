@@ -22,8 +22,8 @@ var assert = require('assert');
 
 console.log('Check 1 - console.log');
 
-console.log('Check 2 - basic if statements');
 
+console.log('Check 2 - basic if statements');
 assert(
   if (true) true
   else false
@@ -35,10 +35,12 @@ assert(
   )
 );
 
+
 console.log('Check 3 - basic logic combinators');
 assert(true && true);
 assert(false || true);
 assert(true && (false || true));
+
 
 console.log('Check 4 - basic equality');
 assert(1 == 1);
@@ -69,11 +71,16 @@ assert(true !== null);
 assert(false !== null);
 assert(null !== undefined); // different from above
 
+
 console.log('Check 5 - basic function definition/call');
 var fn = function () {
   return 'Hello world';
 };
 assert(fn() == 'Hello world');
+
+var fn = -> 23;
+assert(fn() == 23);
+
 
 console.log('Check 6 - basic try/catch');
 var fn = function () {
@@ -85,5 +92,17 @@ try {
 catch (e) {
   assert(e == 42);
 };
+
+
+console.log('Check 7 - basic object manipulation');
+var o = { a: 1, b: 2, c: 'hello' };
+o.a = 3;
+o.c = o.a + o.b;
+assert(o.c == 5);
+var fn = -> 23;
+o.f = fn;
+assert(o.f == fn);
+assert(o.f() == 23);
+
 
 console.log('Done');
