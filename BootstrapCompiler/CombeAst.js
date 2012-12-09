@@ -25,7 +25,6 @@ var CombeAst = module.exports = Class.new(Ast, {
   Types: {
     Script:                 ['statements'],
     
-    DefStatement:           ['name', 'parameters', 'body'],
     VarStatement:           ['declarations'],
     ExpressionStatement:    ['expression'],
     EmptyStatement:         [],
@@ -89,7 +88,6 @@ var CombeAst = module.exports = Class.new(Ast, {
     BindPattern:            ['pattern', 'name'],
     
     CallPattern:            ['pattern', 'arguments'],
-    CallWithPatternArgumentsPattern: ['pattern', 'arguments'],
     
     PredicatePattern:       ['body'],
     ActionPattern:          ['body'],

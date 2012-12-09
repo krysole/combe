@@ -907,7 +907,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   callPattern: (function () {
-    return this.memoize("J86GsTxszq/1tE8mPd/Dmg", (function () {
+    return this.memoize("7M0D/y4TaL/QEYXP6dgPTw", (function () {
       var p, args;
       return (function () {
         p = this.primaryPattern();
@@ -917,7 +917,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
             return p = Ast.CallPattern(p, args);
           }), (function () {
             args = this.patternArguments();
-            return p = Ast.CallWithPatternArgumentsPattern(p, args);
+            return p = Ast.CallPattern(p, args);
           }));
         }));
         return p;

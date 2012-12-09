@@ -485,7 +485,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     ( arguments:args
       !(p = Ast.CallPattern(p, args))
     | patternArguments:args
-      !(p = Ast.CallWithPatternArgumentsPattern(p, args))
+      !(p = Ast.CallPattern(p, args))
     )*
     -> p
   },

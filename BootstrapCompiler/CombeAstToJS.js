@@ -18,6 +18,8 @@
 'use strict';
 var combe = require('combe');
 
+var crypto = require('crypto');
+
 var Ast = require('./CombeAst');
 var AnalyseScoping = require('./AnalyseScoping');
 
@@ -63,21 +65,6 @@ var CombeAstToJS = module.exports = Class.new(Object, {
           'throw __combe$e;\n',
         '}\n',
       '})()'
-    ];
-  },
-  
-  
-  visitDefStatement: function (ast) { // [ name, parameters, body ]
-    ast.visitChildren(this);
-    
-    var params = ast.parameters.interpolate(', ');
-    
-    var body = this.unwrapBlockAsStatements(ast.body);
-    
-    ast.code = [
-      'var ', ast.name, ' = function ', ast.name, '(', params, ') {\n',
-        body,
-      '};\n'
     ];
   },
   
@@ -405,7 +392,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
   visitDot: function (ast) { // [ subject, name ]
     ast.visitChildren(this);
     
-    // Todo: Find a way to tell if the name is simple enough to use '.' instead.
+    // Todo: Check if the name is simple enough to use '.' instead.
     
     ast.code = [
       ast.subject.code, '[', ast.name.quote(), ']'
@@ -537,9 +524,54 @@ var CombeAstToJS = module.exports = Class.new(Object, {
   },
   
   visitRule: function (ast) { // [ parameters, body ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    if (ast.variables.length >= 1) {
+      var vars = [
+        'var ', ast.variables.interpolate(', '), ';\n'
+      ];
+    }
+    else {
+      var vars = null;
+    }
+    
+    if (ast.parameters == null) {
+      var innerFunction = [
+        '(function () {\n',
+          vars,
+          'return ', ast.body.code, '.call(this);\n',
+        '})'
+      ];
+      
+      var innerFunctionCode = Array.deepJoinIOList(innerFunction);
+      var hash = crypto.createHash('md5');
+      hash.update(codeString);
+      var digest = hash.digest('base64').slice(0, -2); // without base64 suffix
+      
+      ast.code = [
+        '(function () {\n',
+          'return this.__combe$memoize(', digest.quote(), innerFunction, ');\n',
+        '})'
+      ];
+    }
+    else {
+      if (typeof ast.parameters === 'string') {
+        var params = null;
+        var argsvar = ['var ', ast.parameters, ' = Array.prototype.slice.call(arguments);\n'];
+      }
+      else {
+        var params = ast.parameters.interpolate(', ');
+        var argsvar = null;
+      }
+      
+      ast.code = [
+        '(function (', params, ') {\n',
+          argsvar,
+          'return ', ast.body.code, '.call(this);\n',
+        '})'
+      ];
+    }
   },
-  
   
   visitVariableDeclaration: function (ast) { // [ name, expression ]
     ast.visitChildren(this);
@@ -618,67 +650,199 @@ var CombeAstToJS = module.exports = Class.new(Object, {
   },
   
   visitChoicePattern: function (ast) { // [ patterns ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    var ps = ast.patterns.map(function (p) {
+      return p.code;
+    }).interpolate(', ');
+    
+    ast.code = [
+      '(function () {\n',
+        'return this.__choice(', ps, ');\n',
+      '})'
+    ];
   },
   
   visitSequencePattern: function (ast) { // [ patterns ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    var ps = ast.patterns.slice(0, ast.patterns.length - 1).map(function (p) {
+      return [p.code, '.call(this);\n'];
+    });
+    ps.push([
+      'return ', ast.patterns.last, '.call(this);\n'
+    ]);
+    
+    ast.code = [
+      '(function () {\n',
+        ps,
+      '})'
+    ];
   },
   
   visitNotPattern: function (ast) { // [ pattern ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    ast.code = [
+      '(function () {\n',
+        'return this.__combe$not(', ast.pattern.code, ');\n',
+      '})'
+    ];
   },
   
   visitLookaheadPattern: function (ast) { // [ pattern ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    ast.code = [
+      '(function () {\n',
+        'return this.__combe$lookahead(', ast.pattern.code, ');\n',
+      '})'
+    ];
   },
   
   visitHashOperatorPattern: function (ast) { // [ pattern ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    ast.code = [
+      '(function () {\n',
+        'return this._handleHashPattern(', ast.pattern.code, ');\n',
+      '})'
+    ];
   },
   
   visitRepeatPattern: function (ast) { // [ pattern ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    ast.code = [
+      '(function () {\n',
+        'return this.__combe$repeat(', ast.pattern.code, ');\n',
+      '})'
+    ];
   },
   
   visitNonZeroRepeatPattern: function (ast) { // [ pattern ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    ast.code = [
+      '(function () {\n',
+        'return this.__combe$nonZeroRepeat(', ast.pattern.code, ');\n',
+      '})'
+    ];
   },
   
   visitOptionalPattern: function (ast) { // [ pattern ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    ast.code = [
+      '(function () {\n',
+        'return this.__combe$optional(', ast.pattern.code, ');\n',
+      '})'
+    ];
   },
   
   visitBindPattern: function (ast) { // [ pattern, name ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    ast.code = [
+      '(function () {\n',
+        'return (', ast.name, ' = ', ast.pattern.code, '.call(this));\n',
+      '})'
+    ];
   },
   
   visitCallPattern: function (ast) { // [ pattern, arguments ]
-    assert(false); // Todo...
-  },
-  
-  visitCallWithPatternArgumentsPattern: function (ast) { // [ pattern, arguments ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    var as = ast.arguments.map(function (a) {
+      return a.code;
+    }).interpolate(', ');
+    
+    ast.code = [
+      '(function () {\n',
+        'return ', ast.pattern.code, '.call(this, ', as, ');\n',
+      '})'
+    ];
   },
   
   visitPredicatePattern: function (ast) { // [ body ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    var pattern = [
+      '(function () {\n',
+        'var __combe$this = this;\n',
+        'var __combe$return = null;\n',
+        'try {\n',
+          'return ', ast.body.code, ';\n',
+        '}\n',
+        'catch (__combe$e) {\n',
+          'if (__combe$e === __combe$return) return __combe$return.value;\n',
+          'throw __combe$e;\n',
+        '}\n',
+      '})'
+    ];
+    
+    ast.code = [
+      '(function () {\n',
+        'return this.__combe$predicate(', pattern, ');\n',
+      '})'
+    ];
   },
   
   visitActionPattern: function (ast) { // [ body ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    ast.code = [
+      '(function () {\n',
+        'var __combe$this = this;\n',
+        'var __combe$return = null;\n',
+        'try {\n',
+          'return ', ast.body.code, ';\n',
+        '}\n',
+        'catch (__combe$e) {\n',
+          'if (__combe$e === __combe$return) return __combe$return.value;\n',
+          'throw __combe$e;\n',
+        '}\n',
+      '})'
+    ];
   },
   
   visitImmediateActionPattern: function (ast) { // [ body ]
-    assert(false); // Todo...
+    ast.visitChildren(this);
+    
+    var pattern = [
+      '(function () {\n',
+        'var __combe$this = this;\n',
+        'var __combe$return = null;\n',
+        'try {\n',
+          'return ', ast.body.code, ';\n',
+        '}\n',
+        'catch (__combe$e) {\n',
+          'if (__combe$e === __combe$return) return __combe$return.value;\n',
+          'throw __combe$e;\n',
+        '}\n',
+      '})'
+    ];
+    
+    ast.code = [
+      pattern, '.call(this)'
+    ];
   },
   
-  visitStringPattern: function (ast) { // [ body ]
-    assert(false); // Todo...
+  visitStringPattern: function (ast) { // [ value ]
+    ast.code = [
+      '(function () {\n',
+        'return this._handleStringPattern(', ast.value.quote(), ');\n',
+      '})'
+    ];
   },
   
   visitVariablePattern: function (ast) { // [ name ]
-    assert(false); // Todo...
+    if (ast.containingScope.variables.include(ast.name)) {
+      ast.code = [ ast.name ];
+    }
+    else {
+      ast.code = [ 'this.', ast.name ];
+    }
   },
   
   
@@ -694,7 +858,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
       });
       
       if (ast.statements.some(function (stmt) {
-        return ['DefStatement', 'VarStatement'].include(stmt.type);
+        return ['VarStatement'].include(stmt.type);
       }) || ignoreDefAndVarTest) {
         return stmts;
       }
