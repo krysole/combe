@@ -26,18 +26,18 @@ var unique = function (name) {
   };
 };
 
-global.__combe$break = unique('__combe$break');
-global.__combe$continue = unique('__combe$continue');
+global.__combe_break = unique('__combe_break');
+global.__combe_continue = unique('__combe_continue');
 
 global.Range = function (lhs, rhs, isInclusive) {
-  this.__combe$lhs = lhs;
-  this.__combe$rhs = rhs;
-  this.__combe$isInclusive = isInclusive;
+  this.__combe_lhs = lhs;
+  this.__combe_rhs = rhs;
+  this.__combe_isInclusive = isInclusive;
   return this;
 };
 Range.prototype = {
   
-  __combe$type: 'Range',
+  __combe_type: 'Range',
   
   inclusive: function (lhs, rhs) {
     return new Range.__constructor(lhs, rhs, true);
@@ -48,7 +48,7 @@ Range.prototype = {
   },
   
   isInclusive: function () {
-    return this.__combe$isInclusive;
+    return this.__combe_isInclusive;
   },
   
   isExclusive: function () {
@@ -66,7 +66,7 @@ Range.prototype = {
   
 };
 
-global.__combe$infixOperators = {
+global.__combe_infixOperators = {
   
   '==': function (lhs, rhs) {
     return (
@@ -85,13 +85,13 @@ global.__combe$infixOperators = {
   
 };
 
-global.__combe$defineValueProperty = function (subject, name, value) {
+global.__combe_defineValueProperty = function (subject, name, value) {
   var descriptor = { value: value, writable: true, enumerable: true, configurable: true };
   Object.defineProperty(subject, name, descriptor);
   return value;
 };
 
-global.__combe$defineGetProperty = function (subject, name, value) {
+global.__combe_defineGetProperty = function (subject, name, value) {
   var descriptor = { get: value, enumerable: true, configurable: true };
   if (Object.hasOwnProperty(subject, name)) {
     var existingDescriptor = Object.getOwnPropertyDescriptor(subject, name);
@@ -101,7 +101,7 @@ global.__combe$defineGetProperty = function (subject, name, value) {
   return value;
 };
 
-global.__combe$defineSetProperty = function (subject, name, value) {
+global.__combe_defineSetProperty = function (subject, name, value) {
   var descriptor = { set: value, enumerable: true, configurable: true };
   if (Object.hasOwnProperty(subject, name)) {
     existingDescriptor = Object.getOwnPropertyDescriptor(subject, name);
@@ -111,7 +111,7 @@ global.__combe$defineSetProperty = function (subject, name, value) {
   return value;
 };
 
-global.__combe$defineDescribedProperty = function (subject, name, descriptor) {
+global.__combe_defineDescribedProperty = function (subject, name, descriptor) {
   Object.defineProperty(subject, name, descriptor);
   return descriptor;
 };
