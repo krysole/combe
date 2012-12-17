@@ -1,0 +1,217 @@
+//
+// Combe - Improved JavaScript with Pattern Matching
+//
+// Copyright 2012 Lorenz Pretterhofer <krysole@alexicalmistake.com>
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+//
+'use strict';
+
+// Todo: This can and probably should be rewritten in Combe notation.
+
+global.Grammar = Object.subclass({
+  
+  match: function (source, sourcename, rulename) {
+    if (rulename == null) rulename = 'start';
+    var matchargs = Array.slice(arguments, 2);
+    
+    var parser = this.new(source, sourcename);
+    return parser.match.apply(parser, matchargs);
+  },
+  
+  matchAll: function (source, sourcename, rulename) {
+    if (rulename == null) rulename = 'start';
+    var matchargs = Array.slice(arguments, 2);
+    
+    var parser = this.new(source, sourcename);
+    return parser.matchAll.apply(parser, matchargs);
+  },
+  
+}, {
+  
+  start: function () {
+    throw ShouldOverideError.new('Grammar.start()');
+  },
+  
+  initialize: function (source, sourcename) {
+    if (source == null) source = [];
+    this.source = source;
+    this.sourcename = sourcename;
+    this.position = 0;
+    this.state = null;
+  },
+  
+  get filename() { return this.sourcename; },
+  set filename(filename) { this.sourcename = filename; },
+
+  match: function (rulename) {
+    var args = Array.slice(arguments, 1);
+    try {
+      var rule = this[rulename];
+      if (rule == null) throw Error.new('No rule named "' + rulename + '"');
+      return rule.apply(this, args);
+    }
+    catch (e) {
+      if (e === Backtrack) {
+        // Todo: Implement better error reporting
+        throw Error.new(this.name + ".match() failed");
+      }
+      else {
+        throw e;
+      }
+    }
+  },
+
+  matchAll: function (rulename) {
+    var args = Array.slice(arguments, 1);
+    try {
+      var rule = this[rulename];
+      if (rule == null) throw Error.new('No rule named "' + rulename + '"');
+      var result = rule.apply(this, args);
+      this.eof();
+      return result;
+    }
+    catch (e) {
+      if (e === Backtrack) {
+        // Todo: Implement better error reporting
+        throw Error.new(this.name + ".match() failed");
+      }
+      else {
+        throw e;
+      }
+    }
+  },
+
+  delimited: function (elementParser, delimiterParser) {
+    var initialPosition, initialState;
+    var result = [];
+  
+    while (true) {
+      try {
+        initialPosition = this.position;
+        initialState = this.state;
+        if (result.length >= 1) {
+          delimiterParser.call(this);
+        }
+        result.push(elementParser.call(this));
+      }
+      catch (e) {
+        if (e === Backtrack) {
+          this.position = initialPosition;
+          this.state = initialState;
+          return result;
+        }
+        else {
+          throw e;
+        }
+      }
+    }
+  },
+
+  nonZeroDelimited: function (elementParser, delimiterParser) {
+    var result = this.delimited(elementParser, delimiterParser);
+    if (result.length >= 1) return result;
+    else throw Backtrack;
+  },
+
+  handleHashPattern: function (parser) {
+    throw ShouldOverride.new();
+  },
+
+  handleStringPattern: function (string) {
+    throw ShouldOverride.new();
+  },
+
+  fail: function () {
+    throw Backtrack;
+  },
+
+  nothing: function () {
+    return null;
+  },
+  
+  isEof: function () {
+    return (this.position >= this.source.length);
+  },
+  eof: function () {
+    if (this.isEof()) return null;
+    else throw Backtrack;
+  },
+  
+  at: function (position) {
+    return this.source[position];
+  },
+  
+  peek: function () {
+    return this.at(this.position);
+  },
+  
+  next: function () {
+    return this.at(this.position++);
+  },
+  
+  nextIf: function (predicate) {
+    var o = this.at(this.position);
+    if (predicate.call(this, o)) {
+      this.position++;
+      return o;
+    }
+    else {
+      throw Backtrack;
+    }
+  },
+  
+  matchedInput: function (parser) {
+    var startPosition = this.position;
+    parser.call(this);
+    var endPosition = this.position;
+    return this.slice(startPosition, endPosition);
+  },
+  
+  slice: function (start, end) {
+    return this.source.slice(start, end);
+  },
+  
+  error: function (message) {
+    throw Error.new(message);
+  },
+  
+  positionString: function (position) {
+    if (position == null) position = this.position;
+    
+    return this.sourcename + ':' + position;
+  },
+  
+  name: '(UnnamedGrammar)',
+  
+  log: function (message) {
+    console.error('%s', this.name + '.log() at ' + this.positionString() + ' ' + message);
+  },
+  
+});
+
+// Synonyms
+Grammar.parse = Grammar.match;
+Grammar.parseAll = Grammar.matchAll;
+Grammar.prototype.parse = Grammar.prototype.match;
+Grammar.prototype.parseAll = Grammar.prototype.parseAll;
+
+Grammar.prototype.separatedBy = Grammar.prototype.delimited;
+Grammar.prototype.delimited1 = Grammar.prototype.nonZeroDelimited;
+Grammar.prototype.nonZeroSeparatedBy = Grammar.prototype.nonZeroDelimited;
+Grammar.prototype.separatedBy1 = Grammar.prototype.nonZeroDelimited;
+Grammar.prototype.repeat = Object.prototype.__combe_repeat;
+Grammar.prototype.many = Object.prototype.__combe_repeat;
+Grammar.prototype.nonZeroRepeat = Object.prototype.__combe_nonZeroRepeat;
+Grammar.prototype.repeat1 = Object.prototype.__combe_nonZeroRepeat;
+Grammar.prototype.many1 = Object.prototype.__combe_nonZeroRepeat;

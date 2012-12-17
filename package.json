@@ -17,7 +17,8 @@
     }
   ],
   "bin": {
-    "newcombebc": "./bin/newcombebc"
+    "newcombebc": "./bin/newcombebc",
+    "newcombe": "./bin/newcombe"
   },
   "repository": {
     "type": "git",
