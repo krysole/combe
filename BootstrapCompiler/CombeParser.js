@@ -324,15 +324,15 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   logicalOrExpression: (function () {
-    return this.memoize("WsLRE5zsPBebph6a2FSNKg", (function () {
-      return this.leftAssociative(this.logicalAndExpression, (function () {
+    return this.memoize("of0yPSpuAjqqN5QIRtG0OQ", (function () {
+      return this.leftAssociative(this.logicalXorExpression, (function () {
         return this.stringPatternHandler("||");
       }));
     }));
   }),
   logicalXorExpression: (function () {
-    return this.memoize("SzL21wxJz/ZIPpA8YpLBxA", (function () {
-      return this.leftAssociative(this.bitwiseXorExpression, (function () {
+    return this.memoize("VYXijjSx269dzadQodz+yA", (function () {
+      return this.leftAssociative(this.logicalAndExpression, (function () {
         return this.stringPatternHandler("^^");
       }));
     }));
@@ -678,8 +678,8 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   property: (function () {
-    return this.memoize("Pm0bEG3anQELlI1Z9Fs5IQ", (function () {
-      var name, pv, expr;
+    return this.memoize("W326xhSYsXqG3tgfbD0gcg", (function () {
+      var name, pv, params, body, expr;
       return this._choice((function () {
         name = this.propertyName();
         pv = this.propertyValue();
@@ -694,6 +694,12 @@ var CombeParser = module.exports = Class.new(BaseParser, {
         name = this.propertyName();
         pv = this.propertyValue();
         return Ast.SetProperty(name, pv);
+      }), (function () {
+        this.id("rule");
+        name = this.propertyName();
+        params = this._optional(this.parameters);
+        body = this.ruleBody();
+        return Ast.ValueProperty(name, Ast.Rule(params, body));
       }), (function () {
         this.id("describe");
         name = this.propertyName();
@@ -841,12 +847,10 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   sequencePattern: (function () {
-    return this.memoize("2Qk1QezQ8dRfxFhNOCdqUQ", (function () {
+    return this.memoize("Wa58g1LRgktZg28oFFd86g", (function () {
       var ps;
       return (function () {
-        ps = this.delimited1(this.operatorPattern, (function () {
-          return this.stringPatternHandler(",");
-        }));
+        ps = this._repeat1(this.operatorPattern);
         return this._choice((function () {
           this._predicate((function () {
             return ps.length > 1;

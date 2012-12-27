@@ -19,6 +19,7 @@
 var combe = require('combe');
 
 var fs = require('fs');
+var path = require('path');
 var inspect = require('util').inspect;
 
 var CombeLexer = require('./CombeLexer');
@@ -29,7 +30,66 @@ var BootstrapCompiler = module.exports = {
   
   shouldOutputIntermediates: false,
   
-  compile: function (filename) {
+  verbose: true,
+  
+  compile: function (p) {
+    p = path.resolve(p);
+    if (fs.existsSync(p)) {
+      if (path.extname(p) === '.combe') {
+        this.compileFile(p);
+      }
+      else if (fs.statSync(p).isDirectory()) {
+        this.compileDirectory(p);
+      }
+      else {
+        throw Error.new('Expected source file to be directory or .combe file');
+      }
+    }
+    else if (fs.existsSync(p + '.combe')) {
+      if (fs.statSync(p + '.combe').isFile()) {
+        this.compileFile(p + '.combe');
+      }
+      else {
+        throw Error.new('Expected .combe path to be a file');
+      }
+    }
+    else {
+      throw Error.new('Expected source file to be directory or .combe file');
+    }
+  },
+  
+  compileDirectory: function (p) {
+    var _this = this;
+    assert(fs.statSync(p).isDirectory());
+    
+    this.log(p + ' (directory)');
+    
+    fs.readdirSync(p).sort().each(function (childname) {
+      var fullChildname = path.join(p, childname);
+      var s = fs.statSync(fullChildname);
+      if (s.isDirectory() && !childname.match(/^\./)) {
+        _this.compileDirectory(fullChildname);
+      }
+      else if (s.isFile() && path.extname(childname) === '.combe') {
+        _this.compileFile(fullChildname);
+      }
+      else {
+        // Do nothing
+      }
+    });
+  },
+  
+  compileFile: function (filename) {
+    var compiledName = filename.replace(/\.combe$/, '.combejs');
+    if (fs.existsSync(compiledName) && 
+        fs.statSync(compiledName).mtime > fs.statSync(filename).mtime) {
+      // Compiled file does not need to be refreshed
+      this.log(filename + ' (up to date)');
+      return;
+    }
+    
+    this.log(filename + ' (compiling)');
+    
     var source = fs.readFileSync(filename, 'utf8');
     
     var hashbang = this.getHashbangLine(source);
@@ -47,6 +107,10 @@ var BootstrapCompiler = module.exports = {
     
     var targetFilename = filename.replace(/\.combe$/, '.combejs');
     fs.writeFileSync(targetFilename, jstext);
+  },
+  
+  log: function (message) {
+    console.log(process.cmdname + ': ' + message);
   },
   
   writeIntermediate: function (baseFilename, name, object) {

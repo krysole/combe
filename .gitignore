@@ -14,3 +14,4 @@
 
 # Combe compiler output
 *.combe.js
+*.combejs

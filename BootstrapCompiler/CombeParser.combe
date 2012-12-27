@@ -455,7 +455,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   sequencePattern: rule {
-    delimited1[operatorPattern, ',']:ps
+    operatorPattern+:ps
     ( ?(ps.length > 1) -> ps
     | -> ps[0]
     )

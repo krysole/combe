@@ -91,7 +91,7 @@ var CombeLexer = module.exports = Class.new(TextParser, {
     "while",
     "do",
     "for",
-    "for",
+    "return",
     "break",
     "continue",
     "try",

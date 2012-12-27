@@ -406,7 +406,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   
   rule sequencePattern {
-    delimited1[operatorPattern, ',']:ps
+    operatorPattern+:ps
     ( ?(ps.length > 1) -> ps
     | -> ps[0]
     )

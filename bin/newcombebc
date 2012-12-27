@@ -17,16 +17,24 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
+var path = require('path');
+
+process.cmdname = path.basename(process.argv[1]) + path.extname(process.argv[1]);
+
 var BootstrapCompiler = require('combe-newcombe/BootstrapCompiler');
 
 setTimeout(function () {
-  if (process.argv.length < 2 + 1) { // argv: node newcombebc ...
-    console.error('Usage: newcombebc filename');
+  var nargs = process.argv.length - 2; // argv: node newcombebc ...
+  if (nargs < 0 || nargs > 1) {
+    console.error('Usage: newcombebc [path]');
     return;
   }
   
   var sourceFilename = process.argv[2];
+  if (sourceFilename == null) {
+    sourceFilename = path.resolve('.');
+    console.log(process.cmdname + ': compiling directory ' + sourceFilename);
+  }
   
-  BootstrapCompiler.shouldOutputIntermediates = false;
   BootstrapCompiler.compile(sourceFilename);
 }, 0);
