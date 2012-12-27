@@ -1,0 +1,204 @@
+//
+// Combe - Improved JavaScript with Pattern Matching
+//
+// Copyright 2012 Lorenz Pretterhofer <krysole@alexicalmistake.com>
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+//
+
+var CombeLexer = module.exports = TextGrammar.subclass({
+  
+  allTokens(source, filename) {
+    var lexer = this.new(source, filename);
+    var tokens = [];
+    
+    while (tokens.isEmpty() || !tokens.last.is('eof')) {
+      tokens.push(lexer.nextToken());
+    }
+    
+    return tokens;
+  },
+  
+}, {
+  
+  reset(position) {
+    if (position != null) this.position = position;
+    else this.position = 0;
+  },
+  
+  createToken(type, value) {
+    var text = this.slice(this.tokenPosition, this.position);
+    return Token.new(
+      type,
+      value,
+      this.tokenPosition,
+      text.length,
+      text
+    );
+  },
+  
+  rule nextToken {
+    !(this.furthestPosition = this.position)
+    ws?
+    
+    !(this.tokenPosition = this.position)
+    ( identifier
+    | number
+    | operatorAssignment
+    | punctuation
+    | string
+    | regex
+    | eof createToken('eof')
+    | error('Lexer failed at position ' + this.positionString());
+    )
+  },
+  
+  
+  rule identifier {
+    initialIdChar idChar*
+    createToken('identifier'):token
+    !(token.reserved = this.ReservedWords.include(token.text))
+    -> token
+  },
+  
+  ReservedWords: [
+    'var',
+    'function', 'rule',
+    'if', 'else', 'while', 'do', 'for',
+    'return', 'break', 'continue',
+    'try', 'catch', 'finally',
+    'this', 'null', 'undefined', 'true', 'false'
+  ],
+  
+  
+  rule operatorAssignment {
+    ( '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^='
+    | '<<=' | '>>>=' | '>>='
+    )
+    createToken('operatorAssignment')
+  },
+  
+  
+  rule punctuation {
+    ( '{' | '}' | '(' | ')' | '[' | ']' | ';' | ','
+    | '<<' | '>>>' | '>>' | '<=' | '>=' | '<' | '>'
+    | '===' | '!==' | '==' | '!=' | '!' | '='
+    | '...' | '..' | '.' ~digit -> '.'
+    | '->' | '#'
+    | '&&' | '||' | '^^' | '&' | '|' | '^'
+    | '++' | '--' | '+' | '-'
+    | '*' | '/' | '%' | '~' | '?' | ':'
+    ):text
+    createToken(text)
+  },
+  
+  
+  rule number {
+    | decimal
+    | hexInteger
+  },
+  
+  rule decimal {
+    matchedInput[
+      | integerPart ('.' digit*)? exponentPart?
+      | '.' digit+ exponentPart?
+    ]:text ~idChar
+    createToken('number', parseFloat(text))
+  },
+  
+  rule integerPart {
+    | '0'
+    | char('1'..'9') digit*
+  },
+  
+  rule exponentPart {
+    ('e'|'E') ('+'|'-'|nothing) digit+
+  },
+  
+  rule hexInteger {
+    ('0x'|'0X') matchedInput[hexDigit+]:text ~idChar
+    createToken('number', parseInt(text, 16))
+  },
+  
+  
+  rule string {
+    ( stringFragment['\''] | stringFragment['\"'] ):text
+    createToken('string', text)
+  },
+  
+  rule stringFragment(delimiter) {
+    delimiter (~delimiter stringChar)*:cs delimiter
+    -> cs.join()
+  },
+  
+  rule stringChar {
+    | '\\' stringEscapeSequence
+    | '\\' newline -> ''
+    | ~newline char
+  },
+  
+  rule stringEscapeSequence {
+    | '\'' -> '\''
+    | '\"' -> '\"'
+    | '\\' -> '\\'
+    | 'b'  -> '\b'
+    | 'f'  -> '\f'
+    | 'n'  -> '\n'
+    | 'r'  -> '\r'
+    | 't'  -> '\t'
+    | 'v'  -> '\v'
+    | '0' ~digit -> '\0'
+    | 'x' matchedInput[hexDigit hexDigit]:hs -> String.fromCodepoint(hs.join())
+    | 'u' matchedInput[hexDigit hexDigit hexDigit hexDigit]:hs -> String.fromCodepoint(hs.join())
+  },
+  
+  
+  rule regex {
+    'r/' matchedInput[~'*' regexChar*]:pattern '/' matchedInput[idChars*]:options
+    createToken('regex', Regex.new(pattern, options))
+  },
+  
+  rule regexChar {
+    | '\\' ~newline char
+    | regexCharacterClass
+    | ~( '/' | newline ) char
+  },
+  
+  rule regexCharacterClass {
+    '[' regexCharacterClassChar ']'
+  },
+  
+  rule regexCharacterClassChar {
+    | '\\' ~newline char
+    | ~(']' | newline) char
+  },
+  
+  
+  rule initialIdChar { char('a'..'z', 'A'..'Z', '_', '$') },
+  rule idChar        { char('a'..'z', 'A'..'Z', '_', '$', '0'..'9') },
+  rule digit         { char('0'..'9') },
+  rule hexDigit      { char('0'..'9', 'a'..'f', 'A'..'F') },
+  
+  rule ws {
+    ( spaces | comment | newline )+
+  },
+  
+  rule spaces  { char(' \t\v\f\u00a0\u200c\u200d\ufeff') },
+  rule newline { '\r\n' | char('\n\r\u2028\u2029') },
+  
+  rule comment {
+    | '//' (~newline char)* (newline | eof)
+    | '/*' (~'*/' char)* '*/'
+  },
+  
+});

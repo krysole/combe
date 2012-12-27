@@ -27,6 +27,6 @@ setTimeout(function () {
   
   var sourceFilename = process.argv[2];
   
-  BootstrapCompiler.shouldOutputIntermediates = true;
+  BootstrapCompiler.shouldOutputIntermediates = false;
   BootstrapCompiler.compile(sourceFilename);
 }, 0);

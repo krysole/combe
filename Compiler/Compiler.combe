@@ -15,8 +15,6 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
-'use strict';
-var combe = require('combe');
 
 var fs = require('fs');
 var inspect = require('util').inspect;
@@ -25,28 +23,27 @@ var CombeLexer = require('./CombeLexer');
 var CombeParser = require('./CombeParser');
 var CombeAstToJS = require('./CombeAstToJS');
 
-var BootstrapCompiler = module.exports = {
+var Compiler = module.exports = {
   
   shouldOutputIntermediates: false,
   
-  compile: function (filename) {
+  compile(filename) {
     var source = fs.readFileSync(filename, 'utf8');
     
     var hashbang = this.getHashbangLine(source);
     source = this.removeHashbangLine(source);
     
-    var parser = CombeParser.new();
-    parser.parseScript(source, filename);
+    var parser = CombeParser.new(source, filename);
+    var ast = parser.match();
     this.writeIntermediate(filename, 'tokens', parser.tokens);
-    this.writeIntermediate(filename, 'ast', parser.ast);
+    this.writeIntermediate(filename, 'ast', ast);
     
-    var jsiolist = CombeAstToJS.translateToIOList(parser.ast);
-    this.writeIntermediate(filename, 'iolist', jsiolist);
+    var jsIolist = CombeAstToJS.translateToIOList(ast);
+    this.writeIntermediate(filename, 'iolist', jsIolist);
     
-    var jstext = Array.deepJoinIOList(jsiolist);
+    var jsText = Array.deepJoinIOList(jsIolist);
     
-    var targetFilename = filename.replace(/\.combe$/, '.combejs');
-    fs.writeFileSync(targetFilename, jstext);
+    fs.writeFileSync(filename + '.js', jsText);
   },
   
   writeIntermediate: function (baseFilename, name, object) {

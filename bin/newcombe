@@ -29,13 +29,8 @@ setTimeout(function () {
   
   var sourceFilename = path.resolve(process.argv[2]);
   var ext = path.extname(sourceFilename);
-  if (ext !== '.js') {
-    if (ext === '.combe') {
-      sourceFilename += '.js';
-    }
-    else {
-      sourceFilename += '.combe.js';
-    }
+  if (ext === '.combe') {
+    sourceFilename += 'js'; // only load a .combejs file
   }
   require(sourceFilename);
 }, 0);

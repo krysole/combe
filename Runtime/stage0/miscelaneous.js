@@ -17,11 +17,26 @@
 //
 'use strict';
 
-// Stage 1 should load a collection of Combe modules, since the core runtime
-// features have now been initialized, providing the remainder of the runtime.
+// Stuff that doesn't have it's own file.
 
-require('./ParsingError');
-require('./Grammar');
-require('./TextGrammar');
+Boolean.prototype.toSourceString = function () {
+  if (this) return 'true';
+  else return 'false';
+},
 
-global.__combe_runtimeStage0Loaded = true;
+Math.randomInteger = function (start, end) {
+  var range = end - start;
+  var n = Math.floor(Math.random() * (range + 1));
+  n %= range; // Prevent the unlikely floating point round to range-end possibility.
+  return n + start;
+}
+
+Math.generateSalt = function (length) {
+  if (length == null) length = 8;
+  var alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
+  var result = '';
+  for (var i = 0; i < length; i++) {
+    result += alphabet.charAt(Math.randomInteger(0, alphabet.length))
+  }
+  return result;
+};

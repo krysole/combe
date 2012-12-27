@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 //
 // Combe - Improved JavaScript with Pattern Matching
 //
@@ -15,13 +16,19 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
-'use strict';
 
-// Stage 1 should load a collection of Combe modules, since the core runtime
-// features have now been initialized, providing the remainder of the runtime.
+require('combe-newcombe/Runtime');
 
-require('./ParsingError');
-require('./Grammar');
-require('./TextGrammar');
+var Compiler = require('combe-newcombe/Compiler');
 
-global.__combe_runtimeStage0Loaded = true;
+setTimeout(function () {
+  if (process.argv.length < 2 + 1) { // argv: node newcombec ...
+    console.error('Usage: newcombec filename');
+    return;
+  }
+  
+  var sourceFilename = process.argv[2];
+  
+  Compiler.shouldOutputIntermediates = true;
+  Compiler.compile(sourceFilename);
+}, 0);

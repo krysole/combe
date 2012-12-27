@@ -15,101 +15,58 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
-'use strict';
-
-var combe = require('combe');
-
-var BaseParser = combe.BaseParser;
 
 var Ast = require('./CombeAst');
 var CombeLexer = require('./CombeLexer');
 
-var CombeParser = module.exports = Class.new(BaseParser, {
+var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
-  parseScript: function () {
-    var parser = this.new();
-    return parser.parseScript.apply(parser, arguments);
-  },
-  
-  parse: function () {
-    var parser = this.new();
-    return parser.parse.apply(parser, arguments);
-  },
-  
-}, {
-  
-  parseScript: function (source, filename) {
-    return this.parse(source, filename, 'script');
-  },
-  
-  parse: function (source, filename, rulename) {
-    var rest = Array.slice(arguments, 3);
-    if (filename == null) filename = '(unnamed)';
-    
-    this.source = source;
-    this.filename = filename;
+  initialize(source, filename) {
+    TokenGrammar.prototype.initialize.call(this, source, filename);
     
     this.lexer = CombeLexer.new(source, filename);
-    this.tokens = [];
-    
-    this.ast = this.match.apply(this, [rulename].concat(rest));
-    if (this.ast == null) {
-      throw Error.new('Combe parser failed; futhest position was ' + this.positionString(this.furthestPosition));
-    }
-    
-    return this.ast;
   },
   
+  rule start { script },
   
-  initialize: function (source, filename) {
-    BaseParser.prototype.initialize.call(this, source);
-    
-    this.filename = filename;
-    
-    this.lexer = CombeLexer.new(source, filename);
-    this.tokens = [];
-    this.furthestPosition = -1;
-  },
-  
-  
-  script: rule {
+  rule script {
     terminatedStatement*:stmts eof
     -> Ast.Script(stmts)
   },
   
   
-  terminatedStatement: rule {
+  rule terminatedStatement {
     statement:stmt ';' -> stmt
   },
   
-  statement: rule {
+  rule statement {
     | varStatement
     
     | expressionStatement
     | emptyStatement
   },
   
-  varStatement: rule {
+  rule varStatement {
     id('var') delimited1[variableDeclaration, ',']:decls
     -> Ast.VarStatement(decls)
-  },
+  }
   
-  variableDeclaration: rule {
+  rule variableDeclaration {
     variableIdentifier:name ( '=' expression:expr )?
     -> Ast.VariableDeclaration(name, expr)
   },
   
-  expressionStatement: rule {
+  rule expressionStatement {
     expression:expr
     -> Ast.ExpressionStatement(expr)
   },
   
-  emptyStatement: rule {
+  rule emptyStatement {
     -> Ast.EmptyStatement()
   },
   
   
-  expression: rule {
+  rule expression {
     | ifExpression
     | whileExpression
     | doWhileExpression
@@ -128,25 +85,25 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     | operatorExpression
   },
   
-  ifExpression: rule {
+  rule ifExpression {
     id('if') '(' expression:condition ')' expressionBody?:consiquent
     ( ?(consiquent != null) id('else') expressionBody:alternative )?
     -> Ast.IfExpression(condition, consiquent, alternative)
   },
   
-  whileExpression: rule {
+  rule whileExpression {
     id('while') '(' expression:condition ')' expressionBody?:b
     -> Ast.WhileExpression(condition, b)
   },
   
-  doWhileExpression: rule {
+  rule doWhileExpression {
     id('do') expressionBody:b id('while') '(' expression:condition ')'
     -> Ast.DoWhileExpression(b, condition)
   },
   
-  forExpression: rule {
+  rule forExpression {
     | id('for') '('
-        expression?:initExpr ';' 
+        expression?:initExpr ';'
         expression?:condExpr ';'
         expression?:incExpr ')' expressionBody?:b
       -> Ast.ForExpression(initExpr, condExpr, incExpr, b)
@@ -157,7 +114,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
       -> Ast.ForDeclaringExpression(decls, condExpr, incExpr, b)
   },
   
-  tryCatchExpression: rule {
+  rule tryCatchExpression {
     id('try') expressionBody:tryBody
     ( id('catch') '(' variableIdentifier:catchBinding ')' expressionBody:catchBody
       ( id('finally') expressionBody:finallyBody )?
@@ -167,52 +124,46 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     )
   },
   
-  throwExpression: rule {
+  rule throwExpression {
     id('throw') expression:expr
     -> Ast.ThrowExpression(expr)
   },
   
-  returnExpression: rule {
+  rule returnExpression {
     id('return') expression?:expr
     -> Ast.ReturnExpression(expr)
   },
   
-  breakExpression: rule {
+  rule breakExpression {
     id('break')
     -> Ast.BreakExpression()
   },
   
-  continueExpression: rule {
+  rule continueExpression {
     id('continue')
     -> Ast.ContinueExpression()
   },
   
   
-  expressionBody: rule {
+  rule expressionBody {
     | expression
     | block
   },
   
-  block: rule {
+  rule block {
     '{' terminatedStatement*:stmts '}'
     -> Ast.Block(stmts)
   },
-  blockContents: rule {
-    terminatedStatements*:stmts
-    -> Ast.Block(stmts)
-  },
   
   
-  operatorExpression: rule {
+  rule operatorExpression {
     assignmentExpression
   },
   
   // Todo: Add support for assignment methods
-  lvalueTypes: [
-    'Variable', 'Subscript', 'Dot'
-  ],
+  lvalueTypes: ['Variable', 'Subscript', 'Dot'],
   
-  assignmentExpression: rule {
+  rule assignmentExpression {
     | secondaryExpression:lhs
       ?(this.lvalueTypes.include(lhs.type))
       ( '=' expression:rhs
@@ -223,7 +174,10 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     | conditionalExpression
   },
   
-  conditionalExpression: rule {
+  rule conditionalExpression {
+    // Todo: Do I want to keep the conditional operator instead of favoring the
+    // if expression for all conditionals. '?' and ':' could be useful for other
+    // things.
     logicalOrExpression:condition
     ( '?' expression:consiquent
       ':' expression:alternative
@@ -232,44 +186,44 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     )
   },
   
-  logicalOrExpression: rule {
+  rule logicalOrExpression {
     leftAssociative[logicalXorExpression, '||']
   },
-  logicalXorExpression: rule {
+  rule logicalXorExpression {
     leftAssociative[logicalAndExpression, '^^']
   },
-  logicalAndExpression: rule {
+  rule logicalAndExpression {
     leftAssociative[equalityExpression, '&&']
   },
   
-  equalityExpression: rule {
+  rule equalityExpression {
     leftAssociative[relationalExpression, ('=='|'!='|'==='|'!==')]
   },
-  relationalExpression: rule {
+  rule relationalExpression {
     leftAssociative[bitwiseOrExpression, ('<'|'<='|'>='|'>')]
   },
   
-  bitwiseOrExpression: rule {
+  rule bitwiseOrExpression {
     leftAssociative[bitwiseXorExpression, '|']
   },
-  bitwiseXorExpression: rule {
+  rule bitwiseXorExpression {
     leftAssociative[bitwiseAndExpression, '^']
   },
-  bitwiseAndExpression: rule {
+  rule bitwiseAndExpression {
     leftAssociative[shiftExpression, '&']
   },
   
-  shiftExpression: rule {
+  rule shiftExpression {
     leftAssociative[additiveExpression, ('<<'|'>>'|'>>>')]
   },
-  additiveExpression: rule {
-    leftAssociative[multiplicitiveExpression, ('+'|'-')]
+  rule additiveExpression {
+    leftAssociative[multiplicative, ('+'|'-')]
   },
-  multiplicitiveExpression: rule {
+  rule multiplicativeExpression {
     leftAssociative[rangeExpression, ('*'|'/'|'%')]
   },
   
-  rangeExpression: rule {
+  rule rangeExpression {
     prefixExpression:expr
     ( '..' (rangeInfinity | prefixExpression):rhs
       -> Ast.InclusiveRange(expr, rhs)
@@ -278,17 +232,17 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     | -> expr
     )
   },
-  rangeInfinity: rule {
+  rule rangeInfinity {
     '*' -> Ast.Literal(null)
   },
   
-  prefixExpression: rule {
+  rule prefixExpression {
     | ('++'|'--'|'+'|'-'|'~'|'!'):op prefixExpression:expr
       -> Ast.PrefixOperator(op.text, expr)
     | postfixExpression
   },
   
-  postfixExpression: rule {
+  rule postfixExpression {
     secondaryExpression:expr
     ( ('++'|'--'):op
       -> Ast.PostfixOperator(op.text, expr)
@@ -297,14 +251,14 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   
-  leftAssociative: rule (operand, operator) {
+  rule leftAssociative(operand, operator) {
     operand:expr
     ( operator:op operand:rhs
-      !(expr = Ast.InfixOperator(op.text, expr, rhs))
+      !(expr = Ast.InfixOperator(op.text, expr, rhs)))
     )*
     -> expr
   },
-  rightAssociative: rule (operand, operator) {
+  rule rightAssociative(operand, operator) {
     operand:expr
     ( operator:op rightAssociative(operand, operator):rhs
       -> Ast.InfixOperator(op.text, expr, rhs)
@@ -312,14 +266,12 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     )
   },
   
-  
-  secondaryExpression: rule {
+  rule secondaryExpression {
     primaryExpression:expr
     ( secondaryExpressionFragment(expr):expr )*
     -> expr
   },
-  
-  secondaryExpressionFragment: rule (subject) {
+  rule secondaryExpressionFragment(subject) {
     | arguments:args
       -> Ast.Call(subject, args)
     | '[' delimited[expression, ',']:args ']'
@@ -331,21 +283,21 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   
-  arguments: rule {
+  rule arguments {
     '(' delimited[expression, ',']:args ')' -> args
   },
   
-  parameters: rule {
+  rule parameters {
     '(' delimited[variableIdentifier, ',']:args ')' -> args
   },
   
-  functionBody: rule {
+  rule functionBody {
     | '->' expression
     | block
   },
   
   
-  primaryExpression: rule {
+  rule primaryExpression {
     | valueLiteral
     | id('this') -> Ast.This()
     | variableIdentifier:name -> Ast.Variable(name)
@@ -356,34 +308,33 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     | subexpression
   },
   
-  valueLiteral: rule {
-    ( id('null')  -> null
+  rule valueLiteral {
+    ( id('null') -> null
     | id('undefined') -> undefined
-    | id('true')  -> true
+    | id('true') -> true
     | id('false') -> false
-    | 'number':n  -> n.value
-    | 'string':s  -> s.value
-    | 'regex':r   -> r.value
+    | 'number':n -> n.value
+    | 'string':s -> s.value
+    | 'regex':r -> r.value
     ):value
     -> Ast.Literal(value)
   },
   
-  arrayLiteral: rule {
+  rule arrayLiteral {
     '[' delimited[arrayElement, ',']:elems ','? ']'
-    !{ if (elems.last.is('Elision')) elems.pop(); }
     -> Ast.Array(elems)
   },
-  arrayElement: rule {
+  rule arrayElement {
     | expression
-    | -> Ast.Literal(null) // Elision
+    | -> Ast.Litearl(null) // Elision
   },
   
-  objectLiteral: rule {
+  rule objectLiteral {
     '{' delimited[property, ',']:decls ','? '}'
     -> Ast.Object(decls)
   },
   
-  property: rule {
+  rule property {
     | propertyName:name propertyValue:pv
       -> Ast.ValueProperty(name, pv)
     | id('get') propertyName:name propertyValue:pv
@@ -395,14 +346,14 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     | id('describe') propertyName:name ':' expression:expr
       -> Ast.DescribeProperty(name, expr)
   },
-  propertyValue: rule {
+  rule propertyValue {
     | ':' expression:expr
     | parameters?:params functionBody:body
       -> Ast.Function(params, body)
   },
   
-  functionLiteral: rule {
-    | parameters?:params '->' expression:e
+  rule functionLiteral {
+    | parametes?:params '->' expression:e
       -> Ast.Function(params, e)
     | variableIdentifier:p '->' expression:e
       -> Ast.Function([p], e)
@@ -410,33 +361,33 @@ var CombeParser = module.exports = Class.new(BaseParser, {
       -> Ast.Function(params, body)
   },
   
-  ruleLiteral: rule {
-    | id('rule') parameters?:params ruleBody:body
-      -> Ast.Rule(params, body)
+  rule ruleLiteral {
+    id('rule') parameters?:params ruleBody:body
+    -> Ast.Rule(params, body)
   },
-  ruleBody: rule {
+  rule ruleBody {
     | '{' pattern:p '}' -> p
     | operatorPattern
   },
   
-  subexpression: rule {
+  rule subexpression {
     '(' expressionSequence:expr ')' -> expr
   },
   
-  expressionSequence: rule {
-    delimited1[expression, ',']:exprs ','?
-    ( ?(exprs.length === 1)
+  rule expressionSequence {
+    delimited1[expression, ',']:expr ','?
+    ( ?(exprs.length == 1)
       -> exprs[0]
     | -> Ast.SequenceExpression(exprs)
     )
   },
   
   
-  pattern: rule {
+  rule pattern {
     choicePattern
   },
   
-  choicePattern: rule {
+  rule choicePattern {
     '|'? returnPattern:p
     ( '|' returnPattern:p2
       !(p = Ast.ChoicePattern([p, p2]))
@@ -444,7 +395,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     -> p
   },
   
-  returnPattern: rule {
+  rule returnPattern {
     | sequencePattern:p
       ( '->' actionBody:e
         -> Ast.SequencePattern([p, Ast.ActionPattern(e)])
@@ -454,35 +405,35 @@ var CombeParser = module.exports = Class.new(BaseParser, {
       -> Ast.ActionPattern(e)
   },
   
-  sequencePattern: rule {
+  rule sequencePattern {
     delimited1[operatorPattern, ',']:ps
     ( ?(ps.length > 1) -> ps
     | -> ps[0]
     )
   },
   
-  operatorPattern: rule {
+  rule operatorPattern {
     prefixOperatorPattern
   },
   
-  prefixOperatorPattern: rule {
-    | '~' prefixOperatorPattern:p -> Ast.NotPatern(p)
+  rule prefixOperatorPattern {
+    | '~' prefixOperatorPattern:p -> Ast.NotPattern(p)
     | '&' prefixOperatorPattern:p -> Ast.LookaheadPattern(p)
     | '#' prefixOperatorPattern:p -> Ast.HashOperatorPattern(p)
     | postfixOperatorPattern
   },
   
-  postfixOperatorPattern: rule {
+  rule postfixOperatorPattern {
     callPattern:p
-    ( '*' !(p = Ast.RepeatPattern(p))
-    | '+' !(p = Ast.NonZeroRepeatPattern(p))
-    | '?' !(p = Ast.OptionalPattern(p))
+    ( '*' -> !(p = Ast.RepeatPattern(p))
+    | '+' -> !(p = Ast.NonZeroRepeatPattern(p))
+    | '?' -> !(p = Ast.OptionalPattern(p))
     | ':' variableIdentifier:name !(p = Ast.BindPattern(p, name))
     )*
     -> e
   },
   
-  callPattern: rule {
+  rule callPattern {
     primaryPattern:p
     ( arguments:args
       !(p = Ast.CallPattern(p, args))
@@ -491,11 +442,11 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     )*
     -> p
   },
-  patternArguments: rule {
+  rule patternArguments {
     '[' delimited[pattern, ',']:args ']' -> args
   },
   
-  primaryPattern: rule {
+  rule primaryPattern {
     | predicatePattern
     | actionPattern
     | immediateActionPattern
@@ -504,116 +455,45 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     | '(' pattern:p ')' -> p
   },
   
-  predicatePattern: rule {
+  rule predicatePattern {
     '?' actionBody:e -> Ast.PredicatePattern(e)
   },
   
-  actionPattern: rule {
+  rule actionPattern {
     '!' actionBody:e -> Ast.ActionPattern(e)
   },
   
-  immediateActionPattern: rule {
+  rule immediateActionPattern {
     '%' actionBody:e -> Ast.ImmediateActionPattern(e)
   },
   
-  actionBody: rule {
+  rule actionBody {
     | secondaryExpression
     | '(' expression:e ')' -> e
     | block
   },
   
-  stringPattern: rule {
-    | 'string':s -> Ast.StringPattern(s.value)
+  rule stringPattern {
+    'string':s -> Ast.StringPattern(s.value)
   },
   
-  variablePattern: rule {
+  rule variablePattern {
     variableIdentifier:name -> Ast.VariablePattern(name)
   },
   
   
-  id: rule (expectedName) {
-    'identifier':name ?(name.text === expectedName) -> name
+  rule id(expectedName) {
+    'identifier':name ?(name.text == expectedName) -> name
   },
   
-  variableIdentifier: rule {
+  rule variableIdentifier {
     'identifier':name ?(!name.reserved) -> name.text
   },
   
-  propertyName: rule {
+  rule propertyName {
     | 'identifier':t -> t.text
     | 'string':t     -> t.value
     | 'number':t     -> t.text
   },
   
-  
-  t: function (typename) {
-    var token = this.next();
-    if (token.type === typename) {
-      this.furthestPosition = Math.max(this.furthestPosition, this.position);
-      return token;
-    }
-    else {
-      this.fail();
-    }
-  },
-  
-  peekNext: function () {
-    return this.tokenAt(this.position);
-  },
-  
-  next: function () {
-    return this.tokenAt(this.position++);
-  },
-  
-  tokenAt: function (position) {
-    var token;
-    
-    assert(position < this.tokens.length + 1);
-    if (position >= this.tokens.length) {
-      assert(this.tokens.isEmpty() || this.tokens.last.type !== 'eof');
-      
-      this.tokens.push(this.lexer.nextToken());
-    }
-    
-    return this.tokens[position];
-  },
-  
-  eof: rule {
-    'eof'
-  },
-  
-  stringPatternHandler: rule (string) {
-    t(string)
-  },
-  
-  
-  lineColumnString: function (position) {
-    if (position == null) position = this.position;
-    
-    if (position != -1) {
-      var token = this.tokenAt(position);
-    
-      return this.source.lineColumnAt(token.position).join(':');
-    }
-    else {
-      return '-:-';
-    }
-  },
-  
-  positionString: function (position) {
-    var lcs = this.lineColumnString(position);
-    
-    return this.filename + ':' + lcs;
-  },
-  
-  log: function (name) {
-    var additionalMessages = Array.slice(arguments, 1);
-    var out = 'CombeParser::log() ' + this.positionString() + ':' + name;
-    if (additionalMessages.length > 0) {
-      out = out + '; ';
-      out = out + additionalMessages.join('; ');
-    }
-    console.error(out);
-  },    
-
 });

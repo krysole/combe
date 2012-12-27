@@ -17,11 +17,12 @@
 //
 'use strict';
 
-// Stage 1 should load a collection of Combe modules, since the core runtime
-// features have now been initialized, providing the remainder of the runtime.
+global.Regex = RegExp;
 
-require('./ParsingError');
-require('./Grammar');
-require('./TextGrammar');
-
-global.__combe_runtimeStage0Loaded = true;
+Regex.prototype.extend({
+  
+  toSourceString: function () {
+    return 'r' + this.toString();
+  },
+  
+});

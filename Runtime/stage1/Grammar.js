@@ -47,12 +47,19 @@ global.Grammar = Object.subclass({
     if (source == null) source = [];
     this.source = source;
     this.sourcename = sourcename;
-    this.position = 0;
+    this._position_storage = 0;
+    this.furthestPosition = 0;
     this.state = null;
   },
   
   get filename() { return this.sourcename; },
   set filename(filename) { this.sourcename = filename; },
+  
+  get position() { return this._position_storage; },
+  set position(position) {
+    this._position_storage = position;
+    this.furthestPosition = Math.max(this.furthestPosition, position);
+  },
 
   match: function (rulename) {
     var args = Array.slice(arguments, 1);
@@ -63,8 +70,7 @@ global.Grammar = Object.subclass({
     }
     catch (e) {
       if (e === Backtrack) {
-        // Todo: Implement better error reporting
-        throw Error.new(this.name + ".match() failed");
+        this.error('failed to match input');
       }
       else {
         throw e;
@@ -83,8 +89,7 @@ global.Grammar = Object.subclass({
     }
     catch (e) {
       if (e === Backtrack) {
-        // Todo: Implement better error reporting
-        throw Error.new(this.name + ".match() failed");
+        this.error('failed to match input');
       }
       else {
         throw e;
@@ -125,11 +130,11 @@ global.Grammar = Object.subclass({
   },
 
   handleHashPattern: function (parser) {
-    throw ShouldOverride.new();
+    throw ShouldOverrideError.new('Grammar.handleHashPattern()');
   },
 
   handleStringPattern: function (string) {
-    throw ShouldOverride.new();
+    throw ShouldOverrideError.new('Grammar.handleStringPattern()');
   },
 
   fail: function () {
@@ -183,7 +188,7 @@ global.Grammar = Object.subclass({
   },
   
   error: function (message) {
-    throw Error.new(message);
+    throw ParsingError.new(this, message, this.furthestPosition);
   },
   
   positionString: function (position) {
@@ -196,6 +201,10 @@ global.Grammar = Object.subclass({
   
   log: function (message) {
     console.error('%s', this.name + '.log() at ' + this.positionString() + ' ' + message);
+  },
+  
+  toString: function () {
+    return this.name;
   },
   
 });

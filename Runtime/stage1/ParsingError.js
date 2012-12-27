@@ -17,11 +17,23 @@
 //
 'use strict';
 
-// Stage 1 should load a collection of Combe modules, since the core runtime
-// features have now been initialized, providing the remainder of the runtime.
-
-require('./ParsingError');
-require('./Grammar');
-require('./TextGrammar');
-
-global.__combe_runtimeStage0Loaded = true;
+global.ParsingError = Error.subclass('ParsingError', {}, {
+  
+  initialize: function (parser, message, furthestPosition) {
+    this.parser = parser;
+    this.message = message;
+    this.furthestPosition;
+  },
+  
+  toString: function () {
+    var s = this.name + " in " + this.parser;
+    if (this.message != null) {
+      s += ": " + message;
+    }
+    if (this.furthestPosition != null) {
+      s += " (furthest position " + this.furthestPosition + ")";
+    }
+    return s;
+  },
+  
+});

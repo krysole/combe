@@ -227,3 +227,5 @@ Object.prototype.__combe_predicate = function (predicate) {
     throw Backtrack;
   }
 };
+
+require.extensions['.combejs'] = require.extensions['.js'];

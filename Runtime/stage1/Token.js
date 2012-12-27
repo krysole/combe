@@ -15,13 +15,23 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
-'use strict';
 
-// Stage 1 should load a collection of Combe modules, since the core runtime
-// features have now been initialized, providing the remainder of the runtime.
-
-require('./ParsingError');
-require('./Grammar');
-require('./TextGrammar');
-
-global.__combe_runtimeStage0Loaded = true;
+global.Token = Object.subclass({}, {
+  
+  initialize: function (type, value, position, length, text) {
+    this.type = type;
+    this.value = value;
+    this.position = position;
+    this.length = length;
+    this.text = text;
+  },
+  
+  toString: function () {
+    return '[[Token ' + this.type + ' ' + this.value + ' ' + this.text.quote() + ']]';
+  },
+  
+  is: function (typename) {
+    return this.type === typename;
+  },
+  
+});

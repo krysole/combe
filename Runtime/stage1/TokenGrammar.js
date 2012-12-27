@@ -19,57 +19,47 @@
 
 // Todo: This can and probably should be rewritten in Combe notation.
 
-global.TextGrammar = Grammar.subclass({}, {
+global.TokenGrammar = Grammar.subclass({}, {
   
-  char: function () {
-    var c = this.next();
-    if (arguments.length === 0) {
-      return c;
-    }
-    else {
-      for (var i = 0; i < arguments.length; i++) {
-        var p = arguments[i];
-        if (typeof p === 'function' && p.call(this, c) ||
-            p.include(c)) {
-          return c;
-        }
-      }
-      throw Backtrack;
-    }
+  initialize: function (source, sourcename) {
+    Grammar.prototype.initialize.call(this, source, sourcename);
+    
+    this.tokens = [];
   },
   
-  eachChar: function (stringOrArray) {
-    var initialPosition = this.position;
-    for (var i = 0; i < string.length; i++) {
-      this.char(stringOrArray[i]);
-    }
-    return this.slice(initialPosition, this.position);
-  },
+  get lexer() { throw ShouldOverrideError('TokenGrammar.lexer'); },
   
   handleStringPattern: function (string) {
-    return eachChar(string);
+    return this.t(string);
   },
   
-  handleHashPattern: function (parser) {
-    this.ws();
-    return parser.call(this);
+  at: function (position) {
+    while (position < this.tokens.length) {
+      if (tokens.last.is('eof')) {
+        this.error('cannot read past eof');
+      }
+      
+      tokens.push(this.lexer.nextToken());
+    }
+    return this.tokens[position];
   },
   
-  ws: function () {
-    throw ShouldOverrideError.new('TextGrammar.ws()');
+  isEof: function () {
+    return this.peek().is('eof');
   },
   
-  get source() { return this._source_storage; },
-  set source(source) {
-    assert(typeof source === 'string');
-    this._source_storage = source
+  t: function (typename) {
+    var token = this.nextIf(function (token) {
+      return (token.is(typename));
+    });
   },
   
   positionString: function (position) {
     if (position == null) position = this.position;
     
     if (position >= 0) {
-      var lineColumn = this.source.lineColumnString(position);
+      var token = this.at(position);
+      var lineColumn = this.source.lineColumnString(token.position);
     }
     else {
       var lineColumn = '-1:0';
@@ -78,7 +68,8 @@ global.TextGrammar = Grammar.subclass({}, {
     return this.sourcename + ':' + lineColumn;
   },
   
+  slice: function () {
+    throw UnimplementedError.new('TokenGrammar.slice()');
+  },
+  
 });
-
-// Synonyms
-TextGrammar.prototype.charIf = Grammar.prototype.nextIf;
