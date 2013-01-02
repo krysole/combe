@@ -547,7 +547,6 @@ var CombeAstToJS = module.exports = Class.new(Object, {
         '})'
       ];
       
-      require('fs').writeFileSync('iolist~', require('util').inspect(innerFunction, false, null));
       var innerFunctionCode = Array.deepJoinIOList(innerFunction);
       var hash = crypto.createHash('md5');
       hash.update(innerFunctionCode);
