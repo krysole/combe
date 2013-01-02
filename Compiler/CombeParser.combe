@@ -407,7 +407,8 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   rule sequencePattern {
     operatorPattern+:ps
-    ( ?(ps.length > 1) -> ps
+    ( ?(ps.length > 1)
+      -> Ast.SequencePattern(ps)
     | -> ps[0]
     )
   },
@@ -417,20 +418,20 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   
   rule prefixOperatorPattern {
-    | '~' prefixOperatorPattern:p -> Ast.NotPattern(p)
-    | '&' prefixOperatorPattern:p -> Ast.LookaheadPattern(p)
-    | '#' prefixOperatorPattern:p -> Ast.HashOperatorPattern(p)
+    | '~' ~ws prefixOperatorPattern:p -> Ast.NotPattern(p)
+    | '&' ~ws prefixOperatorPattern:p -> Ast.LookaheadPattern(p)
+    | '#' ~ws prefixOperatorPattern:p -> Ast.HashOperatorPattern(p)
     | postfixOperatorPattern
   },
   
   rule postfixOperatorPattern {
     callPattern:p
-    ( '*' !(p = Ast.RepeatPattern(p))
-    | '+' !(p = Ast.NonZeroRepeatPattern(p))
-    | '?' !(p = Ast.OptionalPattern(p))
-    | ':' variableIdentifier:name !(p = Ast.BindPattern(p, name))
+    ( '*' ~ws !(p = Ast.RepeatPattern(p))
+    | '+' ~ws !(p = Ast.NonZeroRepeatPattern(p))
+    | '?' ~ws !(p = Ast.OptionalPattern(p))
+    | ':' ~ws variableIdentifier:name !(p = Ast.BindPattern(p, name))
     )*
-    -> e
+    -> p
   },
   
   rule callPattern {
@@ -456,15 +457,15 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   
   rule predicatePattern {
-    '?' actionBody:e -> Ast.PredicatePattern(e)
+    '?' ~ws actionBody:e -> Ast.PredicatePattern(e)
   },
   
   rule actionPattern {
-    '!' actionBody:e -> Ast.ActionPattern(e)
+    '!' ~ws actionBody:e -> Ast.ActionPattern(e)
   },
   
   rule immediateActionPattern {
-    '%' actionBody:e -> Ast.ImmediateActionPattern(e)
+    '%' ~ws actionBody:e -> Ast.ImmediateActionPattern(e)
   },
   
   rule actionBody {
@@ -494,6 +495,16 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | 'identifier':t -> t.text
     | 'string':t     -> t.value
     | 'number':t     -> t.text
+  },
+  
+  
+  ws() {
+    if (this.last().position + this.last().length !== peek().position) {
+      return null;
+    }
+    else {
+      this.fail();
+    };
   },
   
 });

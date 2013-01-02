@@ -65,7 +65,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   
   
   rule identifier {
-    initialIdChar idChar*
+    ~'r/' initialIdChar idChar*
     createToken('identifier'):token
     !(token.reserved = this.ReservedWords.include(token.text))
     -> token

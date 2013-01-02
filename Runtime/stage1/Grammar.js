@@ -154,7 +154,12 @@ global.Grammar = Object.subclass({
   },
   
   at: function (position) {
-    return this.source[position];
+    if (position >= 0 && position < this.source.length) {
+      return this.source[position];
+    }
+    else {
+      throw Backtrack
+    }
   },
   
   peek: function () {
@@ -163,6 +168,10 @@ global.Grammar = Object.subclass({
   
   next: function () {
     return this.at(this.position++);
+  },
+  
+  last: function () {
+    return this.at(this.position - 1);
   },
   
   nextIf: function (predicate) {
