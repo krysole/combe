@@ -17,7 +17,7 @@
 //
 'use strict';
 
-Function.new = function () {
+Function.prototype.new = function () {
   var o = Object.create(this.prototype);
   var result = this.apply(o, arguments);
   if (result != null) return result;

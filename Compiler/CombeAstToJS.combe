@@ -187,7 +187,7 @@ var CombeAstToJS = module.exports = Object.subclass({
       var decl = ast.declarations[i];
       names.push(decl.name);
       inits.push(decl.expression.code);
-    }
+    };
     names.separatedBy(', ');
     inits.separatedBy(', ');
     
@@ -239,7 +239,7 @@ var CombeAstToJS = module.exports = Object.subclass({
           ast.catchBody.code, ';\n',
         '}\n'
       ];
-    }
+    };
     
     if (ast.finallyBody != null) {
       var finallyBody = [
@@ -247,7 +247,7 @@ var CombeAstToJS = module.exports = Object.subclass({
           ast.finallyBody.code, ';\n',
         '}\n'
       ];
-    }
+    };
     
     ast.code = [
       '(function () {\n', 
@@ -293,9 +293,9 @@ var CombeAstToJS = module.exports = Object.subclass({
       return expr.code;
     }).separatedBy(', ');
     
-    if (exprs.length === 0) {
+    if (exprs.isEmpty()) {
       exprs = 'null';
-    }
+    };
     
     ast.code = [
       '(', exprs, ')'
@@ -350,7 +350,7 @@ var CombeAstToJS = module.exports = Object.subclass({
       ast.code = [
         '(', ast.lhs.code, ' ', ast.name, ' ', ast.rhs.code, ')'
       ];
-    }
+    };
   },
   
   
@@ -441,21 +441,21 @@ var CombeAstToJS = module.exports = Object.subclass({
     else if (ast.value === undefined) {
       ast.code = 'undefined';
     }
-    else if (ast.value === true) {
+    else if (ast.value == true) {
       ast.code = 'true';
     }
-    else if (ast.value === false) {
+    else if (ast.value == false) {
       ast.code = 'false';
     }
-    else if (typeof ast.value === 'string') {
+    else if (String.isClassOf(ast.value)) {
       ast.code = ast.value.quote();
     }
-    else if (typeof ast.value === 'number') {
+    else if (Number.isClassOf(ast.value)) {
       ast.code = ast.value.toString();
     }
     else {
       throw Error.new('Unknown Ast (Literal) value type');
-    }
+    };
   },
   
   visitArray(ast) { // [ elements ]
@@ -502,14 +502,14 @@ var CombeAstToJS = module.exports = Object.subclass({
       var params = null;
       var argsvar = null;
     }
-    else if (typeof ast.parameters === 'string') {
+    else if (String.isClassOf(ast.parameters)) {
       var params = null;
       var argsvar = ['var ', ast.parameters, ' = Array.slice(arguments);\n'];
     }
     else {
       var params = ast.parameters.separatedBy(', ');
       var argsvar = null;
-    }
+    };
     
     ast.code = [
       '(function (', params, ') {\n',
@@ -537,7 +537,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     }
     else {
       var vars = null;
-    }
+    };
     
     if (ast.parameters == null) {
       var innerFunction = [
@@ -559,14 +559,14 @@ var CombeAstToJS = module.exports = Object.subclass({
       ];
     }
     else {
-      if (typeof ast.parameters === 'string') {
+      if (String.isClassOf(ast.parameters)) {
         var params = null;
         var argsvar = ['var ', ast.parameters, ' = Array.slice(arguments);\n'];
       }
       else {
         var params = ast.parameters.separatedBy(', ');
         var argsvar = null;
-      }
+      };
       
       ast.code = [
         '(function (', params, ') {\n',
@@ -574,7 +574,7 @@ var CombeAstToJS = module.exports = Object.subclass({
           'return ', ast.body.code, '.call(this);\n',
         '})'
       ];
-    }
+    };
   },
   
   visitVariableDeclaration(ast) { // [ name, expression ]
@@ -586,7 +586,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     }
     else {
       ast.code = ast.name;
-    }
+    };
   },
   
   
@@ -846,7 +846,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     }
     else {
       ast.code = [ 'this.', ast.name ];
-    }
+    };
   },
   
   
@@ -872,11 +872,11 @@ var CombeAstToJS = module.exports = Object.subclass({
             stmts,
           '})()'
         ];
-      }
+      };
     }
     else {
       return [ast.code, ';\n'];
-    }
+    };
   },
   
   gensymIndex: 0,

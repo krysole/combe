@@ -456,7 +456,8 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   
   sequencePattern: rule {
     operatorPattern+:ps
-    ( ?(ps.length > 1) -> ps
+    ( ?(ps.length > 1)
+      -> Ast.SequencePattern(ps)
     | -> ps[0]
     )
   },
@@ -466,20 +467,20 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   prefixOperatorPattern: rule {
-    | '~' prefixOperatorPattern:p -> Ast.NotPatern(p)
-    | '&' prefixOperatorPattern:p -> Ast.LookaheadPattern(p)
-    | '#' prefixOperatorPattern:p -> Ast.HashOperatorPattern(p)
+    | '~' ~ws prefixOperatorPattern:p -> Ast.NotPattern(p)
+    | '&' ~ws prefixOperatorPattern:p -> Ast.LookaheadPattern(p)
+    | '#' ~ws prefixOperatorPattern:p -> Ast.HashOperatorPattern(p)
     | postfixOperatorPattern
   },
   
   postfixOperatorPattern: rule {
     callPattern:p
-    ( '*' !(p = Ast.RepeatPattern(p))
-    | '+' !(p = Ast.NonZeroRepeatPattern(p))
-    | '?' !(p = Ast.OptionalPattern(p))
-    | ':' variableIdentifier:name !(p = Ast.BindPattern(p, name))
+    ( ~ws '*' !(p = Ast.RepeatPattern(p))
+    | ~ws '+' !(p = Ast.NonZeroRepeatPattern(p))
+    | ~ws '?' !(p = Ast.OptionalPattern(p))
+    | ~ws ':' ~ws variableIdentifier:name !(p = Ast.BindPattern(p, name))
     )*
-    -> e
+    -> p
   },
   
   callPattern: rule {
@@ -505,15 +506,15 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   predicatePattern: rule {
-    '?' actionBody:e -> Ast.PredicatePattern(e)
+    '?' ~ws actionBody:e -> Ast.PredicatePattern(e)
   },
   
   actionPattern: rule {
-    '!' actionBody:e -> Ast.ActionPattern(e)
+    '!' ~ws actionBody:e -> Ast.ActionPattern(e)
   },
   
   immediateActionPattern: rule {
-    '%' actionBody:e -> Ast.ImmediateActionPattern(e)
+    '%' ~ws actionBody:e -> Ast.ImmediateActionPattern(e)
   },
   
   actionBody: rule {
@@ -546,6 +547,17 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   },
   
   
+  ws: function () {
+    var last = this.peekLast();
+    var cur = this.peekNext();
+    if (last.position + last.length !== cur.position) {
+      return null;
+    }
+    else {
+      this.fail();
+    } 
+  },
+  
   t: function (typename) {
     var token = this.next();
     if (token.type === typename) {
@@ -561,6 +573,10 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     return this.tokenAt(this.position);
   },
   
+  peekLast: function () {
+    return this.tokenAt(this.position - 1);
+  },
+  
   next: function () {
     return this.tokenAt(this.position++);
   },
@@ -568,7 +584,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   tokenAt: function (position) {
     var token;
     
-    assert(position < this.tokens.length + 1);
+    assert(position >= 0 && position < this.tokens.length + 1);
     if (position >= this.tokens.length) {
       assert(this.tokens.isEmpty() || this.tokens.last.type !== 'eof');
       

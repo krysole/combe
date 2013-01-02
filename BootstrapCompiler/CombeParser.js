@@ -847,7 +847,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   sequencePattern: (function () {
-    return this.memoize("Wa58g1LRgktZg28oFFd86g", (function () {
+    return this.memoize("51T4A1V1s4eKYu79w1KGow", (function () {
       var ps;
       return (function () {
         ps = this._repeat1(this.operatorPattern);
@@ -855,7 +855,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
           this._predicate((function () {
             return ps.length > 1;
           }));
-          return ps;
+          return Ast.SequencePattern(ps);
         }), (function () {
           return ps[0];
         }));
@@ -868,45 +868,53 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   prefixOperatorPattern: (function () {
-    return this.memoize("dQYTwFDadjWNi33wTnXUiA", (function () {
+    return this.memoize("qeNSp48eJN3l2Ms4fUS2Ng", (function () {
       var p;
       return this._choice((function () {
         this.stringPatternHandler("~");
+        this._not(this.ws);
         p = this.prefixOperatorPattern();
-        return Ast.NotPatern(p);
+        return Ast.NotPattern(p);
       }), (function () {
         this.stringPatternHandler("&");
+        this._not(this.ws);
         p = this.prefixOperatorPattern();
         return Ast.LookaheadPattern(p);
       }), (function () {
         this.stringPatternHandler("#");
+        this._not(this.ws);
         p = this.prefixOperatorPattern();
         return Ast.HashOperatorPattern(p);
       }), this.postfixOperatorPattern);
     }));
   }),
   postfixOperatorPattern: (function () {
-    return this.memoize("4Z5naTQWIwAG0EEBrwEk3g", (function () {
+    return this.memoize("QGe7MTpcnwwHJ9c/p3cjkg", (function () {
       var p, name;
       return (function () {
         p = this.callPattern();
         this._repeat((function () {
           return this._choice((function () {
+            this._not(this.ws);
             this.stringPatternHandler("*");
             return p = Ast.RepeatPattern(p);
           }), (function () {
+            this._not(this.ws);
             this.stringPatternHandler("+");
             return p = Ast.NonZeroRepeatPattern(p);
           }), (function () {
+            this._not(this.ws);
             this.stringPatternHandler("?");
             return p = Ast.OptionalPattern(p);
           }), (function () {
+            this._not(this.ws);
             this.stringPatternHandler(":");
+            this._not(this.ws);
             name = this.variableIdentifier();
             return p = Ast.BindPattern(p, name);
           }));
         }));
-        return e;
+        return p;
       }).call(this);
     }));
   }),
@@ -953,30 +961,33 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   predicatePattern: (function () {
-    return this.memoize("5MGQDkXNAv208JjVW0AtGQ", (function () {
+    return this.memoize("/jnB2qvxBNAeArntFyfUyA", (function () {
       var e;
       return (function () {
         this.stringPatternHandler("?");
+        this._not(this.ws);
         e = this.actionBody();
         return Ast.PredicatePattern(e);
       }).call(this);
     }));
   }),
   actionPattern: (function () {
-    return this.memoize("tOcF3G4pd/Gjn9RiguEA6w", (function () {
+    return this.memoize("gqfWhLl7UFB0vE+amip88A", (function () {
       var e;
       return (function () {
         this.stringPatternHandler("!");
+        this._not(this.ws);
         e = this.actionBody();
         return Ast.ActionPattern(e);
       }).call(this);
     }));
   }),
   immediateActionPattern: (function () {
-    return this.memoize("GkHyBeTDJ0/05UQSR0Aoug", (function () {
+    return this.memoize("a+njBGpej/DZN2Q3Ctphmw", (function () {
       var e;
       return (function () {
         this.stringPatternHandler("%");
+        this._not(this.ws);
         e = this.actionBody();
         return Ast.ImmediateActionPattern(e);
       }).call(this);
@@ -1048,6 +1059,16 @@ var CombeParser = module.exports = Class.new(BaseParser, {
       }));
     }));
   }),
+  ws: (function () {
+    var last = this.peekLast();
+    var cur = this.peekNext();
+    if ((last.position + last.length) !== cur.position) {
+      return null;
+    }
+    else {
+      this.fail();
+    }
+  }),
   t: (function (typename) {
     var token = this.next();
     if (token.type === typename) {
@@ -1061,12 +1082,15 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   peekNext: (function () {
     return this.tokenAt(this.position);
   }),
+  peekLast: (function () {
+    return this.tokenAt(this.position - 1);
+  }),
   next: (function () {
     return this.tokenAt(this.position++);
   }),
   tokenAt: (function (position) {
     var token;
-    assert(position < (this.tokens.length + 1));
+    assert((position >= 0) && (position < (this.tokens.length + 1)));
     if (position >= this.tokens.length) {
       assert(this.tokens.isEmpty() || (this.tokens.last.type !== "eof"));
       this.tokens.push(this.lexer.nextToken());

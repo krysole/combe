@@ -21,8 +21,13 @@ Object.setPrototypeOf = function (object, newPrototype) {
   object.__proto__ = newPrototype;
 };
 
-Object.isPrototypeOf = function (object, prototype) {
-  return Object.prototype.isPrototypeOf.call(object, prototype);
+Object.prototype.origIsPrototypeOf = Object.prototype.isPrototypeOf;
+Object.prototype.isPrototypeOf = function (what) {
+  if (what == null || this == null) return false;
+  for (var proto = what.__proto__; proto != null; proto = proto.__proto__) {
+    if (this == proto) return true;
+  }
+  return false;
 };
 
 Object.clone = function (original, propOrFunc) {

@@ -71,9 +71,12 @@ var CombeLexer = module.exports = Class.new(TextParser, {
     }));
   }),
   identifier: (function () {
-    return this.memoize("RAMbOjIAW5N/ZEd93Zt5OA", (function () {
+    return this.memoize("bMfm9O7Yvgtl6a6VPFpReA", (function () {
       var token;
       return (function () {
+        this._not((function () {
+          return this.stringPatternHandler("r/");
+        }));
         this.initialIdChar();
         this._repeat(this.idChar);
         token = this.createToken("identifier");

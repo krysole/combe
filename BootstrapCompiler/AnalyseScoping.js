@@ -33,7 +33,7 @@ var AnalyseScoping = module.exports = Class.new(Object, {
   },
   
   visitUnspecified: function (ast) {
-    throw Error.new('Unrecognized Ast Node');
+    ast.visitChildren(this);
   },
   
   visitScript: function (ast) {
@@ -64,10 +64,12 @@ var AnalyseScoping = module.exports = Class.new(Object, {
   },
   
   visitVariableDeclaration: function (ast) {
-    assert(this.scopes.top.type === 'Block' ||
-           this.scopes.top.type === 'Script');
+    assert(this.scopes.last.type === 'Block' ||
+           this.scopes.last.type === 'Script');
     
-    this.scopes.top.variables.push(ast.name);
+    this.scopes.last.variables.push(ast.name);
+    
+    ast.visitChildren(this);
   },
   
   visitVariable: function (ast) {
@@ -76,17 +78,17 @@ var AnalyseScoping = module.exports = Class.new(Object, {
   },
   
   visitBindPattern: function (ast) {
-    assert(this.scopes.top.type === 'Rule');
+    assert(this.scopes.last.type === 'Rule');
     
-    this.scopes.top.variables.push(ast.name);
+    this.scopes.last.variables.push(ast.name);
     
     ast.visitChildren(this);
   },
   
   visitVariablePattern: function (ast) {
-    assert(this.scopes.top.type === 'Rule');
+    assert(this.scopes.last.type === 'Rule');
     
-    ast.containingScope = this.scopes.top;
+    ast.containingScope = this.scopes.last;
   },
   
 });

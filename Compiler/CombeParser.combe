@@ -49,7 +49,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   rule varStatement {
     id('var') delimited1[variableDeclaration, ',']:decls
     -> Ast.VarStatement(decls)
-  }
+  },
   
   rule variableDeclaration {
     variableIdentifier:name ( '=' expression:expr )?
@@ -254,7 +254,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   rule leftAssociative(operand, operator) {
     operand:expr
     ( operator:op operand:rhs
-      !(expr = Ast.InfixOperator(op.text, expr, rhs)))
+      !(expr = Ast.InfixOperator(op.text, expr, rhs))
     )*
     -> expr
   },
@@ -425,9 +425,9 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   rule postfixOperatorPattern {
     callPattern:p
-    ( '*' -> !(p = Ast.RepeatPattern(p))
-    | '+' -> !(p = Ast.NonZeroRepeatPattern(p))
-    | '?' -> !(p = Ast.OptionalPattern(p))
+    ( '*' !(p = Ast.RepeatPattern(p))
+    | '+' !(p = Ast.NonZeroRepeatPattern(p))
+    | '?' !(p = Ast.OptionalPattern(p))
     | ':' variableIdentifier:name !(p = Ast.BindPattern(p, name))
     )*
     -> e

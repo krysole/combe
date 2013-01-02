@@ -58,6 +58,10 @@ global.Class = {
       return o;
     },
     
+    isClassOf: function (what) {
+      return this.prototype.isPrototypeOf(what);
+    },
+    
   },
 
 };
@@ -65,3 +69,5 @@ Object.setPrototypeOf(Class, Class.prototype);
 
 Object.extend(Object, Class.prototype);
 Error.extend(Class.prototype);
+
+Function.prototype.isClassOf = Class.isClassOf;

@@ -51,10 +51,10 @@ var Compiler = module.exports = {
       var filename = baseFilename + '.' + name + '~';
       var output = inspect(object, false, null);
       fs.writeFileSync(filename, output);
-    }
+    };
   },
   
-  hashbangRegex: /^#![^\r\n]*(\r\n|\r|\n)/,
+  hashbangRegex: r/^#![^\r\n]*(\r\n|\r|\n)/,
   
   hasHashbangLine: function (source) {
     return source.match(this.hashbangRegex) != null;

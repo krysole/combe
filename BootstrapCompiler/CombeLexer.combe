@@ -113,7 +113,7 @@ var CombeLexer = module.exports = Class.new(TextParser, {
   
   
   identifier: rule {
-    initialIdChar idChar*
+    ~'r/' initialIdChar idChar*
     createToken('identifier'):token
     !(token.reserved = this.ReservedWords.include(token.text))
     -> token

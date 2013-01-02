@@ -24,7 +24,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     
     while (tokens.isEmpty() || !tokens.last.is('eof')) {
       tokens.push(lexer.nextToken());
-    }
+    };
     
     return tokens;
   },
@@ -32,7 +32,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
 }, {
   
   reset(position) {
-    if (position != null) this.position = position;
+    if (position != null) this.position = position
     else this.position = 0;
   },
   
@@ -59,7 +59,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     | string
     | regex
     | eof createToken('eof')
-    | error('Lexer failed at position ' + this.positionString());
+    | error('Lexer failed at position ' + this.positionString())
     )
   },
   

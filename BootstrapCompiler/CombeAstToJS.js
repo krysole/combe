@@ -26,11 +26,12 @@ var AnalyseScoping = require('./AnalyseScoping');
 var CombeAstToJS = module.exports = Class.new(Object, {
   
   translate: function (ast) {
-    AnalyseScoping.analyse(ast);
     return Array.deepJoinIOList(this.translateToIOList(ast));
   },
   
   translateToIOList: function (ast) {
+    AnalyseScoping.analyse(ast);
+    
     ast.visit(this.new());
     
     return ast.code;
@@ -449,6 +450,9 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     else if (typeof ast.value === 'number') {
       ast.code = ast.value.toString();
     }
+    else if (ast.value instanceof RegExp) {
+      ast.code = ast.value.toString();
+    }
     else {
       throw Error.new('Unknown Ast (Literal) value type');
     }
@@ -543,9 +547,10 @@ var CombeAstToJS = module.exports = Class.new(Object, {
         '})'
       ];
       
+      require('fs').writeFileSync('iolist~', require('util').inspect(innerFunction, false, null));
       var innerFunctionCode = Array.deepJoinIOList(innerFunction);
       var hash = crypto.createHash('md5');
-      hash.update(codeString);
+      hash.update(innerFunctionCode);
       var digest = hash.digest('base64').slice(0, -2); // without base64 suffix
       
       ast.code = [
@@ -670,7 +675,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
       return [p.code, '.call(this);\n'];
     });
     ps.push([
-      'return ', ast.patterns.last, '.call(this);\n'
+      'return ', ast.patterns.last.code, '.call(this);\n'
     ]);
     
     ast.code = [
