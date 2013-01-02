@@ -22,7 +22,7 @@ require('combe-newcombe/Runtime');
 var Compiler = require('combe-newcombe/Compiler');
 
 setTimeout(function () {
-  if (process.arguments.length < 0 || process.arguments.length >= 1) {
+  if (process.arguments.length < 0 || process.arguments.length > 1) {
     console.error('Usage: newcombec [path]');
     return;
   }

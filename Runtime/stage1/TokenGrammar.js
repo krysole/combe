@@ -27,7 +27,11 @@ global.TokenGrammar = Grammar.subclass({}, {
     this.tokens = [];
   },
   
-  get lexer() { throw ShouldOverrideError('TokenGrammar.lexer'); },
+  get lexer() {
+    if (this._lexer_storage != null) return this._lexer_storage;
+    else throw ShouldOverrideError('TokenGrammar.lexer');
+  },
+  set lexer(value) { this._lexer_storage = value; },
   
   handleStringPattern: function (string) {
     return this.t(string);
