@@ -17,6 +17,7 @@
 //
 
 var fs = require('fs');
+var path = require('path');
 var inspect = require('util').inspect;
 
 var CombeLexer = require('./CombeLexer');
@@ -28,6 +29,62 @@ var Compiler = module.exports = {
   shouldOutputIntermediates: false,
   
   compile(filename) {
+    filename = path.resolve(filename);
+    if (fs.existsSync(filename)) {
+      if (path.extname(filename) === '.combe') {
+        this.compileFile(filename);
+      }
+      else if (fs.statSync(filename).isDirectory()) {
+        this.compileDirectory(filename);
+      }
+      else {
+        throw Error.new('Expected source file to be directory of .combe file');
+      };
+    }
+    else if (fs.existsSync(filename + '.combe')) {
+      if (fs.statSync(filename + '.combe').isFile()) {
+        this.compileFile(filename + '.combe');
+      }
+      else {
+        throw Error.new('Expected .combe to be a regular file');
+      };
+    }
+    else {
+      throw Error.new('Expected source file to be directory or .combe file');
+    };
+  },
+  
+  compileDirectory(dirname) {
+    var _this = this;
+    assert(fs.statSync(dirname).isDirectory());
+    
+    this.log(dirname + ' (directory)');
+    
+    fs.readdirSync(dirname).sort().each(function (filename) {
+      var fullFilename = path.join(dirname, filename);
+      var s = fs.statSync(fullFilename);
+      if (s.isDirectory() && !filename.match(r/^\./)) {
+        _this.compileDirectory(fullFilename);
+      }
+      else if (s.isFile() && path.extname(filename) === '.combe') {
+        _this.compileFile(fullFilename);
+      }
+      else {
+        // Do nothing
+      };
+    });
+  },
+  
+  compileFile(filename) {
+    var compiledFilename = filename.replace(r/\.combe$/, '.combejs');
+    if (fs.existsSync(compiledFilename) &&
+        fs.statSync(compiledFilename).mtime > fs.statSync(filename).mtime) {
+      this.log(filename + ' (up to date)');
+      return;
+    };
+    
+    this.log(filename + ' (compiling)');
+    
     var source = fs.readFileSync(filename, 'utf8');
     
     var hashbang = this.getHashbangLine(source);
@@ -46,7 +103,11 @@ var Compiler = module.exports = {
     fs.writeFileSync(filename + '.js', jsText);
   },
   
-  writeIntermediate: function (baseFilename, name, object) {
+  log(message) {
+    console.log(process.command + ': ' + message);
+  },
+  
+  writeIntermediate(baseFilename, name, object) {
     if (this.shouldOutputIntermediates) {
       var filename = baseFilename + '.' + name + '~';
       var output = inspect(object, false, null);
@@ -56,15 +117,15 @@ var Compiler = module.exports = {
   
   hashbangRegex: r/^#![^\r\n]*(\r\n|\r|\n)/,
   
-  hasHashbangLine: function (source) {
+  hasHashbangLine(source) {
     return source.match(this.hashbangRegex) != null;
   },
   
-  removeHashbangLine: function (source) {
+  removeHashbangLine(source) {
     return source.replace(this.hashbangRegex, '');
   },
   
-  getHashbangLine: function (source) {
+  getHashbangLine(source) {
     return source.match(this.hashbangRegex);
   },
   

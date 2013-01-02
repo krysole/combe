@@ -22,13 +22,10 @@ require('combe-newcombe/Runtime');
 var Compiler = require('combe-newcombe/Compiler');
 
 setTimeout(function () {
-  if (process.argv.length < 2 + 1) { // argv: node newcombec ...
-    console.error('Usage: newcombec filename');
+  if (process.arguments.length < 0 || process.arguments.length >= 1) {
+    console.error('Usage: newcombec [path]');
     return;
   }
   
-  var sourceFilename = process.argv[2];
-  
-  Compiler.shouldOutputIntermediates = true;
-  Compiler.compile(sourceFilename);
+  Compiler.compile(process.arguments[0]);
 }, 0);

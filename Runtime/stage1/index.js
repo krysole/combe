@@ -21,7 +21,10 @@
 // features have now been initialized, providing the remainder of the runtime.
 
 require('./ParsingError');
+require('./Ast');
+require('./Token');
 require('./Grammar');
 require('./TextGrammar');
+require('./TokenGrammar');
 
 global.__combe_runtimeStage0Loaded = true;

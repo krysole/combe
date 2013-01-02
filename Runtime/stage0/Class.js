@@ -24,7 +24,7 @@ global.Class = {
     initialize: function (superclass, classPropOrFunc, propOrFunc) {
       if (superclass == null) superclass = Object;
     
-      if (Object.isPrototypeOf(Class.prototype, superclass)) {
+      if (Class.prototype.isPrototypeOf(superclass)) {
         Object.setPrototypeOf(this, superclass);
       }
       else if (typeof superclass === 'function') {

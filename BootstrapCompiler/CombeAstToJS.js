@@ -266,8 +266,10 @@ var CombeAstToJS = module.exports = Class.new(Object, {
   visitReturnExpression: function (ast) { // [ argument ]
     ast.visitChildren(this);
     
+    var valueCode = ast.argument != null ? ast.argument.code : 'undefined';
+    
     ast.code = [
-      '(function () { throw (__combe_return = { value: ', ast.argument.code, ' }); })()'
+      '(function () { throw (__combe_return = { value: ', valueCode, ' }); })()'
     ];
   },
   

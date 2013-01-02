@@ -24,6 +24,11 @@
 // Combe file-position insertion.
 global.assert = require('assert');
 
+var path = require('path');
+process.command = path.basename(process.argv[1]) + path.extname(process.argv[1]);
+process.absoluteCommand = path.resolve(process.command);
+process.arguments = process.argv.slice(2);
+
 require('./Function');
 require('./Object');
 require('./Array');
