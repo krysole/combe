@@ -22,6 +22,7 @@ Error.extend({
   subclass: function (name, classPropOrFunc, propOrFunc) {
     var _class = Class.new(Error, classPropOrFunc, propOrFunc);
     _class.name = name;
+    _class.prototype.name = name;
     return _class;
   },
 
@@ -31,12 +32,19 @@ Error.extend({
     return e;
   },
   
+  new: function () {
+    var e = Object.create(this.prototype);
+    Error.captureStackTrace(e, Error.new);
+    e.initialize.apply(e, arguments);
+    return e;
+  },
+  
 });
 
 Error.prototype.extend({
   
-  initialize: function () {
-    Error.apply(this, arguments);
+  initialize: function (message) {
+    this.message = message;
   },
   
 });

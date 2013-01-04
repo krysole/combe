@@ -88,3 +88,7 @@ Object.unique = function (name) {
     }
   };
 };
+
+Object.prototype.initialize = function () {
+  // Do nothing
+};
