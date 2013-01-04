@@ -63,7 +63,7 @@ var CombeAstToJS = module.exports = Object.subclass({
           'if (__combe_e === __combe_return) return __combe_return.value;\n',
           'throw __combe_e;\n',
         '}\n',
-      '})()'
+      '})();'
     ];
   },
   
