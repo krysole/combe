@@ -29,22 +29,38 @@ global.Range = Object.subclass({
   
 }, {
   
-  initialize: function (lhs, rhs, inclusive) {
-    this.lhs = lhs;
-    this.rhs = rhs;
+  initialize: function (start, end, inclusive) {
+    this.start = start;
+    this.end = end;
     this.inclusive = inclusive;
   },
   
   get exclusive() { return !this.inclusive; },
   set exclusive(exclusive) { this.inclusive = !exclusive; },
   
+  get lhs() { return this.start; },
+  set lhs(value) { this.start = value; },
+  
+  get rhs() { return this.end; },
+  set rhs(value) { this.end = value; },
+  
   toString: function () {
     if (this.inclusive) {
-      return '(' + this.lhs + '..' + this.rhs + ')';
+      return '(' + this.start + '..' + this.end + ')';
     }
     else {
-      return '(' + this.lhs + '...' + this.rhs + ')';
+      return '(' + this.start + '...' + this.end + ')';
     }
+  },
+  
+  include: function (what) {
+    return (
+      (this.start == null || what >= this.start) &&
+      (this.end == null ||
+       this.inclusive
+         ? what <= this.end
+         : what < this.end)
+    );
   },
   
 });

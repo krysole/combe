@@ -40,14 +40,14 @@ global.TextGrammar = Grammar.subclass({}, {
   
   eachChar: function (stringOrArray) {
     var initialPosition = this.position;
-    for (var i = 0; i < string.length; i++) {
+    for (var i = 0; i < stringOrArray.length; i++) {
       this.char(stringOrArray[i]);
     }
     return this.slice(initialPosition, this.position);
   },
   
   handleStringPattern: function (string) {
-    return eachChar(string);
+    return this.eachChar(string);
   },
   
   handleHashPattern: function (parser) {

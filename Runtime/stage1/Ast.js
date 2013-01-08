@@ -19,7 +19,7 @@
 global.Ast = Object.subclass({
   
   initialize: function () {
-    Object.prototype.initialize.call(this);
+    Object.classPrototype.initialize.call(this);
     
     this.initTypeConstructors();
   },

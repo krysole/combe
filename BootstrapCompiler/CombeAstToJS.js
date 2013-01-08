@@ -556,7 +556,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
       
       ast.code = [
         '(function () {\n',
-          'return this.__combe_memoize(', digest.quote(), innerFunction, ');\n',
+          'return this.__combe_memoize(', digest.quote(), ', ', innerFunction, ');\n',
         '})'
       ];
     }
@@ -573,6 +573,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
       ast.code = [
         '(function (', params, ') {\n',
           argsvar,
+          vars,
           'return ', ast.body.code, '.call(this);\n',
         '})'
       ];
@@ -711,7 +712,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
     
     ast.code = [
       '(function () {\n',
-        'return this._handleHashPattern(', ast.pattern.code, ');\n',
+        'return this.handleHashPattern(', ast.pattern.code, ');\n',
       '})'
     ];
   },
@@ -837,7 +838,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
   visitStringPattern: function (ast) { // [ value ]
     ast.code = [
       '(function () {\n',
-        'return this._handleStringPattern(', ast.value.quote(), ');\n',
+        'return this.handleStringPattern(', ast.value.quote(), ');\n',
       '})'
     ];
   },

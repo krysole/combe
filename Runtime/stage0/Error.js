@@ -19,8 +19,8 @@
 
 Error.extend({
   
-  subclass: function (name, classPropOrFunc, propOrFunc) {
-    var _class = Class.new(Error, classPropOrFunc, propOrFunc);
+  subclass: function (name, classPrototypeExtensions, prototypeExtensions) {
+    var _class = Class.new(Error, classPrototypeExtensions, prototypeExtensions);
     _class.name = name;
     _class.prototype.name = name;
     return _class;

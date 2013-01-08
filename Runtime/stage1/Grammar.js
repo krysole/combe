@@ -21,16 +21,14 @@
 
 global.Grammar = Object.subclass({
   
-  match: function (source, sourcename, rulename) {
-    if (rulename == null) rulename = 'start';
+  match: function (source, sourcename) {
     var matchargs = Array.slice(arguments, 2);
     
     var parser = this.new(source, sourcename);
     return parser.match.apply(parser, matchargs);
   },
   
-  matchAll: function (source, sourcename, rulename) {
-    if (rulename == null) rulename = 'start';
+  matchAll: function (source, sourcename) {
     var matchargs = Array.slice(arguments, 2);
     
     var parser = this.new(source, sourcename);
@@ -62,6 +60,7 @@ global.Grammar = Object.subclass({
   },
 
   match: function (rulename) {
+    if (rulename == null) rulename = 'start';
     var args = Array.slice(arguments, 1);
     try {
       var rule = this[rulename];
@@ -79,6 +78,7 @@ global.Grammar = Object.subclass({
   },
 
   matchAll: function (rulename) {
+    if (rulename == null) rulename = 'start';
     var args = Array.slice(arguments, 1);
     try {
       var rule = this[rulename];

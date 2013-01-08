@@ -29,12 +29,11 @@ process.command = path.basename(process.argv[1]) + path.extname(process.argv[1])
 process.absoluteCommand = path.resolve(process.command);
 process.arguments = process.argv.slice(2);
 
-require('./Function');
 require('./Object');
-require('./Array');
-require('./String');
 require('./Class');
 require('./Error');
+require('./Array');
+require('./String');
 require('./Range');
 require('./Regex');
 require('./Buffer');

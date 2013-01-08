@@ -38,12 +38,13 @@ global.TokenGrammar = Grammar.subclass({}, {
   },
   
   at: function (position) {
-    while (position < this.tokens.length) {
-      if (tokens.last.is('eof')) {
+    assert(position >= 0);
+    while (position >= this.tokens.length) {
+      if (this.tokens.last != null && this.tokens.last.is('eof')) {
         this.error('cannot read past eof');
       }
       
-      tokens.push(this.lexer.nextToken());
+      this.tokens.push(this.lexer.nextToken());
     }
     return this.tokens[position];
   },
@@ -53,7 +54,7 @@ global.TokenGrammar = Grammar.subclass({}, {
   },
   
   t: function (typename) {
-    var token = this.nextIf(function (token) {
+    return this.nextIf(function (token) {
       return (token.is(typename));
     });
   },

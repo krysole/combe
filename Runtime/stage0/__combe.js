@@ -220,7 +220,7 @@ Object.prototype.__combe_optional = function (parser) {
 };
 
 Object.prototype.__combe_predicate = function (predicate) {
-  if (preciate.call(this)) {
+  if (predicate.call(this)) {
     return null;
   }
   else {
