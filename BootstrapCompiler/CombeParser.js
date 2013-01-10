@@ -919,15 +919,17 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   callPattern: (function () {
-    return this.memoize("7M0D/y4TaL/QEYXP6dgPTw", (function () {
+    return this.memoize("9Fk+YsSV2oDtT90fc2cEvQ", (function () {
       var p, args;
       return (function () {
         p = this.primaryPattern();
         this._repeat((function () {
           return this._choice((function () {
+            this._not(this.ws);
             args = this.arguments();
             return p = Ast.CallPattern(p, args);
           }), (function () {
+            this._not(this.ws);
             args = this.patternArguments();
             return p = Ast.CallPattern(p, args);
           }));

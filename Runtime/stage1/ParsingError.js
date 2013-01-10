@@ -20,12 +20,13 @@
 global.ParsingError = Error.subclass('ParsingError', {}, {
   
   initialize: function (parser, message, furthestPosition) {
+    Error.prototype.initialize.call(this, this.generateMessage(message, furthestPosition));
     this.parser = parser;
     this.message = message;
     this.furthestPosition;
   },
   
-  toString: function () {
+  generateMessage: function (message, furthestPosition) {
     var s = this.name + " in " + this.parser;
     if (this.message != null) {
       s += ": " + message;

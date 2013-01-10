@@ -26,7 +26,7 @@ var CombeAstToJS = require('./CombeAstToJS');
 
 var Compiler = module.exports = {
   
-  shouldOutputIntermediates: false,
+  shouldOutputIntermediates: true,
   
   compile(filename) {
     filename = path.resolve(filename);
@@ -95,12 +95,12 @@ var Compiler = module.exports = {
     this.writeIntermediate(filename, 'tokens', parser.tokens);
     this.writeIntermediate(filename, 'ast', ast);
     
-    var jsIolist = CombeAstToJS.translateToIOList(ast);
-    this.writeIntermediate(filename, 'iolist', jsIolist);
+    var jsIOList = CombeAstToJS.translateToIOList(ast);
+    this.writeIntermediate(filename, 'iolist', jsIOList);
     
-    var jsText = Array.deepJoinIOList(jsIolist);
+    var jsText = Array.deepJoinIOList(jsIOList);
     
-    fs.writeFileSync(filename + '.js', jsText);
+    fs.writeFileSync(filename + 'js', jsText);
   },
   
   log(message) {

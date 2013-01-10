@@ -95,9 +95,7 @@ Number.extend({
       value >= this.MinUInt32 && value <= this.MaxUInt32);
   },
   
-});
-
-Number.prototype.extend({
+}, {
   
   toSourceString: function () {
     return this.toString();

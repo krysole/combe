@@ -24,10 +24,10 @@ var AnalyseScoping = require('./AnalyseScoping');
 var CombeAstToJS = module.exports = Object.subclass({
   
   translate(ast) {
-    return Array.deepJoinIolist(this.translateToIolist(ast));
+    return Array.deepJoinIOList(this.translateToIOList(ast));
   },
   
-  translateToIolist(ast) {
+  translateToIOList(ast) {
     AnalyseScoping.analyse(ast);
     
     ast.visit(this.new());
@@ -234,16 +234,18 @@ var CombeAstToJS = module.exports = Object.subclass({
       '}\n'
     ];
     
+    var catchFragment = null;
     if (ast.catchBody != null) {
-      var catchFragment = [
+      catchFragment = [
         'catch (', ast.catchVariable, ') {\n',
           ast.catchBody.code, ';\n',
         '}\n'
       ];
     };
     
+    var finallyBody = null;
     if (ast.finallyBody != null) {
-      var finallyBody = [
+      finallyBody = [
         'finally {\n',
           ast.finallyBody.code, ';\n',
         '}\n'
@@ -505,17 +507,14 @@ var CombeAstToJS = module.exports = Object.subclass({
   visitFunction(ast) { // [ parameters, body ]
     ast.visitChildren(this);
     
+    var params = null, argsvar = null;
     if (ast.parameters == null) {
-      var params = null;
-      var argsvar = null;
-    }
-    else if (String.isClassOf(ast.parameters)) {
-      var params = null;
-      var argsvar = ['var ', ast.parameters, ' = Array.slice(arguments);\n'];
-    }
-    else {
-      var params = ast.parameters.separatedBy(', ');
-      var argsvar = null;
+      if (String.isClassOf(ast.parameters)) {
+        argsvar = ['var ', ast.parameters, ' = Array.slice(arguments);\n'];
+      }
+      else {
+        params = ast.parameters.separatedBy(', ');
+      };
     };
     
     ast.code = [
@@ -537,13 +536,14 @@ var CombeAstToJS = module.exports = Object.subclass({
   visitRule(ast) { // [ parameters, body ]
     ast.visitChildren(this);
     
-    if (ast.variables.length >= 1) {
-      var vars = [
-        'var ', ast.variables.separatedBy(', '), ';\n'
+    var vars;
+    if (ast.declareVariables.length >= 1) {
+      vars = [
+        'var ', ast.declareVariables.separatedBy(', '), ';\n'
       ];
     }
     else {
-      var vars = null;
+      vars = null;
     };
     
     if (ast.parameters == null) {
@@ -554,7 +554,7 @@ var CombeAstToJS = module.exports = Object.subclass({
         '})'
       ];
       
-      var innerFunctionCode = Array.deepJoinIolist(innerFunction);
+      var innerFunctionCode = Array.deepJoinIOList(innerFunction);
       var hash = crypto.createHash('md5');
       hash.update(innerFunctionCode);
       var digest = hash.digest('base64').slice(0, -2); // without base64 suffix
@@ -566,13 +566,12 @@ var CombeAstToJS = module.exports = Object.subclass({
       ];
     }
     else {
+      var params = null, argsvar = null;
       if (String.isClassOf(ast.parameters)) {
-        var params = null;
-        var argsvar = ['var ', ast.parameters, ' = Array.slice(arguments);\n'];
+        argsvar = ['var ', ast.parameters, ' = Array.slice(arguments);\n'];
       }
       else {
-        var params = ast.parameters.separatedBy(', ');
-        var argsvar = null;
+        params = ast.parameters.separatedBy(', ');
       };
       
       ast.code = [

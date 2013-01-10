@@ -20,7 +20,7 @@
 Error.extend({
   
   subclass: function (name, classPrototypeExtensions, prototypeExtensions) {
-    var _class = Class.new(Error, classPrototypeExtensions, prototypeExtensions);
+    var _class = Class.new(this, classPrototypeExtensions, prototypeExtensions);
     _class.name = name;
     _class.prototype.name = name;
     return _class;
@@ -39,9 +39,7 @@ Error.extend({
     return e;
   },
   
-});
-
-Error.prototype.extend({
+}, {
   
   initialize: function (message) {
     this.message = message;

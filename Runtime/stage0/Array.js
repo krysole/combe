@@ -16,6 +16,10 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 'use strict';
+  
+// Todo: Update Array to support negative indices.
+
+global.IOListError = Error.subclass('IOListError');
 
 Array.extend({
   
@@ -23,29 +27,29 @@ Array.extend({
     if (what == null) {
       return '';
     }
-    else if (typeof what === 'object' && Array.isArrayLike(what)) {
-      return Array.prototype.deepJoin.call(what);
+    else if (Array.isClassOf(what)) {
+      return what.deepJoin();
     }
     else {
       return what.toString();
     }
   },
   
-  deepJoinIolist: function (what) {
+  deepJoinIOList: function (what) {
     if (what == null) {
       return new Buffer(0);
     }
-    else if (Buffer.prototype.isPrototypeOf(what)) {
+    else if (Buffer.isClassOf(what)) {
       return what;
     }
-    else if (typeof what === 'object' && Array.isArrayLike(what)) {
-      return Array.prototype.deepJoinIolist.call(what);
+    else if (Array.isClassOf(what) {
+      return what.deepJoinIOList();
     }
-    else if (typeof what === 'string') {
+    else if (String.isClassOf(what)) {
       return new Buffer(what);
     }
     else {
-      throw Error.new("Array.deepJoinIolist(): Element must be null, array like, string or buffer (for '" + what + "')");
+      throw IOListError.new("Element must be array, string, buffer or null (given '" + what + "')");
     }
   },
   
@@ -53,17 +57,17 @@ Array.extend({
     if (what == null) {
       return 0;
     }
-    else if (Buffer.prototype.isPrototypeOf(what)) {
+    else if (Buffer.isClassOf(what)) {
       return what.length;
     }
-    else if (Array.isArrayLike(what)) {
-      return Array.prototype.iolistSize.call(what);
+    else if (Array.isClassOf(what)) {
+      return what.iolistSize();
     }
-    else if (typeof what === 'string') {
+    else if (String.isClassOf(what)) {
       return Buffer.byteLength(what);
     }
     else {
-      throw Error.new("Array.iolistSize(): Element must be null, array like, string or buffer (for '" + what + "')");
+      throw IOListError.new("Element must be array, string, buffer or null (given '" + what + "')");
     }
   },
   
@@ -77,9 +81,7 @@ Array.extend({
     return Array.prototype.slice.call(array, begin, end);
   },
   
-});
-
-Array.prototype.extend({
+}, {
   
   at: function (index) {
     if (index < 0) {
@@ -94,6 +96,9 @@ Array.prototype.extend({
   
   get last() { return this[this.length - 1]; },
   set last(value) { this[this.length - 1] = value; },
+  
+  get top() { return this.last; },
+  set top(value) { this.last = value; },
   
   isEmpty: function () {
     return (this.length === 0);
@@ -132,7 +137,7 @@ Array.prototype.extend({
     return a;
   },
   
-  seperatedBy: function (separator) {
+  separatedBy: function (separator) {
     var a = [];
     if (this.length >= 0) {
       a.push(this[i]);
@@ -145,7 +150,6 @@ Array.prototype.extend({
   },
   
   deepJoin: function () {
-    // Must work on any 'array like' object.
     var s = '';
     for (var i = 0; i < this.length; i++) {
       s += Array.deepJoin(this[i]);
@@ -153,34 +157,32 @@ Array.prototype.extend({
     return s;
   },
   
-  deepJoinIolist: function () {
-    // Must work an any 'array like' object.
+  deepJoinIOList: function () {
     var buffer = Buffer.new(this.iolistSize());
-    Array.prototype.deepJoinIolistInto.call(this, buffer, 0);
+    this.deepJoinIOListInto(buffer, 0);
     return buffer;
   },
   
-  deepJoinIolistInto: function (buffer, position) {
-    // Must work on any 'array like' object.
+  deepJoinIOListInto: function (buffer, position) {
     for (var i = 0; i < this.length; i++) {
       var elem = this[i];
       if (elem == null) {
         // Do nothing
       }
-      else if (Buffer.prototype.isPrototypeOf(elem)) {
+      else if (Buffer.isClassOf(elem)) {
         elem.copy(buffer, position);
         position += elem.length;
       }
-      else if (typeof elem === 'object' && Array.isArrayLike(elem)) {
-        position = Array.prototype.deepJoinIolistInto.call(elem, buffer, position);
+      else if (Array.isClassOf(elem)) {
+        position = elem.deepJoinIOListInto(buffer, position);
       }
-      else if (typeof elem === 'string') {
+      else if (String.isClassOf(elem)) {
         var stringLength = Buffer.byteLength(elem);
         buffer.write(elem, position, stringLength);
-        pos += stringLength;
+        position += stringLength;
       }
       else {
-        throw Error.new("Array.deepJoinIolistInto(): Element must be null, array like, string or buffer (for '" + what + "')");
+        throw IOListError.new("Element must be array, string, buffer or null (given '" + what + "')");
       }
     }
     return position;
@@ -188,24 +190,23 @@ Array.prototype.extend({
 
   
   iolistSize: function () {
-    // Must work on any 'array like' object.
-    var s = 0;
+    var size = 0;
     for (var i = 0; i < this.length; i++) {
       var elem = this[i];
       if (elem == null) {
-        s += 0;
+        size += 0;
       }
-      else if (Buffer.prototype.isPrototypeOf(elem)) {
-        s += elem.length;
+      else if (Buffer.isClassOf(elem)) {
+        size += elem.length;
       }
-      else if (typeof elem === 'object' && Array.isArrayLike(elem)) {
-        s += Array.prototype.iolistSize.call(elem);
+      else if (Array.isClassOf(elem)) {
+        size += elem.iolistSize();
       }
-      else if (typeof elem === 'string') {
-        s += Buffer.byteLength(elem);
+      else if (String.isClassOf(elem)) {
+        size += Buffer.byteLength(elem);
       }
       else {
-        throw Error.new("Array.iolistSize(): Element must be null, array like, string or buffer (for '" + what + "')");
+        throw IOListError.new("Element must be array, string, buffer or null (given '" + what + "')");
       }
     }
     return size;
@@ -220,7 +221,7 @@ Array.prototype.extend({
   },
   
   pushAll: function (array) {
-    for (var i = 0; array.length; i++) {
+    for (var i = 0; i < array.length; i++) {
       this.push(array[i]);
     }
   },
@@ -250,6 +251,6 @@ Array.prototype.extend({
 });
 
 // Synonyms
-Array.prototype.any = Array.prototype.some;
-Array.prototype.each = Array.prototype.forEach;
+Array.prototype.any         = Array.prototype.some;
+Array.prototype.each        = Array.prototype.forEach;
 Array.prototype.interpolate = Array.prototype.separatedBy;

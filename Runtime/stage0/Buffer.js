@@ -140,9 +140,7 @@ Buffer.extend({
     return Buffer.cleared(pad);
   },
   
-});
-
-Buffer.prototype.extend({
+}, {
   
   // Big-endian/Network-endian by default
   writeInt16: function (n, offset, noAssert) { this.writeInt16BE(n, offset, noAssert); },

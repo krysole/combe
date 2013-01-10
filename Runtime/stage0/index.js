@@ -31,7 +31,9 @@ process.arguments = process.argv.slice(2);
 
 require('./Object');
 require('./Class');
+
 require('./Error');
+
 require('./Array');
 require('./String');
 require('./Range');

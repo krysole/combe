@@ -31,9 +31,9 @@ global.__combe_infixOperators = {
   
   '!=': function (lhs, rhs) {
     return (
+      (lhs != null && rhs != null && lhs !== rhs) ||
       (lhs == null && rhs != null) ||
-      (lhs != null && rhs == null) ||
-      (lhs !== rhs)
+      (lhs != null && rhs != null)
     );
   },
   
@@ -83,7 +83,7 @@ Object.prototype.__combe_getMemoTableArray = function () {
 };
 
 Object.prototype.__combe_getMemoTable = function (position) {
-  assert(typeof position === 'number');
+  assert(Number.isClassOf(position));
   var memoTableArray = this.__combe_getMemoTableArray();
   var memoTable = memoTableArray[position];
   if (memoTable == null) {
@@ -103,6 +103,7 @@ Object.prototype.__combe_memoize = function (name, parser) {
   else if (entry != null) {
     this.position = entry.position;
     this.state = entry.state;
+    return entry.result;
   }
   else {
     try {

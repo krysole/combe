@@ -20,11 +20,6 @@
 global.Class = {
   
   classPrototype: {
-    // Each class object inherits from a it's respective classPrototype, which 
-    // in turn inherits from it's superclasses classPrototype, and eventually, 
-    // reaching Object.classPrototype, which inherits Class.prototype.
-    // As usual Class.prototype inherits Object.prototype, being the last link
-    // in the inheritance chain.
     
     allocate: function () {
       throw Error.new('Cannot allocate uninitialized classes, use Class.new() instead');
@@ -33,35 +28,63 @@ global.Class = {
     new: function (superclass, classPrototypeExtensions, prototypeExtensions) {
       if (superclass == null) superclass = Object;
       
-      if (!Class.prototype.isPrototypeOf(superclass.classPrototype)) {
-        console.dir(superclass);
-        console.dir(superclass.classPrototype);
-        console.dir(superclass.__proto__);
+      // Extending most builtins is currently prohibited.
+      if ([Function, Array, Buffer, Number, RegExp, String].include(superclass)) {
+        throw Error.new('Cannot subclass ' + superclass);
       }
+      
       assert(Class.prototype.isPrototypeOf(superclass.classPrototype));
       assert(superclass.prototype != null);
       
-      var classPrototype = Object.create(superclass.classPrototype);
-      var _class = Object.create(classPrototype);
-      classPrototype.classInstance = _class;
+      var _class = Object.create(Object.create(superclass.classPrototype));
+      _class.classPrototype = _class.__proto__;
+      _class.classPrototype.classInstance = _class;
+      _class.classPrototype.superclass = superclass;
+      _class.constructorClassPrototype = undefined;
       _class.prototype = Object.create(superclass.prototype);
-      _class.classPrototype = classPrototype;
-      _class.superclass = superclass;
+      _class.prototype.class = _class;
       
-      classPrototype.extend(classPrototypeExtensions);
-      _class.prototype.extend(prototypeExtensions);
+      Object.extend(_class.classPrototype, classPrototypeExtensions);
+      Object.extend(_class.prototype, prototypeExtensions);
       
       _class.initialize();
       
       return _class;
     },
     
+    makeConstructorClass: function (constructor) {
+      // Converts a constructor (function) into a ConstructorClass
+      assert(typeof constructor === 'function' &&
+             constructor.prototype != null &&
+             constructor.prototype.__proto__ != null &&
+             typeof constructor.prototype.__proto__.constructor === 'function');
+      constructor.classPrototype = Object.create(Class.prototype);
+      constructor.classPrototype.classInstance = constructor;
+      if (constructor.prototype.__proto__.constructor.classPrototype != null) {
+        constructor.classPrototype.superclass = constructor.prototype.__proto__.constructor;
+      }
+      else {
+        constructor.classPrototype.superclass = Object;
+      }
+      constructor.constructorClassPrototype = Object.create(constructor.classPrototype);
+      Object.synchronizeOwnProperties(constructor.constructorClassPrototype, Function.prototype);
+      Object.setPrototypeOf(constructor, constructor.constructorClassPrototype);
+      constructor.prototype.class = constructor;
+      constructor.prototype.initialize = function () {
+        this.__proto__.initialize();
+        var result = this.constructor.apply(this, arguments);
+        assert(result === this || result == null);
+      },
+      
+      return constructor;
+    },
+    
   },
   
   prototype: {
     
-    subclass: function (classPropOrFunc, propOrFunc) {
-      return Class.new(this, classPropOrFunc, propOrFunc);
+    subclass: function (classPrototypeExtensions, prototypeExtensions) {
+      return Class.new(this, classPrototypeExtensions, prototypeExtensions);
     },
     
     allocate: function () {
@@ -78,22 +101,85 @@ global.Class = {
       return this.prototype.isPrototypeOf(what);
     },
     
+    isExactClassOf: function (what) {
+      return this.prototype === what.__proto__;
+    },
+    
+    extendClassPrototype: function (classPrototypeExtensions) {
+      Object.extend(this.classPrototype, classPrototypeExtensions);
+    },
+    
+    extendPrototype: function (prototypeExtensions) {
+      Object.extend(this.prototype, prototypeExtensions);
+    },
+    
+    extend: function (classPrototypeExtensions, prototypeExtensions) {
+      Object.extend(this.classPrototype, classPrototypeExtensions);
+      Object.extend(this.prototype, prototypeExtensions);
+    },
+    
   },
 
 };
 Object.setPrototypeOf(Class.classPrototype, Class.prototype);
 Object.setPrototypeOf(Class, Class.classPrototype);
-
 Class.classPrototype.classInstance = Class;
 Class.superclass = Object;
-      
-Function.prototype.classPrototype = Object.create(Class.prototype);
-Function.prototype.classPrototype.classInstance = null;
-Function.prototype.superclass = null;
-Object.setPrototypeOf(Function.prototype, Function.prototype.classPrototype);
+
 Function.prototype.new = function () {
   var o = Object.create(this.prototype);
   var result = this.apply(o, arguments);
   if (result != null) return result;
   else return o;
+};
+
+Object.classPrototype = Object.create(Class.prototype);
+Object.classPrototype.classInstance = Object;
+Object.classPrototype.superclass = null;
+Object.constructorClassPrototype = Object.create(Object.classPrototype);
+Object.synchronizeOwnProperties(Object.constructorClassPrototype, Function.prototype);
+Object.setPrototypeOf(Object, Object.constructorClassPrototype);
+Object.prototype.class = Object;
+
+// Specialize Standard JS Constructors
+Class.makeConstructorClass(Function);
+Class.makeConstructorClass(Array);
+Class.makeConstructorClass(Buffer);
+Class.makeConstructorClass(Error);
+Class.makeConstructorClass(Number);
+Class.makeConstructorClass(RegExp);
+Class.makeConstructorClass(String);
+
+// Provide specialized new methods for builtins (where appropriate).
+Function.new = function () {
+  if (arguments.length >= 1) {
+    var code = arguments[arguments.length - 1];
+    if (!code.match(/^["']use strict["'];/)) {
+      arguments[arguments.length - 1] = '"use strict";\n' + code;
+    }
+    return Function.apply(null, arguments);
+  }
+  else {
+    return Function();
+  }
+};
+Array.classPrototype.new = Array;
+Buffer.classPrototype.new = Buffer;
+Error.classPrototype.new = Error;
+Number.classPrototype.new = undefined;
+RegExp.classPrototype.new = RegExp;
+String.classPrototype.new = undefined;
+
+Object.getCreatorOf = function (what) {
+  if (Class.isClassOf(what.class)) {
+    return what.class;
+  }
+  else if (Function.isClassOf(what.constructor)) {
+    return what.constructor;
+  }
+  else {
+    // Object.create or a function whose '.prototype.constructor' 
+    // property has been removed.
+    return null;
+  }
 };

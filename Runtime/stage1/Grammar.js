@@ -219,17 +219,17 @@ global.Grammar = Object.subclass({
 });
 
 // Synonyms
-Grammar.parse = Grammar.match;
-Grammar.parseAll = Grammar.matchAll;
-Grammar.prototype.parse = Grammar.prototype.match;
-Grammar.prototype.parseAll = Grammar.prototype.parseAll;
+Grammar.parse                 = Grammar.match;
+Grammar.parseAll              = Grammar.matchAll;
+Grammar.prototype.parse       = Grammar.prototype.match;
+Grammar.prototype.parseAll    = Grammar.prototype.parseAll;
 
 Grammar.prototype.separatedBy = Grammar.prototype.delimited;
-Grammar.prototype.delimited1 = Grammar.prototype.nonZeroDelimited;
+Grammar.prototype.delimited1  = Grammar.prototype.nonZeroDelimited;
 Grammar.prototype.nonZeroSeparatedBy = Grammar.prototype.nonZeroDelimited;
 Grammar.prototype.separatedBy1 = Grammar.prototype.nonZeroDelimited;
-Grammar.prototype.repeat = Object.prototype.__combe_repeat;
-Grammar.prototype.many = Object.prototype.__combe_repeat;
+Grammar.prototype.repeat      = Object.prototype.__combe_repeat;
+Grammar.prototype.many        = Object.prototype.__combe_repeat;
 Grammar.prototype.nonZeroRepeat = Object.prototype.__combe_nonZeroRepeat;
-Grammar.prototype.repeat1 = Object.prototype.__combe_nonZeroRepeat;
-Grammar.prototype.many1 = Object.prototype.__combe_nonZeroRepeat;
+Grammar.prototype.repeat1     = Object.prototype.__combe_nonZeroRepeat;
+Grammar.prototype.many1       = Object.prototype.__combe_nonZeroRepeat;

@@ -61,7 +61,7 @@ global.TextGrammar = Grammar.subclass({}, {
   
   get source() { return this._source_storage; },
   set source(source) {
-    assert(typeof source === 'string');
+    assert(String.isClassOf(source));
     this._source_storage = source
   },
   

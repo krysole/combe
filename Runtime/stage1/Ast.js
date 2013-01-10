@@ -75,10 +75,10 @@ global.Ast = Object.subclass({
     this.childrenNames.each(function (name) {
       if (Array.isArray(_this[name])) {
         values.pushAll(_this[name].filter(function (elem) {
-          return Ast.prototype.isPrototypeOf(elem);
+          return Ast.isClassOf(elem);
         }));
       }
-      else if (Ast.prototype.isPrototypeOf(_this[name])) {
+      else if (Ast.isClassOf(_this[name])) {
         values.push(_this[name]);
       }
     });

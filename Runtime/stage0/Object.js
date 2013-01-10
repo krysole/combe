@@ -17,67 +17,95 @@
 //
 'use strict';
 
+Object.getPrototypeOf = function (object) {
+  return object.__proto__;
+};
+
 Object.setPrototypeOf = function (object, newPrototype) {
   object.__proto__ = newPrototype;
 };
 
-Object.prototype.origIsPrototypeOf = Object.prototype.isPrototypeOf;
 Object.prototype.isPrototypeOf = function (what) {
-  if (what == null || this == null) return false;
-  for (var proto = what.__proto__; proto != null; proto = proto.__proto__) {
-    if (this == proto) return true;
+  return Object.isPrototypeOf(this, what);
+};
+
+Object.isPrototypeOf = function (prototype, what) {
+  if (prototype == null || what == null) return false;
+  for (var p = what.__proto__; p != null; p = p.__proto__) {
+    if (prototype === p) return true;
   }
   return false;
 };
 
-Object.clone = function (original, propOrFunc) {
+Object.removeOwnProperty = function (object, name) {
+  if (!delete object[name]) {
+    throw Error.new('Could not remove own property ' + name + ' on object ' + object);
+  }
+};
+
+Object.clone = function (original, extensions) {
   var o = Object.create(Object.getPrototypeOf(original));
-  Object.copyProperties(o, original);
-  Object.extend(o, propOrFunc);
+  Object.copyOwnProperties(o, original);
+  Object.extend(o, extensions);
   return o;
 };
 
-Object.extend = function (object, propOrFunc) {
-  if (propOrFunc == null) {
+Object.extend = function (object, extensions) {
+  if (extensions == null) {
     // Do nothing
   }
-  else if (typeof propOrFunc === 'function') {
-    propOrFunc(object);
+  else if (Function.isClassOf(object)) {
+    extensions(object);
   }
   else {
-    Object.copyProperties(object, propOrFunc);
+    Object.copyOwnProperties(object, extensions);
   }
   return object;
 };
 
-Object.copyProperties = function (dest, source) {
+Object.derive = function (parent, extensions) {
+  var o = Object.create(parent);
+  Object.extend(o, extensions);
+  return o;
+};
+
+Object.copyOwnProperties = function (dest, source) {
   var names = Object.getOwnPropertyNames(source);
   for (var i = 0; i < names.length; i++) {
     Object.defineProperty(dest, names[i], Object.getOwnPropertyDescriptor(source, names[i]));
   }
 };
 
-Object.derive = function (parent, propOrFunc) {
-  var o = Object.create(parent);
-  Object.extend(o, propOrFunc);
-  return o;
-};
-
-Object.prototype.clone = function (propOrFunc) {
-  return Object.clone(this, propOrFunc);
-};
-
-Object.prototype.extend = function (propOrFunc) {
-  return Object.extend(this, propOrFunc);
-};
-
-Object.prototype.derive = function (propOrFunc) {
-  return Object.derive(this, propOrFunc);
-};
-
-Object.prototype.tap = function (f) {
-  f(this);
-  return this;
+Object.synchronizeOwnProperties = function (dest, source) {
+  var destNames = Object.getOwnPropertyNames(dest);
+  for (var i = 0; i < destNames.length; i++) {
+    var destDesc = Object.getOwnPropertyDescriptor(dest, destNames[i]);
+    if (!destDesc.configurable) {
+      if (!Object.hasOwnProperty(destNames[i])) {
+        throw Error.new('Cannot synchronize non-configurable own property (' + destNames[i] + ')');
+      }
+      var sourceDesc = Object.getOwnPropertyDescriptor(source, destNames[i]);
+      if (destDesc.value !== sourceDesc.value ||
+          destDesc.writable !== sourceDesc.writable ||
+          destDesc.get !== sourceDesc.get ||
+          destDesc.set !== sourceDesc.set ||
+          destDesc.enumerable !== sourceDesc.enumerable ||
+          destDesc.configurable !== sourceDesc.configurable) {
+        throw Error.new('Cannot synchronize non-configurable own property (' + destNames[i] + ')');
+      }
+    }
+    if (!Object.hasOwnProperty(source, destNames[i])) {
+      Object.removeOwnProperty(dest, destNames[i]);
+    }
+  }
+  var sourceNames = Object.getOwnPropertyNames(source);
+  for (var i = 0; i < sourceNames.length; i++) {
+    var sourceDesc = Object.getOwnPropertyDescriptor(source, sourceNames[i]);
+    Object.defineProperty(dest, sourceNames[i], sourceDesc);
+  }
+  if (Object.isFrozen(source)) Object.freeze(dest);
+  else if (Object.isSealed(source)) Object.seal(dest);
+  else if (!Object.isExtensible(source)) Object.preventExtensions(dest);
 };
 
 Object.unique = function (name) {
@@ -91,4 +119,9 @@ Object.unique = function (name) {
 
 Object.prototype.initialize = function () {
   // Do nothing
+};
+
+Object.prototype.tap = function (f) {
+  f(this);
+  return this;
 };

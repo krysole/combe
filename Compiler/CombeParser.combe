@@ -217,7 +217,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     leftAssociative[additiveExpression, ('<<'|'>>'|'>>>')]
   },
   rule additiveExpression {
-    leftAssociative[multiplicative, ('+'|'-')]
+    leftAssociative[multiplicativeExpression, ('+'|'-')]
   },
   rule multiplicativeExpression {
     leftAssociative[rangeExpression, ('*'|'/'|'%')]
@@ -326,7 +326,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   rule arrayElement {
     | expression
-    | -> Ast.Litearl(null) // Elision
+    | -> Ast.Literal(null) // Elision
   },
   
   rule objectLiteral {
@@ -353,7 +353,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   
   rule functionLiteral {
-    | parametes?:params '->' expression:e
+    | parameters?:params '->' expression:e
       -> Ast.Function(params, e)
     | variableIdentifier:p '->' expression:e
       -> Ast.Function([p], e)
@@ -436,9 +436,9 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   rule callPattern {
     primaryPattern:p
-    ( arguments:args
+    ( ~ws arguments:args
       !(p = Ast.CallPattern(p, args))
-    | patternArguments:args
+    | ~ws patternArguments:args
       !(p = Ast.CallPattern(p, args))
     )*
     -> p

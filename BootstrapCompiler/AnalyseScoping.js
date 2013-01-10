@@ -39,8 +39,16 @@ var AnalyseScoping = module.exports = Class.new(Object, {
   visitScript: function (ast) {
     this.scopes.push(ast);
     ast.variables = [];
+    ast.declareVariables = [];
+    
+    if (ast.parameters != null) {
+      if (typeof ast.parameters === 'string') ast.variables.push(ast.parameters);
+      else ast.variables.pushAll(ast.parameters);
+    }
     
     ast.visitChildren(this);
+    
+    ast.variables.pushAll(ast.declareVariables);
     
     this.scopes.pop();
   },
@@ -48,8 +56,16 @@ var AnalyseScoping = module.exports = Class.new(Object, {
   visitBlock: function (ast) {
     this.scopes.push(ast);
     ast.variables = [];
+    ast.declareVariables = [];
+    
+    if (ast.parameters != null) {
+      if (typeof ast.parameters === 'string') ast.variables.push(ast.parameters);
+      else ast.variables.pushAll(ast.parameters);
+    }
     
     ast.visitChildren(this);
+    
+    ast.variables.pushAll(ast.declareVariables);
     
     this.scopes.pop();
   },
@@ -57,8 +73,16 @@ var AnalyseScoping = module.exports = Class.new(Object, {
   visitRule: function (ast) {
     this.scopes.push(ast);
     ast.variables = [];
+    ast.declareVariables = [];
+    
+    if (ast.parameters != null) {
+      if (typeof ast.parameters === 'string') ast.variables.push(ast.parameters);
+      else ast.variables.pushAll(ast.parameters);
+    }
     
     ast.visitChildren(this);
+    
+    ast.variables.pushAll(ast.declareVariables);
     
     this.scopes.pop();
   },
@@ -67,7 +91,9 @@ var AnalyseScoping = module.exports = Class.new(Object, {
     assert(this.scopes.last.type === 'Block' ||
            this.scopes.last.type === 'Script');
     
-    this.scopes.last.variables.push(ast.name);
+    if (!this.scopes.last.variables.include(ast.name)) {
+      this.scopes.last.declareVariables.pushIfAbsent(ast.name);
+    }
     
     ast.visitChildren(this);
   },
@@ -80,7 +106,9 @@ var AnalyseScoping = module.exports = Class.new(Object, {
   visitBindPattern: function (ast) {
     assert(this.scopes.last.type === 'Rule');
     
-    this.scopes.last.variables.push(ast.name);
+    if (!this.scopes.last.variables.include(ast.name)) {
+      this.scopes.last.declareVariables.pushIfAbsent(ast.name);
+    }
     
     ast.visitChildren(this);
   },

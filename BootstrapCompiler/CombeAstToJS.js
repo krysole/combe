@@ -532,9 +532,9 @@ var CombeAstToJS = module.exports = Class.new(Object, {
   visitRule: function (ast) { // [ parameters, body ]
     ast.visitChildren(this);
     
-    if (ast.variables.length >= 1) {
+    if (ast.declareVariables.length >= 1) {
       var vars = [
-        'var ', ast.variables.interpolate(', '), ';\n'
+        'var ', ast.declareVariables.interpolate(', '), ';\n'
       ];
     }
     else {
