@@ -100,11 +100,7 @@ String.extend({
     }
   },
   
-});
-
-String.JavaScriptReservedWords = String.JavaScriptKeywords.concat(String.JavaScriptFutureReservedWords);
-
-String.prototype.extend({
+}, {
   
   toSourceString: function () {
     return this.quote();
@@ -205,3 +201,5 @@ String.prototype.extend({
   },
   
 });
+
+String.JavaScriptReservedWords = String.JavaScriptKeywords.concat(String.JavaScriptFutureReservedWords);

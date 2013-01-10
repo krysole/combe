@@ -17,6 +17,14 @@
 //
 'use strict';
 
+// Bootstrap definition (authoritative definition provided in Array.js)
+Array.prototype.include = function (what) {
+  for (var i = 0; i < what.length; i++) {
+    if (this[i] === what) return true;
+  }
+  return false;
+};
+
 global.Class = {
   
   classPrototype: {
@@ -71,10 +79,10 @@ global.Class = {
       Object.setPrototypeOf(constructor, constructor.constructorClassPrototype);
       constructor.prototype.class = constructor;
       constructor.prototype.initialize = function () {
-        this.__proto__.initialize();
+        Object.prototype.initialize.call(this);
         var result = this.constructor.apply(this, arguments);
         assert(result === this || result == null);
-      },
+      };
       
       return constructor;
     },
@@ -165,7 +173,7 @@ Function.new = function () {
 };
 Array.classPrototype.new = Array;
 Buffer.classPrototype.new = Buffer;
-Error.classPrototype.new = Error;
+Error.classPrototype.new = undefined; // Defined in Error.js
 Number.classPrototype.new = undefined;
 RegExp.classPrototype.new = RegExp;
 String.classPrototype.new = undefined;

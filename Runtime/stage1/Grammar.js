@@ -69,7 +69,7 @@ global.Grammar = Object.subclass({
     }
     catch (e) {
       if (e === Backtrack) {
-        this.error('failed to match input');
+        this.error('Failed to match input');
       }
       else {
         throw e;
@@ -89,7 +89,7 @@ global.Grammar = Object.subclass({
     }
     catch (e) {
       if (e === Backtrack) {
-        this.error('failed to match input');
+        this.error('Failed to match input');
       }
       else {
         throw e;
@@ -197,7 +197,7 @@ global.Grammar = Object.subclass({
   },
   
   error: function (message) {
-    throw ParsingError.new(this, message, this.furthestPosition);
+    throw ParsingError.new(this, message);
   },
   
   positionString: function (position) {

@@ -22,7 +22,7 @@
 global.TokenGrammar = Grammar.subclass({}, {
   
   initialize: function (source, sourcename) {
-    Grammar.prototype.initialize.call(this, source, sourcename);
+    TokenGrammar.prototype.__proto__.initialize.call(this, source, sourcename);
     
     this.tokens = [];
   },

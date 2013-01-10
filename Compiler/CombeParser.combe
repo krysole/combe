@@ -22,7 +22,7 @@ var CombeLexer = require('./CombeLexer');
 var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   initialize(source, filename) {
-    TokenGrammar.prototype.initialize.call(this, source, filename);
+    CombeParser.prototype.__proto__.initialize.call(this, source, filename);
     
     this.lexer = CombeLexer.new(source, filename);
   },

@@ -19,7 +19,9 @@
 
 global.Regex = RegExp;
 
-Regex.prototype.extend({
+Regex.extend({
+  
+}, {
   
   toSourceString: function () {
     return 'r' + this.toString();

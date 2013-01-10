@@ -19,22 +19,19 @@
 
 global.ParsingError = Error.subclass('ParsingError', {}, {
   
-  initialize: function (parser, message, furthestPosition) {
-    Error.prototype.initialize.call(this, this.generateMessage(message, furthestPosition));
+  initialize: function (parser, message) {
+    if (message == null || message === '') {
+      message = 'no message';
+    }
+    
+    var actualMessage = (
+      parser.name + ': ' + 
+      message + 
+      ' (furthest position ' + parser.positionString(parser.furthestPosition) + ')'
+    );
+    ParsingError.prototype.__proto__.initialize.call(this, actualMessage);
+    
     this.parser = parser;
-    this.message = message;
-    this.furthestPosition;
-  },
-  
-  generateMessage: function (message, furthestPosition) {
-    var s = this.name + " in " + this.parser;
-    if (this.message != null) {
-      s += ": " + message;
-    }
-    if (this.furthestPosition != null) {
-      s += " (furthest position " + this.furthestPosition + ")";
-    }
-    return s;
   },
   
 });

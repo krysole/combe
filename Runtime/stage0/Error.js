@@ -21,7 +21,7 @@ Error.extend({
   
   subclass: function (name, classPrototypeExtensions, prototypeExtensions) {
     var _class = Class.new(this, classPrototypeExtensions, prototypeExtensions);
-    _class.name = name;
+    _class.classPrototype.name = name;
     _class.prototype.name = name;
     return _class;
   },
@@ -34,7 +34,7 @@ Error.extend({
   
   new: function () {
     var e = Object.create(this.prototype);
-    Error.captureStackTrace(e, Error.new);
+    Error.captureStackTrace(e, Error.classPrototype.new);
     e.initialize.apply(e, arguments);
     return e;
   },

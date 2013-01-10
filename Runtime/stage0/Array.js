@@ -42,7 +42,7 @@ Array.extend({
     else if (Buffer.isClassOf(what)) {
       return what;
     }
-    else if (Array.isClassOf(what) {
+    else if (Array.isClassOf(what)) {
       return what.deepJoinIOList();
     }
     else if (String.isClassOf(what)) {
