@@ -23,18 +23,15 @@ global.__combe_continue = Object.unique('__combe_continue');
 global.__combe_infixOperators = {
   
   '==': function (lhs, rhs) {
-    return (
-      (lhs == null && rhs == null) ||
-      (lhs === rhs)
-    );
+    if (lhs === undefined) lhs = null;
+    if (rhs === undefined) rhs = null;
+    return (lhs === rhs);
   },
   
   '!=': function (lhs, rhs) {
-    return (
-      (lhs != null && rhs != null && lhs !== rhs) ||
-      (lhs == null && rhs != null) ||
-      (lhs != null && rhs != null)
-    );
+    if (lhs === undefined) lhs = null;
+    if (rhs === undefined) rhs = null;
+    return (lhs !== rhs);
   },
   
 };

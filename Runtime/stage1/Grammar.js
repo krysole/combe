@@ -97,6 +97,8 @@ global.Grammar = Object.subclass({
     }
   },
 
+  // Todo: Add support for range/integer limits, i.e., 5 element delimited list.
+  // Todo: Respectively, add a repeat function that provides the same facility
   delimited: function (elementParser, delimiterParser) {
     var initialPosition, initialState;
     var result = [];

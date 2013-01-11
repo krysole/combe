@@ -26,7 +26,7 @@ var CombeAstToJS = require('./CombeAstToJS');
 
 var Compiler = module.exports = {
   
-  shouldOutputIntermediates: true,
+  shouldOutputIntermediates: false,
   
   compile(filename) {
     filename = path.resolve(filename);

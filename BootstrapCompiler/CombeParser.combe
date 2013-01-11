@@ -370,12 +370,11 @@ var CombeParser = module.exports = Class.new(BaseParser, {
   
   arrayLiteral: rule {
     '[' delimited[arrayElement, ',']:elems ','? ']'
-    !{ if (elems.last.is('Elision')) elems.pop(); }
     -> Ast.Array(elems)
   },
   arrayElement: rule {
     | expression
-    | -> Ast.Literal(null) // Elision
+    | &',' -> Ast.Literal(null) // Elision
   },
   
   objectLiteral: rule {

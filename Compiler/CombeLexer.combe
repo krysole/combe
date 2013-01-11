@@ -138,7 +138,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   
   rule stringFragment(delimiter) {
     delimiter (~delimiter stringChar)*:cs delimiter
-    -> cs.join()
+    -> cs.join('')
   },
   
   rule stringChar {
@@ -158,13 +158,13 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     | 't'  -> '\t'
     | 'v'  -> '\v'
     | '0' ~digit -> '\0'
-    | 'x' matchedInput[hexDigit hexDigit]:hs -> String.fromCodepoint(hs.join())
-    | 'u' matchedInput[hexDigit hexDigit hexDigit hexDigit]:hs -> String.fromCodepoint(hs.join())
+    | 'x' matchedInput[hexDigit hexDigit]:hs -> String.fromCodepoint(hs)
+    | 'u' matchedInput[hexDigit hexDigit hexDigit hexDigit]:hs -> String.fromCodepoint(hs)
   },
   
   
   rule regex {
-    'r/' matchedInput[~'*' regexChar*]:pattern '/' matchedInput[idChars*]:options
+    'r/' matchedInput[~'*' regexChar*]:pattern '/' matchedInput[idChar*]:options
     createToken('regex', Regex.new(pattern, options))
   },
   

@@ -85,7 +85,7 @@ String.extend({
     for (var i = 1; i < length; i++) {
       buf.push(alphabet[Math.randomInteger(0, alphabet.length)]);
     }
-    return bug.join('');
+    return buf.join('');
   },
   
   toSourceString: function (what) {
@@ -198,6 +198,8 @@ String.extend({
         }
       }
     }
+    result += '"';
+    return result;
   },
   
 });

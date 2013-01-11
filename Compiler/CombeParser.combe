@@ -86,8 +86,8 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   
   rule ifExpression {
-    id('if') '(' expression:condition ')' expressionBody?:consiquent
-    ( ?(consiquent != null) id('else') expressionBody:alternative )?
+    id('if') '(' expression:condition ')' expressionBody:consiquent
+    ( id('else') expressionBody:alternative )?
     -> Ast.IfExpression(condition, consiquent, alternative)
   },
   
@@ -326,7 +326,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   rule arrayElement {
     | expression
-    | -> Ast.Literal(null) // Elision
+    | &',' -> Ast.Literal(null) // Elision
   },
   
   rule objectLiteral {
@@ -375,7 +375,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   
   rule expressionSequence {
-    delimited1[expression, ',']:expr ','?
+    delimited1[expression, ',']:exprs ','?
     ( ?(exprs.length == 1)
       -> exprs[0]
     | -> Ast.SequenceExpression(exprs)
@@ -426,10 +426,10 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   rule postfixOperatorPattern {
     callPattern:p
-    ( '*' ~ws !(p = Ast.RepeatPattern(p))
-    | '+' ~ws !(p = Ast.NonZeroRepeatPattern(p))
-    | '?' ~ws !(p = Ast.OptionalPattern(p))
-    | ':' ~ws variableIdentifier:name !(p = Ast.BindPattern(p, name))
+    ( ~ws '*' !(p = Ast.RepeatPattern(p))
+    | ~ws '+' !(p = Ast.NonZeroRepeatPattern(p))
+    | ~ws '?' !(p = Ast.OptionalPattern(p))
+    | ~ws ':' ~ws variableIdentifier:name !(p = Ast.BindPattern(p, name))
     )*
     -> p
   },
@@ -499,7 +499,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   
   ws() {
-    if (this.last().position + this.last().length !== peek().position) {
+    if (this.last().position + this.last().length !== this.peek().position) {
       return null;
     }
     else {

@@ -213,7 +213,7 @@ var CombeAstToJS = module.exports = Class.new(Object, {
           '}\n',
           'catch (__combe_e) {\n',
             'if (__combe_e === __combe_break) break;\n',
-            'if (__combe_e !== __combe_continue) throw e;\n',
+            'if (__combe_e !== __combe_continue) throw __combe_e;\n',
           '}\n',
           inc, ';\n',
         '}\n',

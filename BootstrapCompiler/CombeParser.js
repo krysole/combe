@@ -636,7 +636,7 @@ var CombeParser = module.exports = Class.new(BaseParser, {
     }));
   }),
   arrayLiteral: (function () {
-    return this.memoize("qJmy5hmphQcSLdlCS1KQdQ", (function () {
+    return this.memoize("w4PHxeLNZQsyBVEJ3/Rkow", (function () {
       var elems;
       return (function () {
         this.stringPatternHandler("[");
@@ -647,16 +647,16 @@ var CombeParser = module.exports = Class.new(BaseParser, {
           return this.stringPatternHandler(",");
         }));
         this.stringPatternHandler("]");
-        (function () {
-          if (elems.last.is("Elision")) elems.pop();
-        }).call(this);
         return Ast.Array(elems);
       }).call(this);
     }));
   }),
   arrayElement: (function () {
-    return this.memoize("sWUORPIGOExIvaBXSSoHzA", (function () {
+    return this.memoize("ztbFkBy1A9xcayA1tednRQ", (function () {
       return this._choice(this.expression, (function () {
+        this._lookahead((function () {
+          return this.stringPatternHandler(",");
+        }));
         return Ast.Literal(null);
       }));
     }));

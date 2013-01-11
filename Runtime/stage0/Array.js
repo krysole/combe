@@ -105,7 +105,7 @@ Array.extend({
   },
   
   include: function (what) {
-    for (var i = 0; i < what.length; i++) {
+    for (var i = 0; i < this.length; i++) {
       if (this[i] === what) return true;
     }
     return false;
@@ -140,7 +140,7 @@ Array.extend({
   separatedBy: function (separator) {
     var a = [];
     if (this.length >= 0) {
-      a.push(this[i]);
+      a.push(this[0]);
     }
     for (var i = 1; i < this.length; i++) {
       a.push(separator);

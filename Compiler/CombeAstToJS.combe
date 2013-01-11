@@ -217,7 +217,7 @@ var CombeAstToJS = module.exports = Object.subclass({
           '}\n',
           'catch (__combe_e) {\n',
             'if (__combe_e === __combe_break) break;\n',
-            'if (__combe_e !== __combe_continue) throw e;\n',
+            'if (__combe_e !== __combe_continue) throw __combe_e;\n',
           '}\n',
           inc, ';\n',
         '}\n',
@@ -389,6 +389,9 @@ var CombeAstToJS = module.exports = Object.subclass({
     
     // Todo: Change this to use a gensym'd variable as the subject and subscripting
     // when the name isn't compatable with JS '.'.
+    //
+    // Remember that in JS, object['methodName']() is equivelent to object.methodName()
+    // including 'this' handling.
     
     var args = ast.arguments.map(function (arg) {
       return arg.code;
@@ -508,7 +511,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     ast.visitChildren(this);
     
     var params = null, argsvar = null;
-    if (ast.parameters == null) {
+    if (ast.parameters != null) {
       if (String.isClassOf(ast.parameters)) {
         argsvar = ['var ', ast.parameters, ' = Array.slice(arguments);\n'];
       }
@@ -577,6 +580,7 @@ var CombeAstToJS = module.exports = Object.subclass({
       ast.code = [
         '(function (', params, ') {\n',
           argsvar,
+          vars,
           'return ', ast.body.code, '.call(this);\n',
         '})'
       ];
