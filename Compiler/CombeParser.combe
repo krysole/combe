@@ -42,6 +42,11 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   rule statement {
     | varStatement
     
+    // Todo: Add statement versions of if, while, etc., which will be required
+    // to allow newline/indentation statement termination. Otherwise, the 'else'
+    // keyword would be the first thing the compiler sees as a new statement
+    // in the most common Java/JS coding style.
+    
     | expressionStatement
     | emptyStatement
   },
