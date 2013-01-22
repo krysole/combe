@@ -16,4 +16,5 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-var BootstrapCompiler = module.exports = require('./Compiler');
+var path = require('path');
+module.exports = require(path.join('.', path.basename(__dirname)));
