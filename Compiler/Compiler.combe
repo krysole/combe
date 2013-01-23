@@ -28,105 +28,56 @@ var Compiler = module.exports = {
   
   shouldOutputIntermediates: false,
   
-  compile(filename) {
-    filename = path.resolve(filename);
-    if (fs.existsSync(filename)) {
-      if (path.extname(filename) === '.combe') {
-        this.compileFile(filename);
-      }
-      else if (fs.statSync(filename).isDirectory()) {
-        this.compileDirectory(filename);
+  compile(sourceFilename, outputFilename, options) {
+    if (outputFilename == null) {
+      var ext = path.extname(sourceFilename);
+      if (ext === '.combe') {
+        outputFilename = sourceFilename.replace(r/\.combe$/i, '.combejs');
       }
       else {
-        throw Error.new('Expected source file to be directory of .combe file');
+        outputFilename = sourceFilename + '.combejs';
       };
-    }
-    else if (fs.existsSync(filename + '.combe')) {
-      if (fs.statSync(filename + '.combe').isFile()) {
-        this.compileFile(filename + '.combe');
-      }
-      else {
-        throw Error.new('Expected .combe to be a regular file');
-      };
-    }
-    else {
-      throw Error.new('Expected source file to be directory or .combe file');
     };
-  },
-  
-  compileDirectory(dirname) {
-    var _this = this;
-    assert(fs.statSync(dirname).isDirectory());
+    options.source = sourceFilename;
+    options.output = outputFilename;
     
-    this.log(dirname + ' (directory)');
+    var source = fs.readFileSync(sourceFilename, 'utf8');
     
-    fs.readdirSync(dirname).sort().each(function (filename) {
-      var fullFilename = path.join(dirname, filename);
-      var s = fs.statSync(fullFilename);
-      if (s.isDirectory() && !filename.match(r/^\./)) {
-        _this.compileDirectory(fullFilename);
-      }
-      else if (s.isFile() && path.extname(filename) === '.combe') {
-        _this.compileFile(fullFilename);
-      }
-      else {
-        // Do nothing
-      };
-    });
-  },
-  
-  compileFile(filename) {
-    var compiledFilename = filename.replace(r/\.combe$/, '.combejs');
-    if (fs.existsSync(compiledFilename) &&
-        fs.statSync(compiledFilename).mtime > fs.statSync(filename).mtime) {
-      this.log(filename + ' (up to date)');
-      return;
+    var hashbangLine = this.hashbangLine(source);
+    if (hashbangLine != null) {
+      source = source.slice(hashbangLine[0].length);
     };
     
-    this.log(filename + ' (compiling)');
-    
-    var source = fs.readFileSync(filename, 'utf8');
-    
-    var hashbang = this.getHashbangLine(source);
-    source = this.removeHashbangLine(source);
-    
-    var parser = CombeParser.new(source, filename);
+    var parser = CombeParser.new(source, sourceFilename);
     var ast = parser.match();
-    this.writeIntermediate(filename, 'tokens', parser.tokens);
-    this.writeIntermediate(filename, 'ast', ast);
+    this.writeIntermediate(options, 'tokens', parser.tokens);
+    this.writeIntermediate(options, 'ast', ast);
     
     var jsIOList = CombeAstToJS.translateToIOList(ast);
-    this.writeIntermediate(filename, 'iolist', jsIOList);
+    this.writeIntermediate(options, 'iolist', jsIOList);
     
     var jsText = Array.deepJoinIOList(jsIOList);
     
-    fs.writeFileSync(filename + 'js', jsText);
+    fs.writeFileSync(outputFilename, jsText);
   },
   
   log(message) {
     console.log(process.command + ': ' + message);
   },
   
-  writeIntermediate(baseFilename, name, object) {
-    if (this.shouldOutputIntermediates) {
-      var filename = baseFilename + '.' + name + '~';
+  writeIntermediate(options, name, object) {
+    var outputFilename = options[name];
+    if (outputFilename == null && options.intout) {
+      outputFilename = options.source + '.' + name + '~';
+    };
+    if (outputFilename) {
       var output = inspect(object, false, null);
-      fs.writeFileSync(filename, output);
+      fs.writeFileSync(outputFilename, output);
     };
   },
   
-  hashbangRegex: r/^#![^\r\n]*(\r\n|\r|\n)/,
-  
-  hasHashbangLine(source) {
-    return source.match(this.hashbangRegex) != null;
-  },
-  
-  removeHashbangLine(source) {
-    return source.replace(this.hashbangRegex, '');
-  },
-  
-  getHashbangLine(source) {
-    return source.match(this.hashbangRegex);
+  hashbangLine(source) {
+    return source.match(r/^#![^\r\n]*(\r\n|\r|\n)/);
   },
   
 };

@@ -20,13 +20,25 @@
 
 require('combe-newcombe/Runtime');
 
+var nopt = require('nopt');
+var path = require('path');
+
 var Compiler = require('combe-newcombe/Compiler');
 
 setTimeout(function () {
-  if (process.arguments.length < 0 || process.arguments.length > 1) {
-    console.error('Usage: newcombec [path]');
-    return;
+  var knownOptions = {
+    "output": [String],
+  };
+  var optionShorthands = {
+    "o": ["--output"]
+  };
+  var options = nopt(knownOptions, optionShorthands, process.argv, 2);
+  if (options.argv.remain === 1) {
+    console.error('Usage: newcombec [-o output] source');
+    process.exit(1);
   }
   
-  Compiler.compile(process.arguments[0]);
+  var source = options.argv.remain[0];
+  
+  Compiler.compile(source, options.output, options);
 }, 0);

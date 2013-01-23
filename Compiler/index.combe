@@ -17,4 +17,4 @@
 //
 
 var path = require('path');
-module.exports = require(path.join('.', path.basename(__dirname)));
+module.exports = require('./' + path.basename(__dirname));
