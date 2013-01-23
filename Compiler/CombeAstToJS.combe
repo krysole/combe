@@ -46,7 +46,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     ast.visitChildren(this);
     
     var stmts = ast.statements.map(function (stmt) {
-      return stmt.code;
+      return [stmt.code, ';\n'];
     });
     
     ast.code = [
@@ -75,22 +75,12 @@ var CombeAstToJS = module.exports = Object.subclass({
     }).separatedBy(', ');
     
     ast.code = [
-      'var ', decls, ';\n'
+      'var ', decls
     ];
   },
   
-  visitExpressionStatement(ast) { // [ expression ]
-    ast.visitChildren(this);
-    
-    ast.code = [ast.expression.code, ';\n'];
-  },
   
-  visitEmptyStatement(ast) { // [ ]
-    ast.code = 'null;\n';
-  },
-  
-  
-  visitIfExpression(ast) { // [ condition, consiquent, alternative ]
+  visitIf(ast) { // [ condition, consiquent, alternative ]
     ast.visitChildren(this);
     
     var alt = if (ast.alternative != null) ast.alternative.code
@@ -103,7 +93,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     ];
   },
   
-  visitWhileExpression(ast) { // [ condition, body ]
+  visitWhile(ast) { // [ condition, body ]
     ast.visitChildren(this);
     
     var body = this.unwrapBlockAsStatements(ast.body);
@@ -145,7 +135,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     ];
   },
   
-  visitForExpression(ast) { // [ initialize, condition, increment, body ]
+  visitFor(ast) { // [ initialize, condition, increment, body ]
     ast.visitChildren(this);
     
     var init = if (ast.initialize != null) ast.initialize.code
@@ -175,7 +165,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     ];
   },
   
-  visitForDeclaringExpression(ast) { // [ declarations, condition, increment, body ]
+  visitForDeclaring(ast) { // [ declarations, condition, increment, body ]
     ast.visitChildren(this);
     
     var decls = ['var ', ast.declarations.map(function (decl) {
@@ -225,7 +215,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     ];
   },
   
-  visitTryCatchExpression(ast) { // [ tryBody, catchVariable, catchBody, finallyBody ]
+  visitTryCatch(ast) { // [ tryBody, catchVariable, catchBody, finallyBody ]
     ast.visitChildren(this);
     
     var tryFragment = [
@@ -261,7 +251,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     ];
   },
   
-  visitThrowExpression(ast) { // [ argument ]
+  visitThrow(ast) { // [ argument ]
     ast.visitChildren(this);
     
     ast.code = [
@@ -269,7 +259,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     ];
   },
   
-  visitReturnExpression(ast) { // [ argument ]
+  visitReturn(ast) { // [ argument ]
     ast.visitChildren(this);
     
     var valueCode = if (ast.argument != null) ast.argument.code
@@ -280,19 +270,19 @@ var CombeAstToJS = module.exports = Object.subclass({
     ];
   },
   
-  visitBreakExpression(ast) { // [ ]
+  visitBreak(ast) { // [ ]
     ast.code = [
       '(function () { throw __combe_break; })()'
     ];
   },
   
-  visitContinueExpression(ast) { // [ ]
+  visitContinue(ast) { // [ ]
     ast.code = [
       '(function () { throw __combe_continue; })()'
     ];
   },
   
-  visitSequenceExpression(ast) { // [ expressions ]
+  visitSequence(ast) { // [ expressions ]
     ast.visitChildren(this);
     
     var exprs = ast.expressions.map(function (expr) {
@@ -604,7 +594,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     ast.visitChildren(this);
     
     var stmts = ast.statements.map(function (stmt) {
-      return stmt.code;
+      return [stmt.code, ';\n'];
     });
     
     ast.code = [
@@ -868,7 +858,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     }
     else if (ast.type === 'Block') {
       var stmts = ast.statements.map(function (stmt) {
-        return stmt.code;
+        return [stmt.code, ';\n'];
       });
       
       if (ast.statements.some(function (stmt) {

@@ -42,17 +42,23 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   rule statement {
     | varStatement
     
-    // Todo: Add statement versions of if, while, etc., which will be required
-    // to allow newline/indentation statement termination. Otherwise, the 'else'
-    // keyword would be the first thing the compiler sees as a new statement
-    // in the most common Java/JS coding style.
+    | ifStatement
+    | whileStatement
+    | doWhileStatement
+    | forStatement
+    
+    | tryCatchStatement
+    
+    // Todo: Consider a do statment as a corollary to a do expression, since
+    // it would still provide the opportunity to avoid naming collisions, or
+    // shadow variables.
     
     | expressionStatement
     | emptyStatement
   },
   
   rule varStatement {
-    id('var') delimited1[variableDeclaration, ',']:decls
+    id('var') delimited1[variableDeclaration, ',']:decls /* statementTerminator */
     -> Ast.VarStatement(decls)
   },
   
@@ -61,13 +67,53 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     -> Ast.VariableDeclaration(name, expr)
   },
   
+  rule ifStatement {
+    id('if') '(' expression:condition ')'
+    expressionBody:consiquent /* statementTerminator? */
+    ( id('else') expressionBody:alternative /* statementTerminator */ )?
+    -> Ast.If(condition, consiquent, alternative)
+  },
+  
+  rule whileStatement {
+    id('while') '(' expression:condition ')' expressionBody?:b /* statementTerminator */
+    -> Ast.While(condition, b)
+  },
+  
+  rule doWhileStatement {
+    id('do') expressionBody:b /* statementTerminator? */
+    id('while') '(' expression:condition ')' /* statementTerminator */
+    -> Ast.DoWhile(b, condition)
+  },
+  
+  rule forStatement {
+    | id('for') '('
+        expression?:initExpr ';'
+        expression?:condExpr ';'
+        expression?:incExpr ')' expressionBody?:b /* statementTerminator */
+      -> Ast.For(initExpr, condExpr, incExpr, b)
+    | id('for') '('
+        id('var') delimited1[variableDeclaration, ',']:decls ';'
+        expression?:condExpr ';'
+        expression?:incExpr ')' expressionBody?:b /* statementTerminator */
+      -> Ast.ForDeclaring(decls, condExpr, incExpr, b)
+  },
+  
+  rule tryCatchStatement {
+    id('try') expressionBody:tryBody
+    ( /* statementTerminator? */ id('catch') '(' variableIdentifier:catchBinding ')' expressionBody:catchBody )?
+    ( /* statementTerminator? */ id('finally') expressionBody:finallyBody )?
+    /* statementTerminator */
+    !(if (catchBody == null) catchBinding = null)
+    -> Ast.TryCatch(tryBody, catchBinding, catchBody, finallyBody)
+  },
+  
   rule expressionStatement {
-    expression:expr
-    -> Ast.ExpressionStatement(expr)
+    expression:expr /* statementTerminator */
+    -> expr
   },
   
   rule emptyStatement {
-    -> Ast.EmptyStatement()
+    /* statementTerminator */ -> Ast.Literal(null)
   },
   
   
@@ -93,17 +139,17 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   rule ifExpression {
     id('if') '(' expression:condition ')' expressionBody:consiquent
     ( id('else') expressionBody:alternative )?
-    -> Ast.IfExpression(condition, consiquent, alternative)
+    -> Ast.If(condition, consiquent, alternative)
   },
   
   rule whileExpression {
     id('while') '(' expression:condition ')' expressionBody?:b
-    -> Ast.WhileExpression(condition, b)
+    -> Ast.While(condition, b)
   },
   
   rule doWhileExpression {
     id('do') expressionBody:b id('while') '(' expression:condition ')'
-    -> Ast.DoWhileExpression(b, condition)
+    -> Ast.DoWhile(b, condition)
   },
   
   rule forExpression {
@@ -111,42 +157,50 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
         expression?:initExpr ';'
         expression?:condExpr ';'
         expression?:incExpr ')' expressionBody?:b
-      -> Ast.ForExpression(initExpr, condExpr, incExpr, b)
+      -> Ast.For(initExpr, condExpr, incExpr, b)
     | id('for') '('
         id('var') delimited1[variableDeclaration, ',']:decls ';'
         expression?:condExpr ';'
         expression?:incExpr ')' expressionBody?:b
-      -> Ast.ForDeclaringExpression(decls, condExpr, incExpr, b)
+      -> Ast.ForDeclaring(decls, condExpr, incExpr, b)
+  },
+  
+  rule tryCatchExpression {
+    id('try') expressionBody:tryBody
+    ( id('catch') '(' variableIdentifier:catchBinding ')' expressionBody:catchBody )?
+    ( id('finally') expressionBody:finallyBody )?
+    !(if (catchBody == null) catchBinding = null)
+    -> Ast.TryCatch(tryBody, catchBinding, catchBody, finallyBody)
   },
   
   rule tryCatchExpression {
     id('try') expressionBody:tryBody
     ( id('catch') '(' variableIdentifier:catchBinding ')' expressionBody:catchBody
       ( id('finally') expressionBody:finallyBody )?
-      -> Ast.TryCatchExpression(tryBody, catchBinding, catchBody, finallyBody)
+      -> Ast.TryCatch(tryBody, catchBinding, catchBody, finallyBody)
     | id('finally') expressionBody:finallyBody
-      -> Ast.TryCatchExpression(tryBody, null, null, finallyBody)
+      -> Ast.TryCatch(tryBody, null, null, finallyBody)
     )
   },
   
   rule throwExpression {
     id('throw') expression:expr
-    -> Ast.ThrowExpression(expr)
+    -> Ast.Throw(expr)
   },
   
   rule returnExpression {
     id('return') expression?:expr
-    -> Ast.ReturnExpression(expr)
+    -> Ast.Return(expr)
   },
   
   rule breakExpression {
     id('break')
-    -> Ast.BreakExpression()
+    -> Ast.Break()
   },
   
   rule continueExpression {
     id('continue')
-    -> Ast.ContinueExpression()
+    -> Ast.Continue()
   },
   
   
@@ -186,7 +240,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     logicalOrExpression:condition
     ( '?' expression:consiquent
       ':' expression:alternative
-      -> Ast.IfExpression(condition, consiquent, alternative)
+      -> Ast.If(condition, consiquent, alternative)
     | -> condition
     )
   },
@@ -383,7 +437,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     delimited1[expression, ',']:exprs ','?
     ( ?(exprs.length == 1)
       -> exprs[0]
-    | -> Ast.SequenceExpression(exprs)
+    | -> Ast.Sequence(exprs)
     )
   },
   

@@ -16,25 +16,35 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-require "rake/clean"
-
-CLEAN.include("CompilerCopy/*.combejs")
-
-SRC = FileList["CompilerCopy/*.combe"]
-TARGET = SRC.ext(".combejs")
-
 rule ".combejs" => [".combe"] do |t|
   sh "newcombec -o #{t.name} #{t.source}"
 end
 
 task :compileDirectory, :dirname, :force do |t, args|
-  src = FileList["#{args[:dirname]}/**/*.combe"]
-  target = src.ext(".combejs")
-  target.each do |name|
+  sourceFilenames = FileList["#{args[:dirname]}/**/*.combe"]
+  targetFilenames = sourceFilenames.ext(".combejs")
+  targetFilenames.each do |name|
     if args[:force]
       Rake::Task[name].execute
     else
       Rake::Task[name].invoke
     end
+  end
+end
+
+task :cleanDirectory, :dirname do |t, args|
+  cleanFilenames = FileList["#{args[:dirname]}/**/*.combejs"]
+  cleanFilenames.each do |name|
+    sh "rm -f #{name}"
+  end
+end
+
+task :compilerCopy do
+  sourceFilenames = FileList["Compiler/**/*.combe"]
+  sh "rm -rf CompilerCopy"
+  sourceFilenames.each do |name|
+    dirname = File.dirname(name).sub(/^Compiler/, "CompilerCopy")
+    sh "mkdir -p #{dirname}"
+    sh "cp #{name} #{dirname}/#{File.basename(name)}"
   end
 end
