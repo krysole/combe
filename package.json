@@ -17,7 +17,6 @@
     }
   ],
   "bin": {
-    "newcombebc": "./bin/newcombebc",
     "newcombec": "./bin/newcombec",
     "newcombe": "./bin/newcombe"
   },
