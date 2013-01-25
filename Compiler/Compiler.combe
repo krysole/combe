@@ -36,8 +36,8 @@ var Compiler = module.exports = {
       }
       else {
         outputFilename = sourceFilename + '.combejs';
-      };
-    };
+      }
+    }
     options.source = sourceFilename;
     options.output = outputFilename;
     
@@ -46,7 +46,7 @@ var Compiler = module.exports = {
     var hashbangLine = this.hashbangLine(source);
     if (hashbangLine != null) {
       source = source.slice(hashbangLine[0].length);
-    };
+    }
     
     var parser = CombeParser.new(source, sourceFilename);
     var ast = parser.match();
@@ -69,11 +69,11 @@ var Compiler = module.exports = {
     var outputFilename = options[name];
     if (outputFilename == null && options.intout) {
       outputFilename = options.source + '.' + name + '~';
-    };
+    }
     if (outputFilename) {
       var output = inspect(object, false, null);
       fs.writeFileSync(outputFilename, output);
-    };
+    }
   },
   
   hashbangLine(source) {

@@ -214,7 +214,6 @@ if (__combe_e !== __combe_continue) throw __combe_e;
 (i++);
 }
 })(0);
-null;
 names.separatedBy(", ");
 inits.separatedBy(", ");
 var cond = (/* if */ __combe_infixOperators["!="](ast["condition"], null)
@@ -246,14 +245,12 @@ var catchFragment = null;
 (catchFragment = ["catch (", ast["catchVariable"], ") {\n", ast["catchBody"]["code"], ";\n", "}\n"]);
 })()
 : /* else */ null);
-null;
 var finallyBody = null;
 (/* if */ __combe_infixOperators["!="](ast["finallyBody"], null)
 ? /* then */ (function () {
 (finallyBody = ["finally {\n", ast["finallyBody"]["code"], ";\n", "}\n"]);
 })()
 : /* else */ null);
-null;
 (ast["code"] = ["(function () {\n", tryFragment, catchFragment, finallyBody, "})()"]);
 })();
 }
@@ -343,7 +340,6 @@ throw __combe_e;
 (exprs = "null");
 })()
 : /* else */ null);
-null;
 (ast["code"] = ["(", exprs, ")"]);
 })();
 }
@@ -421,7 +417,6 @@ ast.visitChildren(__combe_this);
 : /* else */ (function () {
 (ast["code"] = ["(", ast["lhs"]["code"], " ", ast["name"], " ", ast["rhs"]["code"], ")"]);
 })());
-null;
 })();
 }
 catch (__combe_e) {
@@ -614,7 +609,6 @@ return (function () {
 : /* else */ (function () {
 (function () { throw Error.new("Unknown Ast (Literal) value type"); })();
 })())))))));
-null;
 })();
 }
 catch (__combe_e) {
@@ -694,10 +688,8 @@ var params = null, argsvar = null;
 : /* else */ (function () {
 (params = ast["parameters"].separatedBy(", "));
 })());
-null;
 })()
 : /* else */ null);
-null;
 (ast["code"] = ["(function (", params, ") {\n", "var __combe_this = this;\n", "var __combe_return = null;\n", argsvar, "try {\n", "return ", ast["body"]["code"], ";\n", "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_return) return __combe_return.value;\n", "throw __combe_e;\n", "}\n", "})"]);
 })();
 }
@@ -720,7 +712,6 @@ var vars;
 : /* else */ (function () {
 (vars = null);
 })());
-null;
 (/* if */ __combe_infixOperators["=="](ast["parameters"], null)
 ? /* then */ (function () {
 var innerFunction = ["(function () {\n", vars, "return ", ast["body"]["code"], ".call(this);\n", "})"];
@@ -739,10 +730,8 @@ var params = null, argsvar = null;
 : /* else */ (function () {
 (params = ast["parameters"].separatedBy(", "));
 })());
-null;
 (ast["code"] = ["(function (", params, ") {\n", argsvar, vars, "return ", ast["body"]["code"], ".call(this);\n", "})"]);
 })());
-null;
 })();
 }
 catch (__combe_e) {
@@ -763,7 +752,6 @@ ast.visitChildren(__combe_this);
 : /* else */ (function () {
 (ast["code"] = ast["name"]);
 })());
-null;
 })();
 }
 catch (__combe_e) {
@@ -1103,7 +1091,6 @@ return (function () {
 : /* else */ (function () {
 (ast["code"] = ["this.", ast["name"]]);
 })());
-null;
 })();
 }
 catch (__combe_e) {
@@ -1157,12 +1144,10 @@ throw __combe_e;
 : /* else */ (function () {
 (function () { throw (__combe_return = { value: ["(function () {\n", stmts, "})()"] }); })();
 })());
-null;
 })()
 : /* else */ (function () {
 (function () { throw (__combe_return = { value: [ast["code"], ";\n"] }); })();
 })()));
-null;
 })();
 }
 catch (__combe_e) {

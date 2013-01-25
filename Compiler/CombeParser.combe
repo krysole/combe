@@ -553,7 +553,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     }
     else {
       this.fail();
-    };
+    }
   },
   
 });

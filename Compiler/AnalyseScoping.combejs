@@ -64,7 +64,6 @@ __combe_this["scopes"].push(ast);
 : /* else */ ast["variables"].pushAll(ast["parameters"]));
 })()
 : /* else */ null);
-null;
 ast.visitChildren(__combe_this);
 ast["variables"].pushAll(ast["declareVariables"]);
 __combe_this["scopes"].pop();
@@ -90,7 +89,6 @@ __combe_this["scopes"].push(ast);
 : /* else */ ast["variables"].pushAll(ast["parameters"]));
 })()
 : /* else */ null);
-null;
 ast.visitChildren(__combe_this);
 ast["variables"].pushAll(ast["declareVariables"]);
 __combe_this["scopes"].pop();
@@ -116,7 +114,6 @@ __combe_this["scopes"].push(ast);
 : /* else */ ast["variables"].pushAll(ast["parameters"]));
 })()
 : /* else */ null);
-null;
 ast.visitChildren(__combe_this);
 ast["variables"].pushAll(ast["declareVariables"]);
 __combe_this["scopes"].pop();
@@ -138,7 +135,6 @@ assert(((__combe_this["scopes"]["top"]["type"] === "Block") || (__combe_this["sc
 __combe_this["scopes"]["last"]["declareVariables"].pushIfAbsent(ast["name"]);
 })()
 : /* else */ null);
-null;
 ast.visitChildren(__combe_this);
 })();
 }
@@ -170,7 +166,6 @@ assert((__combe_this["scopes"]["top"]["type"] === "Rule"));
 __combe_this["scopes"]["last"]["declareVariables"].pushIfAbsent(ast["name"]);
 })()
 : /* else */ null);
-null;
 ast.visitChildren(__combe_this);
 })();
 }

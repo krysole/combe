@@ -29,10 +29,8 @@ var ext = path.extname(sourceFilename);
 : /* else */ (function () {
 (outputFilename = (sourceFilename + ".combejs"));
 })());
-null;
 })()
 : /* else */ null);
-null;
 (options["source"] = sourceFilename);
 (options["output"] = outputFilename);
 var source = fs.readFileSync(sourceFilename, "utf8");
@@ -42,7 +40,6 @@ var hashbangLine = __combe_this.hashbangLine(source);
 (source = source.slice(hashbangLine.subscript(0)["length"]));
 })()
 : /* else */ null);
-null;
 var parser = CombeParser.new(source, sourceFilename);
 var ast = parser.match();
 __combe_this.writeIntermediate(options, "tokens", parser["tokens"]);
@@ -82,14 +79,12 @@ var outputFilename = options.subscript(name);
 (outputFilename = (((options["source"] + ".") + name) + "~"));
 })()
 : /* else */ null);
-null;
 (/* if */ outputFilename
 ? /* then */ (function () {
 var output = inspect(object, false, null);
 fs.writeFileSync(outputFilename, output);
 })()
 : /* else */ null);
-null;
 })();
 }
 catch (__combe_e) {

@@ -24,7 +24,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     
     while (tokens.isEmpty() || !tokens.last.is('eof')) {
       tokens.push(lexer.nextToken());
-    };
+    }
     
     return tokens;
   },

@@ -178,7 +178,7 @@ var CombeAstToJS = module.exports = Object.subclass({
       var decl = ast.declarations[i];
       names.push(decl.name);
       inits.push(decl.expression.code);
-    };
+    }
     names.separatedBy(', ');
     inits.separatedBy(', ');
     
@@ -231,7 +231,7 @@ var CombeAstToJS = module.exports = Object.subclass({
           ast.catchBody.code, ';\n',
         '}\n'
       ];
-    };
+    }
     
     var finallyBody = null;
     if (ast.finallyBody != null) {
@@ -240,7 +240,7 @@ var CombeAstToJS = module.exports = Object.subclass({
           ast.finallyBody.code, ';\n',
         '}\n'
       ];
-    };
+    }
     
     ast.code = [
       '(function () {\n', 
@@ -291,7 +291,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     
     if (exprs.isEmpty()) {
       exprs = 'null';
-    };
+    }
     
     ast.code = [
       '(', exprs, ')'
@@ -346,7 +346,7 @@ var CombeAstToJS = module.exports = Object.subclass({
       ast.code = [
         '(', ast.lhs.code, ' ', ast.name, ' ', ast.rhs.code, ')'
       ];
-    };
+    }
   },
   
   
@@ -457,7 +457,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     }
     else {
       throw Error.new('Unknown Ast (Literal) value type');
-    };
+    }
   },
   
   visitArray(ast) { // [ elements ]
@@ -507,8 +507,8 @@ var CombeAstToJS = module.exports = Object.subclass({
       }
       else {
         params = ast.parameters.separatedBy(', ');
-      };
-    };
+      }
+    }
     
     ast.code = [
       '(function (', params, ') {\n',
@@ -537,7 +537,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     }
     else {
       vars = null;
-    };
+    }
     
     if (ast.parameters == null) {
       var innerFunction = [
@@ -565,7 +565,7 @@ var CombeAstToJS = module.exports = Object.subclass({
       }
       else {
         params = ast.parameters.separatedBy(', ');
-      };
+      }
       
       ast.code = [
         '(function (', params, ') {\n',
@@ -574,7 +574,7 @@ var CombeAstToJS = module.exports = Object.subclass({
           'return ', ast.body.code, '.call(this);\n',
         '})'
       ];
-    };
+    }
   },
   
   visitVariableDeclaration(ast) { // [ name, expression ]
@@ -586,7 +586,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     }
     else {
       ast.code = ast.name;
-    };
+    }
   },
   
   
@@ -846,7 +846,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     }
     else {
       ast.code = [ 'this.', ast.name ];
-    };
+    }
   },
   
   
@@ -872,11 +872,11 @@ var CombeAstToJS = module.exports = Object.subclass({
             stmts,
           '})()'
         ];
-      };
+      }
     }
     else {
       return [ast.code, ';\n'];
-    };
+    }
   },
   
   gensymIndex: 0,

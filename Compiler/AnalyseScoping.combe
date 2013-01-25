@@ -41,7 +41,7 @@ var AnalyseScoping = module.exports = Object.subclass({
     if (ast.parameters != null) {
       if (String.isClassOf(ast.parameters)) ast.variables.push(ast.parameters)
       else ast.variables.pushAll(ast.parameters);
-    };
+    }
     
     ast.visitChildren(this);
     
@@ -58,7 +58,7 @@ var AnalyseScoping = module.exports = Object.subclass({
     if (ast.parameters != null) {
       if (String.isClassOf(ast.parameters)) ast.variables.push(ast.parameters)
       else ast.variables.pushAll(ast.parameters);
-    };
+    }
     
     ast.visitChildren(this);
     
@@ -75,7 +75,7 @@ var AnalyseScoping = module.exports = Object.subclass({
     if (ast.parameters != null) {
       if (String.isClassOf(ast.parameters)) ast.variables.push(ast.parameters)
       else ast.variables.pushAll(ast.parameters);
-    };
+    }
     
     ast.visitChildren(this);
     
@@ -90,7 +90,7 @@ var AnalyseScoping = module.exports = Object.subclass({
     
     if (!this.scopes.last.variables.include(ast.name)) {
       this.scopes.last.declareVariables.pushIfAbsent(ast.name);
-    };
+    }
     
     ast.visitChildren(this);
   },
@@ -106,7 +106,7 @@ var AnalyseScoping = module.exports = Object.subclass({
     
     if (!this.scopes.last.variables.include(ast.name)) {
       this.scopes.last.declareVariables.pushIfAbsent(ast.name);
-    };
+    }
     
     ast.visitChildren(this);
   },

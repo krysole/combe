@@ -27,7 +27,6 @@ throw __combe_e;
 }
 }
 })();
-null;
 (function () { throw (__combe_return = { value: tokens }); })();
 })();
 }

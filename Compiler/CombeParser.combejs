@@ -3196,7 +3196,6 @@ return (function () {
 : /* else */ (function () {
 __combe_this.fail();
 })());
-null;
 })();
 }
 catch (__combe_e) {
