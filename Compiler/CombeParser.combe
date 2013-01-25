@@ -30,14 +30,10 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   rule start { script },
   
   rule script {
-    terminatedStatement*:stmts eof
+    statement*:stmts eof
     -> Ast.Script(stmts)
   },
   
-  
-  rule terminatedStatement {
-    statement:stmt ';' -> stmt
-  },
   
   rule statement {
     | varStatement
@@ -58,7 +54,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   
   rule varStatement {
-    id('var') delimited1[variableDeclaration, ',']:decls /* statementTerminator */
+    id('var') delimited1[variableDeclaration, ',']:decls ';'
     -> Ast.VarStatement(decls)
   },
   
@@ -69,19 +65,19 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   rule ifStatement {
     id('if') '(' expression:condition ')'
-    expressionBody:consiquent /* statementTerminator? */
-    ( id('else') expressionBody:alternative /* statementTerminator */ )?
+    statementBody:consiquent
+    ( id('else') statementBody:alternative )?
     -> Ast.If(condition, consiquent, alternative)
   },
   
   rule whileStatement {
-    id('while') '(' expression:condition ')' expressionBody?:b /* statementTerminator */
+    id('while') '(' expression:condition ')' statementBody:b
     -> Ast.While(condition, b)
   },
   
   rule doWhileStatement {
-    id('do') expressionBody:b /* statementTerminator? */
-    id('while') '(' expression:condition ')' /* statementTerminator */
+    id('do') statementBody:b
+    id('while') '(' expression:condition ')' ';'
     -> Ast.DoWhile(b, condition)
   },
   
@@ -89,31 +85,30 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | id('for') '('
         expression?:initExpr ';'
         expression?:condExpr ';'
-        expression?:incExpr ')' expressionBody?:b /* statementTerminator */
+        expression?:incExpr ')' statementBody:b
       -> Ast.For(initExpr, condExpr, incExpr, b)
     | id('for') '('
         id('var') delimited1[variableDeclaration, ',']:decls ';'
         expression?:condExpr ';'
-        expression?:incExpr ')' expressionBody?:b /* statementTerminator */
+        expression?:incExpr ')' statementBody:b
       -> Ast.ForDeclaring(decls, condExpr, incExpr, b)
   },
   
   rule tryCatchStatement {
-    id('try') expressionBody:tryBody
-    ( /* statementTerminator? */ id('catch') '(' variableIdentifier:catchBinding ')' expressionBody:catchBody )?
-    ( /* statementTerminator? */ id('finally') expressionBody:finallyBody )?
-    /* statementTerminator */
+    id('try') statementBody:tryBody
+    ( id('catch') '(' variableIdentifier:catchBinding ')' statementBody:catchBody )?
+    ( id('finally') statementBody:finallyBody )?
     !(if (catchBody == null) catchBinding = null)
     -> Ast.TryCatch(tryBody, catchBinding, catchBody, finallyBody)
   },
   
   rule expressionStatement {
-    expression:expr /* statementTerminator */
+    expression:expr ';'
     -> expr
   },
   
   rule emptyStatement {
-    /* statementTerminator */ -> Ast.Literal(null)
+    ';' -> Ast.Literal(null)
   },
   
   
@@ -173,16 +168,6 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     -> Ast.TryCatch(tryBody, catchBinding, catchBody, finallyBody)
   },
   
-  rule tryCatchExpression {
-    id('try') expressionBody:tryBody
-    ( id('catch') '(' variableIdentifier:catchBinding ')' expressionBody:catchBody
-      ( id('finally') expressionBody:finallyBody )?
-      -> Ast.TryCatch(tryBody, catchBinding, catchBody, finallyBody)
-    | id('finally') expressionBody:finallyBody
-      -> Ast.TryCatch(tryBody, null, null, finallyBody)
-    )
-  },
-  
   rule throwExpression {
     id('throw') expression:expr
     -> Ast.Throw(expr)
@@ -204,13 +189,18 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   
   
+  rule statementBody {
+    | statement
+    | block
+  },
+  
   rule expressionBody {
     | expression
     | block
   },
   
   rule block {
-    '{' terminatedStatement*:stmts '}'
+    '{' statement*:stmts '}'
     -> Ast.Block(stmts)
   },
   
