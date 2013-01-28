@@ -47,7 +47,7 @@ global.Grammar = Object.subclass({
     this.sourcename = sourcename;
     this._position_storage = 0;
     this.furthestPosition = 0;
-    this.state = null;
+    this.state = {};
   },
   
   get filename() { return this.sourcename; },
@@ -164,11 +164,21 @@ global.Grammar = Object.subclass({
     }
   },
   
+  ignoreToken: null,
+  
+  __combe_ignoreToken: function () {
+    if (this.ignoreToken != null) {
+      while (this.ignoreToken(this.at(this.position))) this.position++;
+    }
+  },
+  
   peek: function () {
+    this.__combe_ignoreToken();
     return this.at(this.position);
   },
   
   next: function () {
+    this.__combe_ignoreToken();
     return this.at(this.position++);
   },
   
@@ -177,6 +187,7 @@ global.Grammar = Object.subclass({
   },
   
   nextIf: function (predicate) {
+    this.__combe_ignoreToken();
     var o = this.at(this.position);
     if (predicate.call(this, o)) {
       this.position++;
@@ -216,6 +227,22 @@ global.Grammar = Object.subclass({
   
   toString: function () {
     return this.name;
+  },
+  
+  pushState: function (name, value) {
+    this.state = Object.clone(this.state);
+    if (this.state[name] == null) this.state[name] = [];
+    this.state[name] = this.state[name].copy(); // assumes an array or similar
+    this.state[name].push(value);
+  },
+  
+  popState: function (name) {
+    return this.state[name].pop();
+  },
+  
+  getState: function (name, positionFromTop) {
+    if (positionFromTop == null) positionFromTop = 0;
+    return this.state[name][this.state[name].length - positionFromTop - 1];
   },
   
 });

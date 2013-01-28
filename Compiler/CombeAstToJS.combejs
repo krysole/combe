@@ -6,8 +6,11 @@ var __combe_this = null;
 var __combe_return = null;
 try {
 var crypto = require("crypto");
+null;
 var Ast = require("./CombeAst");
+null;
 var AnalyseScoping = require("./AnalyseScoping");
+null;
 var CombeAstToJS = (module["exports"] = Object.subclass((function () {
 var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "translate", (function (ast) {
@@ -1014,7 +1017,7 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 })).separatedBy(", ");
-(ast["code"] = ["(function () {\n", "return ", ast["pattern"]["code"], ".call(this, ", as, ");\n", "})"]);
+(ast["code"] = ["(function () {\n", "var __combe_this = this;\n", "return ", ast["pattern"]["code"], ".call(this, ", as, ");\n", "})"]);
 })();
 }
 catch (__combe_e) {

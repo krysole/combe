@@ -228,8 +228,8 @@ Array.extend({
   
   copy: function () {
     var a = Array.new(this.length);
-    for (var i = 0; this.length; i++) {
-      a.push(this[i]);
+    for (var i = 0; i < this.length; i++) {
+      a[i] = this[i];
     }
     return a;
   },

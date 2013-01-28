@@ -31,35 +31,33 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   
 }, {
   
-  reset(position) {
-    if (position != null) this.position = position
-    else this.position = 0;
-  },
-  
   createToken(type, value) {
     var text = this.slice(this.tokenPosition, this.position);
-    return Token.new(
+    return (this.lastToken = Token.new(
       type,
       value,
       this.tokenPosition,
       text.length,
       text
-    );
+    ));
   },
   
   rule nextToken {
-    !(this.furthestPosition = this.position)
+    !(this.furthestPosition = this.position, this.emitNewline = false, this.tokenPosition = this.position)
     ws?
     
-    !(this.tokenPosition = this.position)
-    ( identifier
-    | number
-    | operatorAssignment
-    | punctuation
-    | string
-    | regex
-    | eof createToken('eof')
-    | error('Lexer failed at position ' + this.positionString())
+    ( ?(this.emitNewline) ~eof ?(this.tokenPosition != 0) newlineToken 
+    
+    | !(this.tokenPosition = this.position)
+      ( identifier
+      | number
+      | operatorAssignment
+      | punctuation
+      | string
+      | regex
+      | eof createToken('eof')
+      | error('Lexer failed at position ' + this.positionString())
+      )
     )
   },
   
@@ -184,17 +182,25 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   },
   
   
+  rule newlineToken {
+    createToken('newline', this.source.lineColumn()[1] - 1)
+  },
+  
+  
   rule initialIdChar { char('a'..'z', 'A'..'Z', '_', '$') },
   rule idChar        { char('a'..'z', 'A'..'Z', '_', '$', '0'..'9') },
   rule digit         { char('0'..'9') },
   rule hexDigit      { char('0'..'9', 'a'..'f', 'A'..'F') },
   
   rule ws {
-    ( spaces | comment | newline )+
+    ( spaces 
+    | comment
+    | newline !(this.emitNewline = true)
+    )+
   },
   
-  rule spaces  { char(' \t\v\f\u00a0\u200c\u200d\ufeff') },
-  rule newline { '\r\n' | char('\n\r\u2028\u2029') },
+  rule spaces  { char(' ') },
+  rule newline { '\r\n' | char('\n\r') },
   
   rule comment {
     | '//' (~newline char)* (newline | eof)
