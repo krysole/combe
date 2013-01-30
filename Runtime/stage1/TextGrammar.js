@@ -65,17 +65,19 @@ global.TextGrammar = Grammar.subclass({}, {
     this._source_storage = source
   },
   
-  positionString: function (position) {
+  lineColumn: function (position) {
     if (position == null) position = this.position;
     
     if (position >= 0) {
-      var lineColumn = this.source.lineColumnString(position);
+      return this.source.lineColumn(position);
     }
     else {
-      var lineColumn = '-1:0';
+      return lineColumn = [-1, 0];
     }
-    
-    return this.sourcename + ':' + lineColumn;
+  },
+  
+  positionString: function (position) {
+    return this.sourcename + ':' + this.lineColumn(position).join(':');
   },
   
 });

@@ -999,10 +999,10 @@ return this.char.call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "newlineToken", (function () {
-return this.__combe_memoize("Hi+QBJCVKndPbPwf3qhO9g", (function () {
+return this.__combe_memoize("fxZXSIMkZvO0N/ll554AcQ", (function () {
 return (function () {
 var __combe_this = this;
-return this.createToken.call(this, "newline", (__combe_this["source"].lineColumn().subscript(1) - 1));
+return this.createToken.call(this, "newline", (__combe_this.lineColumn().subscript(1) - 1));
 }).call(this);
 }));
 }));
@@ -1083,7 +1083,7 @@ return this.char.call(this, "\n\r");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "comment", (function () {
-return this.__combe_memoize("F7kJBl30nBdM6gF4qtKh0g", (function () {
+return this.__combe_memoize("qgWipmu5dlK8i2UUE9CclQ", (function () {
 return (function () {
 return this.__combe_choice((function () {
 (function () {
@@ -1098,7 +1098,9 @@ return this.char.call(this);
 }));
 }).call(this);
 return (function () {
-return this.__combe_choice(this.newline, this.eof);
+return this.__combe_choice((function () {
+return this.__combe_lookahead(this.newline);
+}), this.eof);
 }).call(this);
 }), (function () {
 (function () {

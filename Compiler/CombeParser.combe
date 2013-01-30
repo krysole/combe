@@ -111,7 +111,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   
   rule emptyStatement {
-    statementTerminator -> Ast.Literal(null)
+    ';' newlineTerminator? -> Ast.Literal(null)
   },
   
   
@@ -193,18 +193,20 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   
   rule statementBody {
+    | block:b statementTerminator -> b
     | statement
-    | block
   },
   
   rule expressionBody {
-    | expression
     | block
+    | expression
   },
   
   rule block {
-    beginBlock statement*:stmts endBlock
-    -> Ast.Block(stmts)
+    | beginBlock statement*:stmts endBlock
+      -> Ast.Block(stmts)
+    | emptyBlock
+      -> Ast.Block([])
   },
   
   
@@ -420,7 +422,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     -> Ast.Rule(params, body)
   },
   rule ruleBody {
-    | beginBlock pattern:p endBlock -> p
+    | lbrace pattern:p rbrace -> p
     | operatorPattern
   },
   
@@ -562,6 +564,13 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     }
   },
   
+  newline {
+    // ignoreToken causes next to ignore sometimes ignore newlines we want
+    var token = this.at(this.position++);
+    if (token.is('newline')) return token
+    else throw Backtrack;
+  },
+  
   ignoreToken(token) {
     // Ignore line continuations
     return (
@@ -574,36 +583,46 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   
   rule blockIndentation {
-    'newline':nl ?(nl.value > this.getState('column'))
+    // workaround to ignoreToken eating token it as a continuation line
+    newline:nl ?(nl.value > this.getState('column'))
     pushState('column', nl.value)
     pushState('enclosed', false)
   },
   
   rule blockDedentation {
     ?(!this.getState('enclosed'))
-    'newline':nl ?(nl.value > this.getState('column', 1))
+    ( newline:nl ?(nl.value < this.getState('column'))
+    | eof
+    )
     popState('enclosed')
     popState('column')
   },
   
+  rule emptyBlock {
+    lbrace newline? rbrace
+  },
+  
   rule newlineTerminator {
     ?(!this.getState('enclosed'))
-    'newline':nl ?(nl.value == this.getState('column'))
+    ( newline:nl ?(nl.value == this.getState('column'))
+    | &newline:nl ?(nl.value < this.getState('column'))
+    | eof
+    )
   },
   
   
-  rule statementTerminator { ';' | newlineTerminator },
+  rule statementTerminator { ';' newlineTerminator? | newlineTerminator },
   
   rule beginBlock { lbrace blockIndentation | lbrace },
   rule endBlock   { blockDedentation rbrace | rbrace },
   
   rule lparen { '(' pushState('enclosed', true) },
-  rule rparen { ')' popState('enclosed') },
+  rule rparen { ?(this.getState('enclosed')) ')' popState('enclosed') },
   
   rule lbracket { '[' pushState('enclosed', true) },
-  rule rbracket { ']' popState('enclosed') },
+  rule rbracket { ?(this.getState('enclosed')) ']' popState('enclosed') },
   
   rule lbrace { '{' pushState('enclosed', true) },
-  rule rbrace { '}' popState('enclosed') },
+  rule rbrace { ?(this.getState('enclosed')) '}' popState('enclosed') },
   
 });

@@ -39,9 +39,9 @@ task :compile, :pathname, :force do |t, args|
   pathname = args[:pathname]
   force = args[:force]
   if File.stat(pathname).directory?
-    Rake::Task[:compileDirectory].invoke(pathname, force)
+    Rake::Task[:compileDirectory].execute(pathname, force)
   else
-    Rake::Task[:compileFile].invoke(pathname, force)
+    Rake::Task[:compileFile].execute(pathname, force)
   end
 end
 

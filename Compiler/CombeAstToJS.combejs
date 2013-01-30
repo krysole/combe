@@ -6,11 +6,8 @@ var __combe_this = null;
 var __combe_return = null;
 try {
 var crypto = require("crypto");
-null;
 var Ast = require("./CombeAst");
-null;
 var AnalyseScoping = require("./AnalyseScoping");
-null;
 var CombeAstToJS = (module["exports"] = Object.subclass((function () {
 var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "translate", (function (ast) {

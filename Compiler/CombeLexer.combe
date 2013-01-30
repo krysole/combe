@@ -183,7 +183,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   
   
   rule newlineToken {
-    createToken('newline', this.source.lineColumn()[1] - 1)
+    createToken('newline', this.lineColumn()[1] - 1)
   },
   
   
@@ -203,7 +203,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   rule newline { '\r\n' | char('\n\r') },
   
   rule comment {
-    | '//' (~newline char)* (newline | eof)
+    | '//' (~newline char)* (&newline | eof)
     | '/*' (~'*/' char)* '*/'
   },
   

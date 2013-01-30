@@ -6,17 +6,11 @@ var __combe_this = null;
 var __combe_return = null;
 try {
 var fs = require("fs");
-null;
 var path = require("path");
-null;
 var inspect = require("util")["inspect"];
-null;
 var CombeLexer = require("./CombeLexer");
-null;
 var CombeParser = require("./CombeParser");
-null;
 var CombeAstToJS = require("./CombeAstToJS");
-null;
 var Compiler = (module["exports"] = (function () {
 var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "shouldOutputIntermediates", false);
