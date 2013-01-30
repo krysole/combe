@@ -16,6 +16,7 @@ __combe_defineValueProperty(__combe_object, "While", ["condition", "body"]);
 __combe_defineValueProperty(__combe_object, "DoWhile", ["body", "condition"]);
 __combe_defineValueProperty(__combe_object, "For", ["initialize", "condition", "increment", "body"]);
 __combe_defineValueProperty(__combe_object, "ForDeclaring", ["declarations", "condition", "increment", "body"]);
+__combe_defineValueProperty(__combe_object, "Do", ["body"]);
 __combe_defineValueProperty(__combe_object, "TryCatch", ["tryBody", "catchVariable", "catchBody", "finallyBody"]);
 __combe_defineValueProperty(__combe_object, "Throw", ["argument"]);
 __combe_defineValueProperty(__combe_object, "Return", ["argument"]);

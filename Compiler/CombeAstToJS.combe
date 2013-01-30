@@ -215,6 +215,27 @@ var CombeAstToJS = module.exports = Object.subclass({
     ]
   },
   
+  visitDo(ast) { // [ body ]
+    ast.visitChildren(this)
+    
+    var body = this.unwrapBlockAsStatements(ast.body)
+    
+    ast.code = [
+      '(function () {\n',
+        '/* do */ {\n',
+          'try {\n',
+            body,
+          '}\n',
+          'catch (__combe_e) {\n',
+            'if (__combe_e === __combe_break) break;\n',
+            'if (__combe_e === __combe_continue) continue;\n',
+            'throw __combe_e;\n',
+          '}\n',
+        '}\n',
+      '})()'
+    ]
+  },
+  
   visitTryCatch(ast) { // [ tryBody, catchVariable, catchBody, finallyBody ]
     ast.visitChildren(this)
     

@@ -45,12 +45,9 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | whileStatement
     | doWhileStatement
     | forStatement
+    | doStatement
     
     | tryCatchStatement
-    
-    // Todo: Consider a do statment as a corollary to a do expression, since
-    // it would still provide the opportunity to avoid naming collisions, or
-    // shadow variables.
     
     | expressionStatement
     | emptyStatement
@@ -97,6 +94,11 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       -> Ast.ForDeclaring(decls, condExpr, incExpr, b)
   },
   
+  rule doStatement {
+    id('do') statementBody:b
+    -> Ast.Do(b)
+  },
+  
   rule tryCatchStatement {
     id('try') statementBody:tryBody
     ( id('catch') lparen variableIdentifier:catchBinding rparen statementBody:catchBody )?
@@ -120,9 +122,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | whileExpression
     | doWhileExpression
     | forExpression
-    
-    // Todo: Add a 'doExpression' which is just for creating a new lexical
-    // block scope.
+    | doExpression
     
     | tryCatchExpression
     | throwExpression
@@ -161,6 +161,11 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
         expression?:condExpr ';'
         expression?:incExpr rparen expressionBody?:b
       -> Ast.ForDeclaring(decls, condExpr, incExpr, b)
+  },
+  
+  rule doExpression {
+    id('do') expressionBody:b
+    -> Ast.Do(b)
   },
   
   rule tryCatchExpression {

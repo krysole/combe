@@ -60,8 +60,9 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "statement", (function () {
-return this.__combe_memoize("aoZ94Ag/goSUqSKuxICvRQ", (function () {
+return this.__combe_memoize("w8Y0PvXWJYBRre5+L2w5Ng", (function () {
 return (function () {
+return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
@@ -72,6 +73,7 @@ return this.__combe_choice(this.varStatement, this.ifStatement);
 }), this.whileStatement);
 }), this.doWhileStatement);
 }), this.forStatement);
+}), this.doStatement);
 }), this.tryCatchStatement);
 }), this.expressionStatement);
 }), this.emptyStatement);
@@ -359,6 +361,33 @@ throw __combe_e;
 }).call(this);
 }));
 }));
+__combe_defineValueProperty(__combe_object, "doStatement", (function () {
+return this.__combe_memoize("1msQNltdB3JMEE2LZdRDmA", (function () {
+var b;
+return (function () {
+(function () {
+(function () {
+var __combe_this = this;
+return this.id.call(this, "do");
+}).call(this);
+return (function () {
+return (b = this.statementBody.call(this));
+}).call(this);
+}).call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return Ast.Do(b);
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
+}).call(this);
+}));
+}));
 __combe_defineValueProperty(__combe_object, "tryCatchStatement", (function () {
 return this.__combe_memoize("ibE2WBy4vNzZGZQxBzKWKw", (function () {
 var tryBody, catchBinding, catchBody, finallyBody;
@@ -476,8 +505,9 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "expression", (function () {
-return this.__combe_memoize("VxdBzrRhPr9WdlnnCcBmzw", (function () {
+return this.__combe_memoize("T0WiNxrEKDAOBxqeBsNrug", (function () {
 return (function () {
+return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
@@ -489,6 +519,7 @@ return this.__combe_choice((function () {
 return this.__combe_choice(this.ifExpression, this.whileExpression);
 }), this.doWhileExpression);
 }), this.forExpression);
+}), this.doExpression);
 }), this.tryCatchExpression);
 }), this.throwExpression);
 }), this.returnExpression);
@@ -715,6 +746,33 @@ throw __combe_e;
 }
 }).call(this);
 }));
+}).call(this);
+}));
+}));
+__combe_defineValueProperty(__combe_object, "doExpression", (function () {
+return this.__combe_memoize("CuEPyzhXyMq7LjR4WkekUg", (function () {
+var b;
+return (function () {
+(function () {
+(function () {
+var __combe_this = this;
+return this.id.call(this, "do");
+}).call(this);
+return (function () {
+return (b = this.expressionBody.call(this));
+}).call(this);
+}).call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return Ast.Do(b);
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
 }).call(this);
 }));
 }));

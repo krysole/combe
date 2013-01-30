@@ -28,6 +28,7 @@ var CombeAst = module.exports = Ast.subclass({
     DoWhile:                ['body', 'condition'],
     For:                    ['initialize', 'condition', 'increment', 'body'],
     ForDeclaring:           ['declarations', 'condition', 'increment', 'body'],
+    Do:                     ['body'],
     TryCatch:               ['tryBody', 'catchVariable', 'catchBody', 'finallyBody'],
     Throw:                  ['argument'],
     Return:                 ['argument'],
