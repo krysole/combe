@@ -223,7 +223,6 @@ var inc = (/* if */ __combe_infixOperators["!="](ast["increment"], null)
 ? /* then */ ast["increment"]["code"]
 : /* else */ null);
 var body = __combe_this.unwrapBlockAsStatements(ast["body"], true);
-(ast["code"] = ["(function (", names, ") {\n", "while (", cond, ") {\n", body, inc, ";\n", "}\n", "})(", inits, ")"]);
 (ast["code"] = ["(function (", names, ") {\n", "while (", cond, ") {\n", "try {\n", body, "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_break) break;\n", "if (__combe_e !== __combe_continue) throw __combe_e;\n", "}\n", inc, ";\n", "}\n", "})(", inits, ")"]);
 })();
 }

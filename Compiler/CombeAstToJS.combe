@@ -193,15 +193,6 @@ var CombeAstToJS = module.exports = Object.subclass({
     ast.code = [
       '(function (', names, ') {\n',
         'while (', cond, ') {\n',
-          body,
-          inc, ';\n',
-        '}\n',
-      '})(', inits, ')'
-    ]
-    
-    ast.code = [
-      '(function (', names, ') {\n',
-        'while (', cond, ') {\n',
           'try {\n',
             body,
           '}\n',
