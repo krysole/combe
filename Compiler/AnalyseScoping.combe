@@ -19,80 +19,80 @@
 var AnalyseScoping = module.exports = Object.subclass({
   
   analyse(ast) {
-    ast.visit(this.new());
+    ast.visit(this.new())
   },
   
 }, {
   
   initialize() {
-    this.scopes = [];
+    this.scopes = []
   },
   
   
   visitUnspecified(ast) {
-    ast.visitChildren(this);
+    ast.visitChildren(this)
   },
   
   visitScript(ast) {
-    this.scopes.push(ast);
-    ast.variables = [];
-    ast.declareVariables = [];
+    this.scopes.push(ast)
+    ast.variables = []
+    ast.declareVariables = []
     
     if (ast.parameters != null) {
       if (String.isClassOf(ast.parameters)) ast.variables.push(ast.parameters)
-      else ast.variables.pushAll(ast.parameters);
+      else ast.variables.pushAll(ast.parameters)
     }
     
-    ast.visitChildren(this);
+    ast.visitChildren(this)
     
-    ast.variables.pushAll(ast.declareVariables);
+    ast.variables.pushAll(ast.declareVariables)
     
-    this.scopes.pop();
+    this.scopes.pop()
   },
   
   visitBlock(ast) {
-    this.scopes.push(ast);
-    ast.variables = [];
-    ast.declareVariables = [];
+    this.scopes.push(ast)
+    ast.variables = []
+    ast.declareVariables = []
     
     if (ast.parameters != null) {
       if (String.isClassOf(ast.parameters)) ast.variables.push(ast.parameters)
-      else ast.variables.pushAll(ast.parameters);
+      else ast.variables.pushAll(ast.parameters)
     }
     
-    ast.visitChildren(this);
+    ast.visitChildren(this)
     
-    ast.variables.pushAll(ast.declareVariables);
+    ast.variables.pushAll(ast.declareVariables)
     
-    this.scopes.pop();
+    this.scopes.pop()
   },
   
   visitRule(ast) {
-    this.scopes.push(ast);
-    ast.variables = [];
-    ast.declareVariables = [];
+    this.scopes.push(ast)
+    ast.variables = []
+    ast.declareVariables = []
     
     if (ast.parameters != null) {
       if (String.isClassOf(ast.parameters)) ast.variables.push(ast.parameters)
-      else ast.variables.pushAll(ast.parameters);
+      else ast.variables.pushAll(ast.parameters)
     }
     
-    ast.visitChildren(this);
+    ast.visitChildren(this)
     
-    ast.variables.pushAll(ast.declareVariables);
+    ast.variables.pushAll(ast.declareVariables)
     
-    this.scopes.pop();
+    this.scopes.pop()
   },
   
   visitVariableDeclaration(ast) {
     assert(this.scopes.top.type === 'Block' ||
-           this.scopes.top.type === 'Script');
+           this.scopes.top.type === 'Script')
     
     if (!this.scopes.last.variables.include(ast.name)) {
-      this.scopes.last.declareVariables.pushIfAbsent(ast.name);
+      this.scopes.last.declareVariables.pushIfAbsent(ast.name)
     }
     
-    ast.visitChildren(this);
+    ast.visitChildren(this)
   },
   
   visitVariable(ast) {
@@ -102,19 +102,19 @@ var AnalyseScoping = module.exports = Object.subclass({
   },
   
   visitBindPattern(ast) {
-    assert(this.scopes.top.type === 'Rule');
+    assert(this.scopes.top.type === 'Rule')
     
     if (!this.scopes.last.variables.include(ast.name)) {
-      this.scopes.last.declareVariables.pushIfAbsent(ast.name);
+      this.scopes.last.declareVariables.pushIfAbsent(ast.name)
     }
     
-    ast.visitChildren(this);
+    ast.visitChildren(this)
   },
   
   visitVariablePattern(ast) {
-    assert(this.scopes.top.type === 'Rule');
+    assert(this.scopes.top.type === 'Rule')
     
-    ast.containingScope = this.scopes.top;
+    ast.containingScope = this.scopes.top
   },
   
-});
+})

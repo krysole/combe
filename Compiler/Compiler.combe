@@ -16,13 +16,13 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-var fs = require('fs');
-var path = require('path');
-var inspect = require('util').inspect;
+var fs = require('fs')
+var path = require('path')
+var inspect = require('util').inspect
 
-var CombeLexer = require('./CombeLexer');
-var CombeParser = require('./CombeParser');
-var CombeAstToJS = require('./CombeAstToJS');
+var CombeLexer = require('./CombeLexer')
+var CombeParser = require('./CombeParser')
+var CombeAstToJS = require('./CombeAstToJS')
 
 var Compiler = module.exports = {
   
@@ -30,54 +30,54 @@ var Compiler = module.exports = {
   
   compile(sourceFilename, outputFilename, options) {
     if (outputFilename == null) {
-      var ext = path.extname(sourceFilename);
+      var ext = path.extname(sourceFilename)
       if (ext === '.combe') {
-        outputFilename = sourceFilename.replace(r/\.combe$/i, '.combejs');
+        outputFilename = sourceFilename.replace(r/\.combe$/i, '.combejs')
       }
       else {
-        outputFilename = sourceFilename + '.combejs';
+        outputFilename = sourceFilename + '.combejs'
       }
     }
-    options.source = sourceFilename;
-    options.output = outputFilename;
+    options.source = sourceFilename
+    options.output = outputFilename
     
-    var source = fs.readFileSync(sourceFilename, 'utf8');
+    var source = fs.readFileSync(sourceFilename, 'utf8')
     
-    var hashbangLine = this.hashbangLine(source);
+    var hashbangLine = this.hashbangLine(source)
     if (hashbangLine != null) {
-      source = source.slice(hashbangLine[0].length);
+      source = source.slice(hashbangLine[0].length)
     }
     
-    var parser = CombeParser.new(source, sourceFilename);
-    var ast = parser.match();
-    this.writeIntermediate(options, 'tokens', parser.tokens);
-    this.writeIntermediate(options, 'ast', ast);
+    var parser = CombeParser.new(source, sourceFilename)
+    var ast = parser.match()
+    this.writeIntermediate(options, 'tokens', parser.tokens)
+    this.writeIntermediate(options, 'ast', ast)
     
-    var jsIOList = CombeAstToJS.translateToIOList(ast);
-    this.writeIntermediate(options, 'iolist', jsIOList);
+    var jsIOList = CombeAstToJS.translateToIOList(ast)
+    this.writeIntermediate(options, 'iolist', jsIOList)
     
-    var jsText = Array.deepJoinIOList(jsIOList);
+    var jsText = Array.deepJoinIOList(jsIOList)
     
-    fs.writeFileSync(outputFilename, jsText);
+    fs.writeFileSync(outputFilename, jsText)
   },
   
   log(message) {
-    console.log(process.command + ': ' + message);
+    console.log(process.command + ': ' + message)
   },
   
   writeIntermediate(options, name, object) {
-    var outputFilename = options[name];
+    var outputFilename = options[name]
     if (outputFilename == null && options.intout) {
-      outputFilename = options.source + '.' + name + '~';
+      outputFilename = options.source + '.' + name + '~'
     }
     if (outputFilename) {
-      var output = inspect(object, false, null);
-      fs.writeFileSync(outputFilename, output);
+      var output = inspect(object, false, null)
+      fs.writeFileSync(outputFilename, output)
     }
   },
   
   hashbangLine(source) {
-    return source.match(r/^#![^\r\n]*(\r\n|\r|\n)/);
+    return source.match(r/^#![^\r\n]*(\r\n|\r|\n)/)
   },
   
-};
+}

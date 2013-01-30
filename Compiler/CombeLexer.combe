@@ -19,27 +19,27 @@
 var CombeLexer = module.exports = TextGrammar.subclass({
   
   allTokens(source, filename) {
-    var lexer = this.new(source, filename);
-    var tokens = [];
+    var lexer = this.new(source, filename)
+    var tokens = []
     
     while (tokens.isEmpty() || !tokens.last.is('eof')) {
-      tokens.push(lexer.nextToken());
+      tokens.push(lexer.nextToken())
     }
     
-    return tokens;
+    return tokens
   },
   
 }, {
   
   createToken(type, value) {
-    var text = this.slice(this.tokenPosition, this.position);
+    var text = this.slice(this.tokenPosition, this.position)
     return (this.lastToken = Token.new(
       type,
       value,
       this.tokenPosition,
       text.length,
       text
-    ));
+    ))
   },
   
   rule nextToken {
@@ -207,4 +207,4 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     | '/*' (~'*/' char)* '*/'
   },
   
-});
+})

@@ -16,18 +16,18 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-var Ast = require('./CombeAst');
-var CombeLexer = require('./CombeLexer');
+var Ast = require('./CombeAst')
+var CombeLexer = require('./CombeLexer')
 
 var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   initialize(source, filename) {
-    CombeParser.prototype.__proto__.initialize.call(this, source, filename);
+    CombeParser.prototype.__proto__.initialize.call(this, source, filename)
     
-    this.lexer = CombeLexer.new(source, filename);
+    this.lexer = CombeLexer.new(source, filename)
     
-    this.pushState('column', 0);
-    this.pushState('enclosed', false);
+    this.pushState('column', 0)
+    this.pushState('enclosed', false)
   },
   
   rule start { script },
@@ -557,18 +557,18 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   ws {
     if (this.last().is('newline') ||
         this.last().position + this.last().length !== this.peek().position) {
-      return null;
+      return null
     }
     else {
-      this.fail();
+      this.fail()
     }
   },
   
   newline {
     // ignoreToken causes next to ignore sometimes ignore newlines we want
-    var token = this.at(this.position++);
+    var token = this.at(this.position++)
     if (token.is('newline')) return token
-    else throw Backtrack;
+    else throw Backtrack
   },
   
   ignoreToken(token) {
@@ -579,7 +579,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
         this.getState('enclosed') ||
         token.value > this.getState('column')
       )
-    );
+    )
   },
   
   rule blockIndentation {
@@ -625,4 +625,4 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   rule lbrace { '{' pushState('enclosed', true) },
   rule rbrace { ?(this.getState('enclosed')) '}' popState('enclosed') },
   
-});
+})

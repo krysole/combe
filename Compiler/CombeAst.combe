@@ -89,4 +89,4 @@ var CombeAst = module.exports = Ast.subclass({
     VariablePattern:        ['name'],
   },
   
-}, {});
+}, {})
