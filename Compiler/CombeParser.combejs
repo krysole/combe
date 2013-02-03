@@ -7,7 +7,7 @@ var __combe_return = null;
 try {
 var Ast = require("./CombeAst");
 var CombeLexer = require("./CombeLexer");
-var CombeParser = (module["exports"] = TokenGrammar.subclass((function () {
+var CombeParser = (module.exports = TokenGrammar.subclass((function () {
 var __combe_object = {};
 return __combe_object;
 })(), (function () {
@@ -17,8 +17,8 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-CombeParser["prototype"]["__proto__"]["initialize"].call(__combe_this, source, filename);
-(__combe_this["lexer"] = CombeLexer.new(source, filename));
+CombeParser.prototype.__proto__.initialize.call(__combe_this, source, filename);
+(__combe_this.lexer = CombeLexer.new(source, filename));
 __combe_this.pushState("column", 0);
 __combe_this.pushState("enclosed", false);
 })();
@@ -1023,7 +1023,7 @@ return this.assignmentExpression.call(this);
 }));
 __combe_defineValueProperty(__combe_object, "lvalueTypes", ["Variable", "Subscript", "Dot"]);
 __combe_defineValueProperty(__combe_object, "assignmentExpression", (function () {
-return this.__combe_memoize("up4IW3EiOu5B680YMbo6ZQ", (function () {
+return this.__combe_memoize("XzAHJCt2H2vusHd+kgtcWg", (function () {
 var lhs, rhs, op;
 return (function () {
 return this.__combe_choice((function () {
@@ -1035,7 +1035,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return __combe_this["lvalueTypes"].include(lhs["type"]);
+return __combe_this.lvalueTypes.include(lhs.type);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1385,7 +1385,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "prefixExpression", (function () {
-return this.__combe_memoize("asywfd24tgVHX/PcYNfzuQ", (function () {
+return this.__combe_memoize("YA976+so7jL3iz/pOvRGlQ", (function () {
 var op, expr;
 return (function () {
 return this.__combe_choice((function () {
@@ -1423,7 +1423,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return Ast.PrefixOperator(op["text"], expr);
+return Ast.PrefixOperator(op.text, expr);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1435,7 +1435,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "postfixExpression", (function () {
-return this.__combe_memoize("uJEwh8eJsIZsNCQnH2Xa7g", (function () {
+return this.__combe_memoize("Z/E4LownqO+Kob3JUT5/JQ", (function () {
 var expr, op;
 return (function () {
 (function () {
@@ -1456,7 +1456,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return Ast.PostfixOperator(op["text"], expr);
+return Ast.PostfixOperator(op.text, expr);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1497,7 +1497,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (expr = Ast.InfixOperator(op["text"], expr, rhs));
+return (expr = Ast.InfixOperator(op.text, expr, rhs));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1543,7 +1543,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return Ast.InfixOperator(op["text"], expr, rhs);
+return Ast.InfixOperator(op.text, expr, rhs);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1602,7 +1602,7 @@ return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 (function () {
-return (args = this.arguments.call(this));
+return (args = this.argumentList.call(this));
 }).call(this);
 return (function () {
 var __combe_this = this;
@@ -1617,16 +1617,7 @@ throw __combe_e;
 }).call(this);
 }), (function () {
 (function () {
-this.lbracket.call(this);
-(function () {
-return (args = (function () {
-var __combe_this = this;
-return this.delimited.call(this, this.expression, (function () {
-return this.handleStringPattern(",");
-}));
-}).call(this));
-}).call(this);
-return this.rbracket.call(this);
+return (args = this.bracketedArgumentList.call(this));
 }).call(this);
 return (function () {
 var __combe_this = this;
@@ -1646,19 +1637,17 @@ throw __combe_e;
 return this.handleStringPattern(".");
 }).call(this);
 (function () {
-return (name = (function () {
-return this.handleStringPattern("identifier");
-}).call(this));
+return (name = this.propertyName.call(this));
 }).call(this);
 return (function () {
-return (args = this.arguments.call(this));
+return (args = this.argumentList.call(this));
 }).call(this);
 }).call(this);
 return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return Ast.MethodCall(subject, name["text"], args);
+return Ast.MethodCall(subject, name, args);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1672,16 +1661,14 @@ throw __combe_e;
 return this.handleStringPattern(".");
 }).call(this);
 return (function () {
-return (name = (function () {
-return this.handleStringPattern("identifier");
-}).call(this));
+return (name = this.propertyName.call(this));
 }).call(this);
 }).call(this);
 return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return Ast.Dot(subject, name["text"]);
+return Ast.Dot(subject, name);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1691,8 +1678,38 @@ throw __combe_e;
 }));
 }).call(this);
 }));
-__combe_defineValueProperty(__combe_object, "arguments", (function () {
-return this.__combe_memoize("+WAXpG7abkPMKqP4Ju3QUA", (function () {
+__combe_defineValueProperty(__combe_object, "bracketedArgumentList", (function () {
+return this.__combe_memoize("GV3Uy6h3U6588xKq1rMOCA", (function () {
+var args;
+return (function () {
+(function () {
+this.lbracket.call(this);
+(function () {
+return (args = (function () {
+var __combe_this = this;
+return this.delimited.call(this, this.argument, (function () {
+return this.handleStringPattern(", ");
+}));
+}).call(this));
+}).call(this);
+return this.rbracket.call(this);
+}).call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return args;
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
+}).call(this);
+}));
+}));
+__combe_defineValueProperty(__combe_object, "argumentList", (function () {
+return this.__combe_memoize("NwGmPX5nL+bHGd/VmYHR8g", (function () {
 var args;
 return (function () {
 (function () {
@@ -1700,7 +1717,7 @@ this.lparen.call(this);
 (function () {
 return (args = (function () {
 var __combe_this = this;
-return this.delimited.call(this, this.expression, (function () {
+return this.delimited.call(this, this.argument, (function () {
 return this.handleStringPattern(",");
 }));
 }).call(this));
@@ -1721,8 +1738,36 @@ throw __combe_e;
 }).call(this);
 }));
 }));
-__combe_defineValueProperty(__combe_object, "parameters", (function () {
-return this.__combe_memoize("/klCagPdh3GP9eddQOkDbA", (function () {
+__combe_defineValueProperty(__combe_object, "argument", (function () {
+return this.__combe_memoize("F3Tm6MJnYbJq478E/OGJdg", (function () {
+var e;
+return (function () {
+return this.__combe_choice((function () {
+(function () {
+(function () {
+return this.handleStringPattern("*");
+}).call(this);
+return (function () {
+return (e = this.expression.call(this));
+}).call(this);
+}).call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return Ast.SplatArgument(e);
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
+}), this.expression);
+}).call(this);
+}));
+}));
+__combe_defineValueProperty(__combe_object, "parameterList", (function () {
+return this.__combe_memoize("0aN35yOqusxUrcYFgDqXgw", (function () {
 var args;
 return (function () {
 (function () {
@@ -1730,7 +1775,7 @@ this.lparen.call(this);
 (function () {
 return (args = (function () {
 var __combe_this = this;
-return this.delimited.call(this, this.variableIdentifier, (function () {
+return this.delimited.call(this, this.parameter, (function () {
 return this.handleStringPattern(",");
 }));
 }).call(this));
@@ -1748,6 +1793,49 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }).call(this);
+}).call(this);
+}));
+}));
+__combe_defineValueProperty(__combe_object, "parameter", (function () {
+return this.__combe_memoize("+d/Xz014H9pc1eUCOx385Q", (function () {
+var name;
+return (function () {
+return this.__combe_choice((function () {
+(function () {
+(function () {
+return this.handleStringPattern("*");
+}).call(this);
+return (function () {
+return (name = this.variableIdentifier.call(this));
+}).call(this);
+}).call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return Ast.SplatParameter(name);
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
+}), (function () {
+(function () {
+return (name = this.variableIdentifier.call(this));
+}).call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return Ast.Parameter(name);
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
+}));
 }).call(this);
 }));
 }));
@@ -1815,7 +1903,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "valueLiteral", (function () {
-return this.__combe_memoize("1dYGOm8s+8mKrkI6lZD46w", (function () {
+return this.__combe_memoize("YHKCRqLkalkQdur2SiJ4Ag", (function () {
 var value, n, s, r;
 return (function () {
 (function () {
@@ -1902,7 +1990,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return n["value"];
+return n.value;
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1920,7 +2008,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return s["value"];
+return s.value;
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1938,7 +2026,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return r["value"];
+return r.value;
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1998,9 +2086,9 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "arrayElement", (function () {
-return this.__combe_memoize("NlDl70qiXUMKIGVYWmMGtg", (function () {
+return this.__combe_memoize("CM+jB9MeNLE8mudk1Tlk3w", (function () {
 return (function () {
-return this.__combe_choice(this.expression, (function () {
+return this.__combe_choice(this.argument, (function () {
 (function () {
 return this.__combe_lookahead((function () {
 return this.handleStringPattern(",");
@@ -2057,7 +2145,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "property", (function () {
-return this.__combe_memoize("L4PrfX3SqWR1IHDY/xBtAw", (function () {
+return this.__combe_memoize("G71ql4AVKyHwuS/+ZkxMcw", (function () {
 var name, pv, params, body, expr;
 return (function () {
 return this.__combe_choice((function () {
@@ -2144,7 +2232,7 @@ return (name = this.propertyName.call(this));
 }).call(this);
 (function () {
 return (params = (function () {
-return this.__combe_optional(this.parameters);
+return this.__combe_optional(this.parameterList);
 }).call(this));
 }).call(this);
 return (function () {
@@ -2195,7 +2283,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "propertyValue", (function () {
-return this.__combe_memoize("Hqg8lxJXHR7r4VqwruZkSw", (function () {
+return this.__combe_memoize("F5Kfo+hmiwqnFa8BVTOHxQ", (function () {
 var expr, params, body;
 return (function () {
 return this.__combe_choice((function () {
@@ -2209,7 +2297,7 @@ return (expr = this.expression.call(this));
 (function () {
 (function () {
 return (params = (function () {
-return this.__combe_optional(this.parameters);
+return this.__combe_optional(this.parameterList);
 }).call(this));
 }).call(this);
 return (function () {
@@ -2232,7 +2320,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "functionLiteral", (function () {
-return this.__combe_memoize("grCeS92c7ntRACFYzfyvPg", (function () {
+return this.__combe_memoize("HKRiRmDRIDa8tdUoUfDPBw", (function () {
 var params, e, p, body;
 return (function () {
 return this.__combe_choice((function () {
@@ -2240,7 +2328,7 @@ return this.__combe_choice((function () {
 (function () {
 (function () {
 return (params = (function () {
-return this.__combe_optional(this.parameters);
+return this.__combe_optional(this.parameterList);
 }).call(this));
 }).call(this);
 (function () {
@@ -2293,7 +2381,7 @@ return this.id.call(this, "function");
 }).call(this);
 (function () {
 return (params = (function () {
-return this.__combe_optional(this.parameters);
+return this.__combe_optional(this.parameterList);
 }).call(this));
 }).call(this);
 return (function () {
@@ -2316,7 +2404,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "ruleLiteral", (function () {
-return this.__combe_memoize("KoC8AZ7HW5mWvOIX1Qar4w", (function () {
+return this.__combe_memoize("Agr0W90YI76kKXcw7BAFnA", (function () {
 var params, body;
 return (function () {
 (function () {
@@ -2326,7 +2414,7 @@ return this.id.call(this, "rule");
 }).call(this);
 (function () {
 return (params = (function () {
-return this.__combe_optional(this.parameters);
+return this.__combe_optional(this.parameterList);
 }).call(this));
 }).call(this);
 return (function () {
@@ -2400,7 +2488,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "expressionSequence", (function () {
-return this.__combe_memoize("pPMrlhGXHOdMfTEt0M0pGA", (function () {
+return this.__combe_memoize("8QiNINGaCEiaqEZQnDMXYA", (function () {
 var exprs;
 return (function () {
 (function () {
@@ -2423,7 +2511,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return __combe_infixOperators["=="](exprs["length"], 1);
+return __combe_infixOperators["=="](exprs.length, 1);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -2577,7 +2665,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "sequencePattern", (function () {
-return this.__combe_memoize("+9JXTfC/NoTmxKdBGm83uQ", (function () {
+return this.__combe_memoize("4vZVnsfJ1kFMdnwZQ0fZ0w", (function () {
 var ps;
 return (function () {
 (function () {
@@ -2592,7 +2680,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (ps["length"] > 1);
+return (ps.length > 1);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -2823,7 +2911,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "callPattern", (function () {
-return this.__combe_memoize("Z/4ie/NFv4rLJ1Tmll/DCA", (function () {
+return this.__combe_memoize("4LBmxEeXcMQ/LGKoPggZmQ", (function () {
 var p, args;
 return (function () {
 (function () {
@@ -2837,7 +2925,7 @@ return this.__combe_choice((function () {
 return this.__combe_not(this.ws);
 }).call(this);
 (function () {
-return (args = this.arguments.call(this));
+return (args = this.argumentList.call(this));
 }).call(this);
 return (function () {
 var __combe_this = this;
@@ -3068,7 +3156,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "stringPattern", (function () {
-return this.__combe_memoize("HMRw6r3GQoPPduoE6fHkig", (function () {
+return this.__combe_memoize("GBjsIx7HpAT/rR9Gdfc3lw", (function () {
 var s;
 return (function () {
 (function () {
@@ -3080,7 +3168,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return Ast.StringPattern(s["value"]);
+return Ast.StringPattern(s.value);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3125,7 +3213,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return __combe_infixOperators["=="](name["text"], expectedName);
+return __combe_infixOperators["=="](name.text, expectedName);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3148,7 +3236,7 @@ throw __combe_e;
 }).call(this);
 }));
 __combe_defineValueProperty(__combe_object, "variableIdentifier", (function () {
-return this.__combe_memoize("2I7bZC8hypOY83KDNJA+Xg", (function () {
+return this.__combe_memoize("3jgXjH1xRQVcSoknoKX0YA", (function () {
 var name;
 return (function () {
 (function () {
@@ -3162,7 +3250,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (!name["reserved"]);
+return (!name.reserved);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3175,7 +3263,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return name["text"];
+return name.text;
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3186,11 +3274,31 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "propertyName", (function () {
-return this.__combe_memoize("FMoMplYl/3yQPPFMf/LuyA", (function () {
-var t;
+return this.__combe_memoize("/EtQ9vYeAk311ZRQqSPa6A", (function () {
+var expr, t;
 return (function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
+return this.__combe_choice((function () {
+(function () {
+this.lparen.call(this);
+(function () {
+return (expr = this.expression.call(this));
+}).call(this);
+return this.rparen.call(this);
+}).call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return expr;
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
+}), (function () {
 (function () {
 return (t = (function () {
 return this.handleStringPattern("identifier");
@@ -3200,13 +3308,14 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return t["text"];
+return Ast.Literal(t.text);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }).call(this);
+}));
 }), (function () {
 (function () {
 return (t = (function () {
@@ -3217,7 +3326,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return t["value"];
+return Ast.Literal(t.value);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3235,7 +3344,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return t["text"];
+return Ast.Literal(t.value);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3251,7 +3360,7 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-(/* if */ (__combe_this.last().is("newline") || ((__combe_this.last()["position"] + __combe_this.last()["length"]) !== __combe_this.peek()["position"]))
+(/* if */ (__combe_this.last().is("newline") || ((__combe_this.last().position + __combe_this.last().length) !== __combe_this.peek().position))
 ? /* then */ (function () {
 (function () { throw (__combe_return = { value: null }); })();
 })()
@@ -3270,7 +3379,7 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-var token = __combe_this.at((__combe_this["position"]++));
+var token = __combe_this.at((__combe_this.position++));
 (/* if */ token.is("newline")
 ? /* then */ (function () { throw (__combe_return = { value: token }); })()
 : /* else */ (function () { throw Backtrack; })());
@@ -3286,7 +3395,7 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-(function () { throw (__combe_return = { value: (token.is("newline") && (__combe_this.getState("enclosed") || (token["value"] > __combe_this.getState("column")))) }); })();
+(function () { throw (__combe_return = { value: (token.is("newline") && (__combe_this.getState("enclosed") || (token.value > __combe_this.getState("column")))) }); })();
 })();
 }
 catch (__combe_e) {
@@ -3295,7 +3404,7 @@ throw __combe_e;
 }
 }));
 __combe_defineValueProperty(__combe_object, "blockIndentation", (function () {
-return this.__combe_memoize("dVl0SPc+VgtPheySU5TYHg", (function () {
+return this.__combe_memoize("m+bDoHnbmCpgZnFHwB0kQQ", (function () {
 var nl;
 return (function () {
 (function () {
@@ -3306,7 +3415,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (nl["value"] > __combe_this.getState("column"));
+return (nl.value > __combe_this.getState("column"));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3316,7 +3425,7 @@ throw __combe_e;
 }).call(this);
 (function () {
 var __combe_this = this;
-return this.pushState.call(this, "column", nl["value"]);
+return this.pushState.call(this, "column", nl.value);
 }).call(this);
 return (function () {
 var __combe_this = this;
@@ -3326,7 +3435,7 @@ return this.pushState.call(this, "enclosed", false);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "blockDedentation", (function () {
-return this.__combe_memoize("7e/mtcizmoUoxdia0FnOvg", (function () {
+return this.__combe_memoize("JhaPfQvXBAXqi7XtyCraUw", (function () {
 var nl;
 return (function () {
 (function () {
@@ -3352,7 +3461,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (nl["value"] < __combe_this.getState("column"));
+return (nl.value < __combe_this.getState("column"));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3385,7 +3494,7 @@ return this.rbrace.call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "newlineTerminator", (function () {
-return this.__combe_memoize("1fIi1bEN8WeMHYn7vbdLMQ", (function () {
+return this.__combe_memoize("UmawzvygBbWY0E+YHuIewg", (function () {
 var nl;
 return (function () {
 (function () {
@@ -3412,7 +3521,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return __combe_infixOperators["=="](nl["value"], __combe_this.getState("column"));
+return __combe_infixOperators["=="](nl.value, __combe_this.getState("column"));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3431,7 +3540,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (nl["value"] < __combe_this.getState("column"));
+return (nl.value < __combe_this.getState("column"));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;

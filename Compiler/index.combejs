@@ -6,7 +6,7 @@ var __combe_this = null;
 var __combe_return = null;
 try {
 var path = require("path");
-(module["exports"] = require(("./" + path.basename(__dirname))));
+(module.exports = require(("./" + path.basename(__dirname))));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;

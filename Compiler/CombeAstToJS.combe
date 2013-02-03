@@ -365,53 +365,32 @@ var CombeAstToJS = module.exports = Object.subclass({
   visitCall(ast) { // [ function, arguments ]
     ast.visitChildren(this)
     
-    var args = ast.arguments.map(function (arg) {
-      return arg.code
-    }).separatedBy(', ')
-    
-    ast.code = [
-      ast.function.code, '(', args, ')'
-    ]
+    ast.code = this.generateCall(ast.function.code, ast.arguments)
   },
   
   visitSubscript(ast) { // [ subject, arguments ]
     ast.visitChildren(this)
     
-    var args = ast.arguments.map(function (arg) {
-      return arg.code
-    }).separatedBy(', ')
-    
-    ast.code = [
-      ast.subject.code, '.subscript(', args, ')'
-    ]
+    ast.code = this.generateMethodCall(ast.subject.code, Ast.Literal('subscript'), ast.arguments)
   },
   
   visitMethodCall(ast) { // [ subject, name, arguments ]
     ast.visitChildren(this)
     
-    // Todo: Change this to use a gensym'd variable as the subject and subscripting
-    // when the name isn't compatable with JS '.'.
-    //
-    // Remember that in JS, object['methodName']() is equivelent to object.methodName()
-    // including 'this' handling.
-    
-    var args = ast.arguments.map(function (arg) {
-      return arg.code
-    }).separatedBy(', ')
-    
-    ast.code = [
-      ast.subject.code, '.', ast.name, '(', args, ')'
-    ]
+    ast.code = this.generateMethodCall(ast.subject.code, ast.name, ast.arguments)
   },
   
   visitDot(ast) { // [ subject, name ]
     ast.visitChildren(this)
     
-    // Todo: Check if the name is simple enough to use '.' instead.
-    
-    ast.code = [
-      ast.subject.code, '[', ast.name.quote(), ']'
-    ]
+    if (ast.name.is('Literal') &&
+        String.isClassOf(ast.name.value) &&
+        ast.name.value.isJavaScriptPropertyName()) {
+      ast.code = [ast.subject.code, '.', ast.name.value]
+    }
+    else {
+      ast.code = [ast.subject.code, '[', ast.name.value.quote(), ']']
+    }
   },
   
   
@@ -472,16 +451,22 @@ var CombeAstToJS = module.exports = Object.subclass({
     }
   },
   
-  visitArray(ast) { // [ elements ]
+  visitArray(ast) { // [ arguments ]
     ast.visitChildren(this)
+    if (ast.arguments == null) ast.arguments = []
     
-    var elems = ast.elements.map(function (elem) {
-      return elem.code
-    }).separatedBy(', ')
-    
-    ast.code = [
-      '[', elems, ']'
-    ]
+    var argumentsVariable = this.generateArgumentsVariable(ast.arguments)
+    if (argumentsVariable != null) {
+      ast.code = [
+        '(function () {\n',
+          argumentsVariable,
+          'return __combe_arguments;\n',
+        '})()'
+      ]
+    }
+    else {
+      ast.code = ['[', ast.arguments.map((a) -> a.code).separatedBy(', '), ']']
+    }
   },
   
   visitObject(ast) { // [ properties ]
@@ -512,21 +497,13 @@ var CombeAstToJS = module.exports = Object.subclass({
   visitFunction(ast) { // [ parameters, body ]
     ast.visitChildren(this)
     
-    var params = null, argsvar = null
-    if (ast.parameters != null) {
-      if (String.isClassOf(ast.parameters)) {
-        argsvar = ['var ', ast.parameters, ' = Array.slice(arguments);\n']
-      }
-      else {
-        params = ast.parameters.separatedBy(', ')
-      }
-    }
+    var p = this.generateParameters(ast.parameters)
     
     ast.code = [
-      '(function (', params, ') {\n',
+      '(function (', p.jsParams, ') {\n',
         'var __combe_this = this;\n',
         'var __combe_return = null;\n',
-        argsvar,
+        p.restParams,
         'try {\n',
           'return ', ast.body.code, ';\n',
         '}\n',
@@ -541,6 +518,8 @@ var CombeAstToJS = module.exports = Object.subclass({
   visitRule(ast) { // [ parameters, body ]
     ast.visitChildren(this)
     
+    var p = this.generateParameters(ast.parameters)
+    
     var vars
     if (ast.declareVariables.length >= 1) {
       vars = [
@@ -551,7 +530,7 @@ var CombeAstToJS = module.exports = Object.subclass({
       vars = null
     }
     
-    if (ast.parameters == null) {
+    if (p.jsParams == null && p.restParams == null) {
       var innerFunction = [
         '(function () {\n',
           vars,
@@ -571,17 +550,9 @@ var CombeAstToJS = module.exports = Object.subclass({
       ]
     }
     else {
-      var params = null, argsvar = null
-      if (String.isClassOf(ast.parameters)) {
-        argsvar = ['var ', ast.parameters, ' = Array.slice(arguments);\n']
-      }
-      else {
-        params = ast.parameters.separatedBy(', ')
-      }
-      
       ast.code = [
-        '(function (', params, ') {\n',
-          argsvar,
+        '(function (', p.jsParams, ') {\n',
+          p.restParams,
           vars,
           'return ', ast.body.code, '.call(this);\n',
         '})'
@@ -617,13 +588,28 @@ var CombeAstToJS = module.exports = Object.subclass({
   },
   
   
+  visitSplatArgument(ast) { // [ argument ]
+    ast.visitChildren(this);
+    
+    ast.code = ast.argument.code;
+  },
+  
+  visitParameter(ast) { // [ name ]
+    // Do nothing
+  },
+  
+  visitSplatParameter(ast) { // [ name ]
+    // Do nothing
+  },
+  
+  
   visitValueProperty(ast) { // [ name, value ]
     ast.visitChildren(this)
     
     ast.code = [
       '__combe_defineValueProperty(', 
         '__combe_object, ',
-        ast.name.quote(), ', ',
+        ast.name.code, ', ',
         ast.value.code,
       ')'
     ]
@@ -635,7 +621,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     ast.code = [
       '__combe_defineGetProperty(', 
         '__combe_object, ',
-        ast.name.quote(), ', ',
+        ast.name.code, ', ',
         ast.value.code,
       ')'
     ]
@@ -647,7 +633,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     ast.code = [
       '__combe.defineSetProperty(',
         '__combe_object, ',
-        ast.name.quote(), ', ',
+        ast.name.code, ', ',
         ast.value.code,
       ')'
     ]
@@ -659,7 +645,7 @@ var CombeAstToJS = module.exports = Object.subclass({
     ast.code = [
       '__combe.defineDescribedProperty(', 
         '__combe_object, ',
-        ast.name.quote(), ', ',
+        ast.name.code, ', ',
         ast.value.code,
       ')'
     ]
@@ -769,16 +755,26 @@ var CombeAstToJS = module.exports = Object.subclass({
   visitCallPattern(ast) { // [ pattern, arguments ]
     ast.visitChildren(this)
     
-    var as = ast.arguments.map(function (a) {
-      return a.code
-    }).separatedBy(', ')
-    
-    ast.code = [
-      '(function () {\n',
-        'var __combe_this = this;\n', // Needed for as
-        'return ', ast.pattern.code, '.call(this, ', as, ');\n',
-      '})'
-    ]
+    var argumentsVariable = this.generateArgumentsVariable(ast.arguments);
+    if (argumentsVariable != null) {
+      ast.code = [
+        '(function () {\n',
+          'var __combe_this = this;\n', // Needed for argumentsVariable
+          'var __combe_subject = ', ast.pattern.code, ';\n',
+          argumentsVariable,
+          'return __combe_subject.apply(__combe_this, __combe_arguments);\n',
+        '})'
+      ]
+    }
+    else {
+      var as = ast.arguments.map((a) -> a.code).separatedBy(', ')
+      ast.code = [
+        '(function () {\n',
+          'var __combe_this = this;\n', // Needed for arguments
+          'return ', ast.pattern.code, '.call(this, ', as, ');\n',
+        '})'
+      ]
+    }
   },
   
   visitPredicatePattern(ast) { // [ body ]
@@ -891,6 +887,131 @@ var CombeAstToJS = module.exports = Object.subclass({
       return [ast.code, ';\n']
     }
   },
+  
+  generateArgumentsVariable(args) {
+    if (args == null || args.length == 0) {
+      return null
+    }
+    else if (args.length === 1 && args[0].is('SplatArgument')) {
+      return ['var __combe_arguments = ', args[0].code, ';\n']
+    }
+    else if (args.any((a) -> a.is('SplatArgument'))) {
+      var splatIndex = args.indexOfPredicate((a) -> a.is('SplatArgument'));
+      
+      var code = [
+        'var __combe_arguments = [', args.slice(0, splatIndex).map((a) -> a.code).separatedBy(', '), '];\n'
+      ]
+      
+      while (splatIndex != null) {
+        code.push(
+          '__combe_arguments.pushAll(', args[splatIndex].code, ');\n'
+        )
+        args = args.slice(splatIndex + 1)
+        splatIndex = args.indexOfPredicate((a) -> a.is('SplatArgument'));
+        if (splatIndex > 0 || (splatIndex == null && args.length > 0)) {
+          code.push(
+            '__combe_arguments.push(', args.slice(0, splatIndex).map((a) -> a.code).separatedBy(', '), ');\n'
+          )
+        }
+      }
+      return code;
+    }
+    else {
+      return null;
+    }
+  },
+  
+  generateCall(functionCode, args) {
+    if (args == null) args = []
+    
+    var argumentsVariable = this.generateArgumentsVariable(args);
+    if (argumentsVariable != null) {
+      return [
+        '(function () {\n',
+          'var __combe_subject = ', functionCode, ';\n',
+          argumentsVariable,
+          'return __combe_subject.apply(null, __combe_arguments);\n',
+        '})()'
+      ]
+    }
+    else {
+      return [
+        functionCode, '(', args.map((a) -> a.code).separatedBy(', '), ')'
+      ]
+    }
+  },
+  
+  generateMethodCall(subjectCode, name, args) {
+    if (args == null) args = []
+    
+    var argumentsVariable = this.generateArgumentsVariable(args);
+    if (argumentsVariable != null) {
+      return [
+        '(function () {\n',
+          'var __combe_subject = ', subjectCode, ';\n',
+          'var __combe_name = ', name.code, ';\n',
+          argumentsVariable,
+          'return __combe_subject[__combe_name].apply(__combe_subject, __combe_arguments);\n',
+        '})()'
+      ]
+    }
+    else {
+      args = args.map((a) -> a.code).separatedBy(', ')
+      if (name.is('Literal') &&
+          String.isClassOf(name.value) &&
+          name.value.isJavaScriptPropertyName()) {
+        return [subjectCode, '.', name.value, '(', args, ')']
+      }
+      else {
+        return [subjectCode, '[', name.code, '](', args, ')']
+      }
+    }
+  },
+  
+  generateParameters(params) {
+    if (params == null || params.length == 0) return {
+      jsParams: null,
+      restParams: null,
+    }
+    
+    assert(params.count((p) -> p.is('SplatParameter')) <= 1)
+    
+    var jsParams = null
+    var restParams = null
+    if (params.any((p) -> p.is('SplatParameter'))) {
+      if (params.length == 1) {
+        restParams = [
+          'var ', params[0].name, ' = Array.slice(arguments);\n'
+        ]
+      }
+      else if (params.last.is('SplatParameter')) {
+        jsParams = params.dropLast(1).map((p) -> p.name).separatedBy(', ')
+        restParams = [
+          'var ', params.last.name, ' = Array.slice(arguments, ', params.length, ');\n'
+        ]
+      }
+      else {
+        var splatIndex = params.indexOfPredicate((p) -> p.is('SplatParameter'))
+        jsParams = params.take(splatIndex).map((p) -> p.name).separatedBy(', ')
+        var remParams = params.drop(splatIndex + 1)
+        restParams = [
+          'var ', params[splatIndex].name, ' = Array.slice(arguments, ', splatIndex, 'arguments.length - ', remParams.length, ');\n'
+        ]
+        remParams.each(function (p, i) {
+          restParams.push('var ', p.name, ' = arguments[', splatIndex + 1 + i, '];\n')
+        })
+      }
+    }
+    else {
+      jsParams = params.map((p) -> p.name).separatedBy(', ')
+    }
+    
+    return {
+      jsParams: jsParams,
+      restParams: restParams
+    }
+  },
+    
   
   gensymIndex: 0,
   

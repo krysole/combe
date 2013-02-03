@@ -5,7 +5,7 @@ if (!__combe_runtimeLoaded) throw new Error("Combe runtime not loaded");
 var __combe_this = null;
 var __combe_return = null;
 try {
-var CombeLexer = (module["exports"] = TextGrammar.subclass((function () {
+var CombeLexer = (module.exports = TextGrammar.subclass((function () {
 var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "allTokens", (function (source, filename) {
 var __combe_this = this;
@@ -15,7 +15,7 @@ return (function () {
 var lexer = __combe_this.new(source, filename);
 var tokens = [];
 (function () {
-while ((tokens.isEmpty() || (!tokens["last"].is("eof")))) {
+while ((tokens.isEmpty() || (!tokens.last.is("eof")))) {
 try {
 (function () {
 tokens.push(lexer.nextToken());
@@ -43,8 +43,8 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-var text = __combe_this.slice(__combe_this["tokenPosition"], __combe_this["position"]);
-(function () { throw (__combe_return = { value: (__combe_this["lastToken"] = Token.new(type, value, __combe_this["tokenPosition"], text["length"], text)) }); })();
+var text = __combe_this.slice(__combe_this.tokenPosition, __combe_this.position);
+(function () { throw (__combe_return = { value: (__combe_this.lastToken = Token.new(type, value, __combe_this.tokenPosition, text.length, text)) }); })();
 })();
 }
 catch (__combe_e) {
@@ -53,13 +53,13 @@ throw __combe_e;
 }
 }));
 __combe_defineValueProperty(__combe_object, "nextToken", (function () {
-return this.__combe_memoize("W/V5ryVKPGK2GaCH1+eJBQ", (function () {
+return this.__combe_memoize("SwCb3K3D70uY4ainKFEiLg", (function () {
 return (function () {
 (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return ((__combe_this["furthestPosition"] = __combe_this["position"]), (__combe_this["emitNewline"] = false), (__combe_this["tokenPosition"] = __combe_this["position"]));
+return ((__combe_this.furthestPosition = __combe_this.position), (__combe_this.emitNewline = false), (__combe_this.tokenPosition = __combe_this.position));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -76,7 +76,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return __combe_this["emitNewline"];
+return __combe_this.emitNewline;
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -92,7 +92,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return __combe_infixOperators["!="](__combe_this["tokenPosition"], 0);
+return __combe_infixOperators["!="](__combe_this.tokenPosition, 0);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -106,7 +106,7 @@ return this.newlineToken.call(this);
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (__combe_this["tokenPosition"] = __combe_this["position"]);
+return (__combe_this.tokenPosition = __combe_this.position);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -143,7 +143,7 @@ return this.error.call(this, ("Lexer failed at position " + __combe_this.positio
 }));
 }));
 __combe_defineValueProperty(__combe_object, "identifier", (function () {
-return this.__combe_memoize("aSt9MAqNRw4Xy9gQRStSlw", (function () {
+return this.__combe_memoize("fSJhHSf984KEO9NDtDjpEA", (function () {
 var token;
 return (function () {
 (function () {
@@ -166,7 +166,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (token["reserved"] = __combe_this["ReservedWords"].include(token["text"]));
+return (token.reserved = __combe_this.ReservedWords.include(token.text));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1039,7 +1039,7 @@ return this.char.call(this, Range.inclusive("0", "9"), Range.inclusive("a", "f")
 }));
 }));
 __combe_defineValueProperty(__combe_object, "ws", (function () {
-return this.__combe_memoize("onObZwHLBV9bZndemX/mbw", (function () {
+return this.__combe_memoize("zCQe9NWC76+HDO/4NI8x0A", (function () {
 return (function () {
 return this.__combe_nonZeroRepeat((function () {
 return this.__combe_choice((function () {
@@ -1050,7 +1050,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (__combe_this["emitNewline"] = true);
+return (__combe_this.emitNewline = true);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;

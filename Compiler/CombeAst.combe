@@ -52,7 +52,7 @@ var CombeAst = module.exports = Ast.subclass({
     This:                   [],
     Variable:               ['name'],
     Literal:                ['value'],
-    Array:                  ['elements'],
+    Array:                  ['arguments'],
     Object:                 ['properties'],
     
     
@@ -62,6 +62,10 @@ var CombeAst = module.exports = Ast.subclass({
     VariableDeclaration:    ['name', 'expression'],
     
     Block:                  ['statements'],
+    
+    SplatArgument:          ['argument'],
+    Parameter:              ['name'],
+    SplatParameter:         ['name'],
     
     ValueProperty:          ['name', 'value'],
     GetProperty:            ['name', 'value'],

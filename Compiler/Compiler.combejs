@@ -7,11 +7,11 @@ var __combe_return = null;
 try {
 var fs = require("fs");
 var path = require("path");
-var inspect = require("util")["inspect"];
+var inspect = require("util").inspect;
 var CombeLexer = require("./CombeLexer");
 var CombeParser = require("./CombeParser");
 var CombeAstToJS = require("./CombeAstToJS");
-var Compiler = (module["exports"] = (function () {
+var Compiler = (module.exports = (function () {
 var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "shouldOutputIntermediates", false);
 __combe_defineValueProperty(__combe_object, "compile", (function (sourceFilename, outputFilename, options) {
@@ -31,18 +31,18 @@ var ext = path.extname(sourceFilename);
 })());
 })()
 : /* else */ null);
-(options["source"] = sourceFilename);
-(options["output"] = outputFilename);
+(options.source = sourceFilename);
+(options.output = outputFilename);
 var source = fs.readFileSync(sourceFilename, "utf8");
 var hashbangLine = __combe_this.hashbangLine(source);
 (/* if */ __combe_infixOperators["!="](hashbangLine, null)
 ? /* then */ (function () {
-(source = source.slice(hashbangLine.subscript(0)["length"]));
+(source = source.slice(hashbangLine.subscript(0).length));
 })()
 : /* else */ null);
 var parser = CombeParser.new(source, sourceFilename);
 var ast = parser.match();
-__combe_this.writeIntermediate(options, "tokens", parser["tokens"]);
+__combe_this.writeIntermediate(options, "tokens", parser.tokens);
 __combe_this.writeIntermediate(options, "ast", ast);
 var jsIOList = CombeAstToJS.translateToIOList(ast);
 __combe_this.writeIntermediate(options, "iolist", jsIOList);
@@ -60,7 +60,7 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-console.log(((process["command"] + ": ") + message));
+console.log(((process.command + ": ") + message));
 })();
 }
 catch (__combe_e) {
@@ -74,9 +74,9 @@ var __combe_return = null;
 try {
 return (function () {
 var outputFilename = options.subscript(name);
-(/* if */ (__combe_infixOperators["=="](outputFilename, null) && options["intout"])
+(/* if */ (__combe_infixOperators["=="](outputFilename, null) && options.intout)
 ? /* then */ (function () {
-(outputFilename = (((options["source"] + ".") + name) + "~"));
+(outputFilename = (((options.source + ".") + name) + "~"));
 })()
 : /* else */ null);
 (/* if */ outputFilename

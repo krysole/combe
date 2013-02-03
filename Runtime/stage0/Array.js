@@ -111,6 +111,108 @@ Array.extend({
     return false;
   },
   
+  count: function (predicate) {
+    var count = 0;
+    for (var i = 0; i < this.length; i++) {
+      if (predicate(this[i])) count++;
+    }
+    return count;
+  },
+  
+  take: function (predicateOrCount) {
+    if (Function.isClassOf(predicateOrCount)) {
+      var result = [];
+      for (var i = 0; i < this.length; i++) {
+        if (predicateOrCount(this[i])) result.push(this[i]);
+        else break;
+      }
+      return result;
+    }
+    else {
+      return this.slice(0, predicateOrCount);
+    }
+  },
+  
+  takeLast: function (predicateOrCount) {
+    if (Function.isClassOf(predicateOrCount)) {
+      var i;
+      for (i = this.length - 1; i >= 0; i--) {
+        if (!predicateOrCount(this[i])) break;
+      }
+      return this.slice(i + 1);
+    }
+    else {
+      return this.slice(this.length - predicateOrCount);
+    }
+  },
+  
+  drop: function (predicateOrCount) {
+    if (Function.isClassOf(predicateOrCount)) {
+      for (var i = 0; i < this.length; i++) {
+        if (!predicateOrCount(this[i])) {
+          return this.slice(i);
+        }
+      }
+      return [];
+    }
+    else {
+      return this.slice(predicateOrCount);
+    }
+  },
+  
+  dropLast: function (predicateOrCount) {
+    if (Function.isClassOf(predicateOrCount)) {
+      for (var i = this.length - 1; i >= 0; i--) {
+        if (!predicateOrCount(this[i])) {
+          return this.slice(0, i + 1);
+        }
+      }
+      return [];
+    }
+    else {
+      return this.slice(0, this.length - predicateOrCount);
+    }
+  },
+  
+  split: function (predicateOrIndex) {
+    if (Function.isClassOf(predicateOrIndex)) {
+      var before = [];
+      var i;
+      for (i = 0; i < this.length; i++) {
+        if (!predicateOrCount(this[i])) before.push(this[i]);
+        else break;
+      }
+      var after = this.slice(i);
+      return [before, after];
+    }
+    else {
+      return [this.slice(0, predicateOrIndex), this.slice(predicateOrIndex)];
+    }
+  },
+  
+  indexOfPredicate: function (predicate) {
+    for (var i = 0; i < this.length; i++) {
+      if (predicate(this[i])) return i;
+    }
+    return null;
+  },
+  
+  splitLast: function (predicateOrIndex) {
+    if (Function.isClassOf(predicateOrIndex)) {
+      var i;
+      for (i = this.length - 1; i >= 0; i--) {
+        if (predicateOrCount(this[i])) break;
+      }
+      return [this.slice(0, i + 1), this.slice(i + 1)];
+    }
+    else {
+      return [
+        this.slice(0, this.length - predicateOrIndex), 
+        this.slice(this.length - predicateOrIndex)
+      ];
+    }
+  },
+  
   pushIfAbsent: function (what) {
     if (!this.include(what)) {
       this.push(what);
@@ -226,14 +328,6 @@ Array.extend({
     }
   },
   
-  copy: function () {
-    var a = Array.new(this.length);
-    for (var i = 0; i < this.length; i++) {
-      a[i] = this[i];
-    }
-    return a;
-  },
-  
   toSourceString: function () {
     return [
       '[',
@@ -254,3 +348,5 @@ Array.extend({
 Array.prototype.any         = Array.prototype.some;
 Array.prototype.each        = Array.prototype.forEach;
 Array.prototype.interpolate = Array.prototype.separatedBy;
+Array.copy                  = Array.slice;
+Array.prototype.copy        = Array.prototype.slice;

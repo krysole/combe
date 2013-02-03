@@ -5,7 +5,7 @@ if (!__combe_runtimeLoaded) throw new Error("Combe runtime not loaded");
 var __combe_this = null;
 var __combe_return = null;
 try {
-var AnalyseScoping = (module["exports"] = Object.subclass((function () {
+var AnalyseScoping = (module.exports = Object.subclass((function () {
 var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "analyse", (function (ast) {
 var __combe_this = this;
@@ -28,7 +28,7 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-(__combe_this["scopes"] = []);
+(__combe_this.scopes = []);
 })();
 }
 catch (__combe_e) {
@@ -54,19 +54,27 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-__combe_this["scopes"].push(ast);
-(ast["variables"] = []);
-(ast["declareVariables"] = []);
-(/* if */ __combe_infixOperators["!="](ast["parameters"], null)
+__combe_this.scopes.push(ast);
+(ast.variables = []);
+(ast.declareVariables = []);
+(/* if */ __combe_infixOperators["!="](ast.parameters, null)
 ? /* then */ (function () {
-(/* if */ String.isClassOf(ast["parameters"])
-? /* then */ ast["variables"].push(ast["parameters"])
-: /* else */ ast["variables"].pushAll(ast["parameters"]));
+ast.variables.pushAll(ast.parameters.map((function (p) {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return p.name;
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+})));
 })()
 : /* else */ null);
 ast.visitChildren(__combe_this);
-ast["variables"].pushAll(ast["declareVariables"]);
-__combe_this["scopes"].pop();
+ast.variables.pushAll(ast.declareVariables);
+__combe_this.scopes.pop();
 })();
 }
 catch (__combe_e) {
@@ -79,19 +87,27 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-__combe_this["scopes"].push(ast);
-(ast["variables"] = []);
-(ast["declareVariables"] = []);
-(/* if */ __combe_infixOperators["!="](ast["parameters"], null)
+__combe_this.scopes.push(ast);
+(ast.variables = []);
+(ast.declareVariables = []);
+(/* if */ __combe_infixOperators["!="](ast.parameters, null)
 ? /* then */ (function () {
-(/* if */ String.isClassOf(ast["parameters"])
-? /* then */ ast["variables"].push(ast["parameters"])
-: /* else */ ast["variables"].pushAll(ast["parameters"]));
+ast.variables.pushAll(ast.parameters.map((function (p) {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return p.name;
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+})));
 })()
 : /* else */ null);
 ast.visitChildren(__combe_this);
-ast["variables"].pushAll(ast["declareVariables"]);
-__combe_this["scopes"].pop();
+ast.variables.pushAll(ast.declareVariables);
+__combe_this.scopes.pop();
 })();
 }
 catch (__combe_e) {
@@ -104,19 +120,27 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-__combe_this["scopes"].push(ast);
-(ast["variables"] = []);
-(ast["declareVariables"] = []);
-(/* if */ __combe_infixOperators["!="](ast["parameters"], null)
+__combe_this.scopes.push(ast);
+(ast.variables = []);
+(ast.declareVariables = []);
+(/* if */ __combe_infixOperators["!="](ast.parameters, null)
 ? /* then */ (function () {
-(/* if */ String.isClassOf(ast["parameters"])
-? /* then */ ast["variables"].push(ast["parameters"])
-: /* else */ ast["variables"].pushAll(ast["parameters"]));
+ast.variables.pushAll(ast.parameters.map((function (p) {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return p.name;
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+})));
 })()
 : /* else */ null);
 ast.visitChildren(__combe_this);
-ast["variables"].pushAll(ast["declareVariables"]);
-__combe_this["scopes"].pop();
+ast.variables.pushAll(ast.declareVariables);
+__combe_this.scopes.pop();
 })();
 }
 catch (__combe_e) {
@@ -129,10 +153,10 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-assert(((__combe_this["scopes"]["top"]["type"] === "Block") || (__combe_this["scopes"]["top"]["type"] === "Script")));
-(/* if */ (!__combe_this["scopes"]["last"]["variables"].include(ast["name"]))
+assert(((__combe_this.scopes.top.type === "Block") || (__combe_this.scopes.top.type === "Script")));
+(/* if */ (!__combe_this.scopes.last.variables.include(ast.name))
 ? /* then */ (function () {
-__combe_this["scopes"]["last"]["declareVariables"].pushIfAbsent(ast["name"]);
+__combe_this.scopes.last.declareVariables.pushIfAbsent(ast.name);
 })()
 : /* else */ null);
 ast.visitChildren(__combe_this);
@@ -160,10 +184,10 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-assert((__combe_this["scopes"]["top"]["type"] === "Rule"));
-(/* if */ (!__combe_this["scopes"]["last"]["variables"].include(ast["name"]))
+assert((__combe_this.scopes.top.type === "Rule"));
+(/* if */ (!__combe_this.scopes.last.variables.include(ast.name))
 ? /* then */ (function () {
-__combe_this["scopes"]["last"]["declareVariables"].pushIfAbsent(ast["name"]);
+__combe_this.scopes.last.declareVariables.pushIfAbsent(ast.name);
 })()
 : /* else */ null);
 ast.visitChildren(__combe_this);
@@ -179,8 +203,8 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-assert((__combe_this["scopes"]["top"]["type"] === "Rule"));
-(ast["containingScope"] = __combe_this["scopes"]["top"]);
+assert((__combe_this.scopes.top.type === "Rule"));
+(ast.containingScope = __combe_this.scopes.top);
 })();
 }
 catch (__combe_e) {

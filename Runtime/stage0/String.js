@@ -126,6 +126,17 @@ String.extend({
     return String.CombeKeywords.include(this);
   },
   
+  isJavaScriptIdentifier: function () {
+    return (
+      (this.match(/^[a-zA-Z_\$][a-zA-Z_\$0-9]*$/) != null) &&
+      !this.isJavaScriptCompatabilityReservedWord()
+    );
+  },
+  
+  isJavaScriptPropertyName: function () {
+    return (this.match(/^[a-zA-Z_\$][a-zA-Z_\$0-9]*$/) != null);
+  },
+  
   include: function (c) {
     return (this.indexOf(c) !== -1);
   },
