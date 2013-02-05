@@ -1,0 +1,84 @@
+//
+// Combe - Improved JavaScript with Pattern Matching
+//
+// Copyright 2012 Lorenz Pretterhofer <krysole@alexicalmistake.com>
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+//
+
+var AstVisitor = module.exports = Object.subclass({
+  
+  visit(ast) {
+    this.new().visit(ast)
+  },
+  
+}, {
+  
+  defaultVisitOrder: 'PreOrder',
+  
+  handleUnspecifiedType: null,
+  recurseOverUnspecifiedTypes: true,
+  
+  visit(ast) {
+    assert(this.defaultVisitOrder != null)
+    var orderingMethod = this.('visitWithOrder_' + this.defaultVisitOrder)
+    if (orderingMethod != null) {
+      var method = this.(ast.type)
+      if (method != null) {
+        return orderingMethod.call(this, ast, method)
+      }
+      else if (this.handleUnknownType != null) {
+        if (this.recurseOverUnspecifiedTypes) {
+          return orderingMethod.call(this, ast, this.handleUnspecifiedType)
+        }
+        else {
+          return this.visitWithOrder_NoOrder(ast, this.handleUnspecifiedType)
+        }
+      }
+      else if (this.recurseOverUnspecifiedTypes) {
+        this.visitChildren(ast)
+        return null
+      }
+      else {
+        throw Error.new("Unhandled Ast Node Type '" + ast.type + "'")
+      }
+    }
+    else {
+      throw Error.new("Invalid visit order '" + this.defaultVisitOrder + "'")
+    }
+  },
+  
+  visitWithOrder_NoOrder(ast, method) {
+    return method.call(this, ast)
+  },
+  
+  visitWithOrder_PreOrder(ast, method) {
+    this.visitChildren(ast)
+    return method.call(this, ast)
+  },
+  
+  visitWithOrder_PostOrder(ast, method) {
+    var result = method.call(this, ast)
+    this.visitChildren(ast)
+  },
+  
+  visitChildren(ast) {
+    return this.visitAll(ast.children)
+  },
+  
+  visitAll(array) {
+    var self = this;
+    return array.map((a) -> self.visit(a))
+  },
+  
+})

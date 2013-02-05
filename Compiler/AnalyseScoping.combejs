@@ -5,21 +5,9 @@ if (!__combe_runtimeLoaded) throw new Error("Combe runtime not loaded");
 var __combe_this = null;
 var __combe_return = null;
 try {
-var AnalyseScoping = (module.exports = Object.subclass((function () {
+var AstVisitor = require("./AstVisitor");
+var AnalyseScoping = (module.exports = AstVisitor.subclass((function () {
 var __combe_object = {};
-__combe_defineValueProperty(__combe_object, "analyse", (function (ast) {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return (function () {
-ast.visit(__combe_this.new());
-})();
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}));
 return __combe_object;
 })(), (function () {
 var __combe_object = {};
@@ -36,53 +24,41 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitUnspecified", (function (ast) {
+__combe_defineValueProperty(__combe_object, "defaultVisitOrder", "NoOrder");
+__combe_defineValueProperty(__combe_object, "Script", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (function () {
-ast.visitChildren(__combe_this);
-})();
+return __combe_this.visitCreatingScope(ast);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitScript", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Block", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (function () {
-__combe_this.scopes.push(ast);
-(ast.variables = []);
-(ast.declareVariables = []);
-(/* if */ __combe_infixOperators["!="](ast.parameters, null)
-? /* then */ (function () {
-ast.variables.pushAll(ast.parameters.map((function (p) {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return p.name;
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-})));
-})()
-: /* else */ null);
-ast.visitChildren(__combe_this);
-ast.variables.pushAll(ast.declareVariables);
-__combe_this.scopes.pop();
-})();
+return __combe_this.visitCreatingScope(ast);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitBlock", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Rule", (function (ast) {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return __combe_this.visitCreatingScope(ast);
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}));
+__combe_defineValueProperty(__combe_object, "visitCreatingScope", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
@@ -105,7 +81,7 @@ throw __combe_e;
 })));
 })()
 : /* else */ null);
-ast.visitChildren(__combe_this);
+__combe_this.visitChildren(ast);
 ast.variables.pushAll(ast.declareVariables);
 __combe_this.scopes.pop();
 })();
@@ -115,51 +91,13 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitRule", (function (ast) {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return (function () {
-__combe_this.scopes.push(ast);
-(ast.variables = []);
-(ast.declareVariables = []);
-(/* if */ __combe_infixOperators["!="](ast.parameters, null)
-? /* then */ (function () {
-ast.variables.pushAll(ast.parameters.map((function (p) {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return p.name;
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-})));
-})()
-: /* else */ null);
-ast.visitChildren(__combe_this);
-ast.variables.pushAll(ast.declareVariables);
-__combe_this.scopes.pop();
-})();
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}));
-__combe_defineValueProperty(__combe_object, "visitVariableDeclaration", (function (ast) {
+__combe_defineValueProperty(__combe_object, "VariableDeclaration", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
 assert(((__combe_this.scopes.top.type === "Block") || (__combe_this.scopes.top.type === "Script")));
-(/* if */ (!__combe_this.scopes.last.variables.include(ast.name))
-? /* then */ (function () {
-__combe_this.scopes.last.declareVariables.pushIfAbsent(ast.name);
-})()
-: /* else */ null);
-ast.visitChildren(__combe_this);
+(function () { throw (__combe_return = { value: __combe_this.visitDeclaringVariable(ast) }); })();
 })();
 }
 catch (__combe_e) {
@@ -167,30 +105,13 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitVariable", (function (ast) {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return (function () {
-})();
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}));
-__combe_defineValueProperty(__combe_object, "visitBindPattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "BindPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
 assert((__combe_this.scopes.top.type === "Rule"));
-(/* if */ (!__combe_this.scopes.last.variables.include(ast.name))
-? /* then */ (function () {
-__combe_this.scopes.last.declareVariables.pushIfAbsent(ast.name);
-})()
-: /* else */ null);
-ast.visitChildren(__combe_this);
+(function () { throw (__combe_return = { value: __combe_this.visitDeclaringVariable(ast) }); })();
 })();
 }
 catch (__combe_e) {
@@ -198,7 +119,37 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitVariablePattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "visitDeclaringVariable", (function (ast) {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return (function () {
+(/* if */ (!__combe_this.scopes.last.variables.include(ast.name))
+? /* then */ (function () {
+__combe_this.scopes.last.declareVariables.pushIfAbsent(ast.name);
+})()
+: /* else */ null);
+__combe_this.visitChildren(ast);
+})();
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}));
+__combe_defineValueProperty(__combe_object, "Variable", (function (ast) {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return (function () {
+})();
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}));
+__combe_defineValueProperty(__combe_object, "VariablePattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {

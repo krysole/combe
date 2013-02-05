@@ -16,24 +16,20 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-var AnalyseScoping = module.exports = Object.subclass({
-  
-  analyse(ast) {
-    ast.visit(this.new())
-  },
-  
-}, {
+var AstVisitor = require('./AstVisitor')
+
+var AnalyseScoping = module.exports = AstVisitor.subclass({}, {
   
   initialize() {
     this.scopes = []
   },
   
+  defaultVisitOrder: 'NoOrder',
   
-  visitUnspecified(ast) {
-    ast.visitChildren(this)
-  },
-  
-  visitScript(ast) {
+  Script(ast) -> this.visitCreatingScope(ast),
+  Block(ast) -> this.visitCreatingScope(ast),
+  Rule(ast) -> this.visitCreatingScope(ast),
+  visitCreatingScope(ast) {
     this.scopes.push(ast)
     ast.variables = []
     ast.declareVariables = []
@@ -42,73 +38,39 @@ var AnalyseScoping = module.exports = Object.subclass({
       ast.variables.pushAll(ast.parameters.map((p) -> p.name))
     }
     
-    ast.visitChildren(this)
+    this.visitChildren(ast)
     
     ast.variables.pushAll(ast.declareVariables)
     
     this.scopes.pop()
   },
   
-  visitBlock(ast) {
-    this.scopes.push(ast)
-    ast.variables = []
-    ast.declareVariables = []
-    
-    if (ast.parameters != null) {
-      ast.variables.pushAll(ast.parameters.map((p) -> p.name))
-    }
-    
-    ast.visitChildren(this)
-    
-    ast.variables.pushAll(ast.declareVariables)
-    
-    this.scopes.pop()
-  },
-  
-  visitRule(ast) {
-    this.scopes.push(ast)
-    ast.variables = []
-    ast.declareVariables = []
-    
-    if (ast.parameters != null) {
-      ast.variables.pushAll(ast.parameters.map((p) -> p.name))
-    }
-    
-    ast.visitChildren(this)
-    
-    ast.variables.pushAll(ast.declareVariables)
-    
-    this.scopes.pop()
-  },
-  
-  visitVariableDeclaration(ast) {
+  VariableDeclaration(ast) {
     assert(this.scopes.top.type === 'Block' ||
            this.scopes.top.type === 'Script')
-    
+           
+    return this.visitDeclaringVariable(ast)
+  },
+  BindPattern(ast) {
+    assert(this.scopes.top.type === 'Rule')
+           
+    return this.visitDeclaringVariable(ast)
+  },
+  visitDeclaringVariable(ast) {
     if (!this.scopes.last.variables.include(ast.name)) {
       this.scopes.last.declareVariables.pushIfAbsent(ast.name)
     }
     
-    ast.visitChildren(this)
+    this.visitChildren(ast)
   },
   
-  visitVariable(ast) {
+  Variable(ast) {
     // Note: If I add a strict module system I could do checking here, although
     // that would require the ability to also 'declare' globals that you wish
     // to have access to.
   },
   
-  visitBindPattern(ast) {
-    assert(this.scopes.top.type === 'Rule')
-    
-    if (!this.scopes.last.variables.include(ast.name)) {
-      this.scopes.last.declareVariables.pushIfAbsent(ast.name)
-    }
-    
-    ast.visitChildren(this)
-  },
-  
-  visitVariablePattern(ast) {
+  VariablePattern(ast) {
     assert(this.scopes.top.type === 'Rule')
     
     ast.containingScope = this.scopes.top

@@ -28,7 +28,7 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-AnalyseScoping.analyse(ast);
+AnalyseScoping.visit(ast);
 ast.visit(__combe_this.new());
 (function () { throw (__combe_return = { value: ast.code }); })();
 })();
@@ -491,7 +491,7 @@ ast.visitChildren(__combe_this);
 (ast.code = [ast.subject.code, ".", ast.name.value]);
 })()
 : /* else */ (function () {
-(ast.code = [ast.subject.code, "[", ast.name.value.quote(), "]"]);
+(ast.code = [ast.subject.code, "[", ast.name.code, "]"]);
 })());
 })();
 }

@@ -28,7 +28,7 @@ var CombeAstToJS = module.exports = Object.subclass({
   },
   
   translateToIOList(ast) {
-    AnalyseScoping.analyse(ast)
+    AnalyseScoping.visit(ast)
     
     ast.visit(this.new())
     
@@ -389,7 +389,7 @@ var CombeAstToJS = module.exports = Object.subclass({
       ast.code = [ast.subject.code, '.', ast.name.value]
     }
     else {
-      ast.code = [ast.subject.code, '[', ast.name.value.quote(), ']']
+      ast.code = [ast.subject.code, '[', ast.name.code, ']']
     }
   },
   
