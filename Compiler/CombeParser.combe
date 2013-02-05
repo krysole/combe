@@ -323,10 +323,21 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       -> Ast.Call(subject, args)
     | bracketedArgumentList:args
       -> Ast.Subscript(subject, args)
+      
     | '.' propertyName:name argumentList:args
       -> Ast.MethodCall(subject, name, args)
     | '.' propertyName:name
       -> Ast.Dot(subject, name)
+      
+    | '::' propertyName:name argumentList:args
+      -> Ast.MethodCall(Ast.Dot(subject, '__proto__'), name, args)
+    | '::' propertyName:name
+      -> Ast.Dot(Ast.Dot(subject, '__proto__'), name)
+      
+    | ':' propertyName:name argumentList:args
+      -> Ast.MethodCall(Ast.Dot(subject, 'prototype'), name, args)
+    | ':' propertyName:name
+      -> Ast.Dot(Ast.Dot(subject, 'prototype'), name)
   },
   
   

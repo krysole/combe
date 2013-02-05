@@ -95,7 +95,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     | '->' | '#'
     | '&&' | '||' | '^^' | '&' | '|' | '^'
     | '++' | '--' | '+' | '-'
-    | '*' | '/' | '%' | '~' | '?' | ':'
+    | '*' | '/' | '%' | '~' | '?' | '::' | ':'
     ):text
     createToken(text)
   },

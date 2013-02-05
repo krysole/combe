@@ -1601,6 +1601,10 @@ return (function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
+return this.__combe_choice((function () {
+return this.__combe_choice((function () {
+return this.__combe_choice((function () {
+return this.__combe_choice((function () {
 (function () {
 return (args = this.argumentList.call(this));
 }).call(this);
@@ -1669,6 +1673,96 @@ var __combe_this = this;
 var __combe_return = null;
 try {
 return Ast.Dot(subject, name);
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
+}));
+}), (function () {
+(function () {
+(function () {
+return this.handleStringPattern("::");
+}).call(this);
+(function () {
+return (name = this.propertyName.call(this));
+}).call(this);
+return (function () {
+return (args = this.argumentList.call(this));
+}).call(this);
+}).call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return Ast.MethodCall(Ast.Dot(subject, "__proto__"), name, args);
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
+}));
+}), (function () {
+(function () {
+(function () {
+return this.handleStringPattern("::");
+}).call(this);
+return (function () {
+return (name = this.propertyName.call(this));
+}).call(this);
+}).call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return Ast.Dot(Ast.Dot(subject, "__proto__"), name);
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
+}));
+}), (function () {
+(function () {
+(function () {
+return this.handleStringPattern(":");
+}).call(this);
+(function () {
+return (name = this.propertyName.call(this));
+}).call(this);
+return (function () {
+return (args = this.argumentList.call(this));
+}).call(this);
+}).call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return Ast.MethodCall(Ast.Dot(subject, "prototype"), name, args);
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
+}));
+}), (function () {
+(function () {
+(function () {
+return this.handleStringPattern(":");
+}).call(this);
+return (function () {
+return (name = this.propertyName.call(this));
+}).call(this);
+}).call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return Ast.Dot(Ast.Dot(subject, "prototype"), name);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;

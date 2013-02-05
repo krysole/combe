@@ -248,12 +248,13 @@ return this.createToken.call(this, "operatorAssignment");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "punctuation", (function () {
-return this.__combe_memoize("VCjSZL87i2iD5ppZit5GmA", (function () {
+return this.__combe_memoize("4vcYaGSyTXy5DLH2Fq3BLg", (function () {
 var self = this;
 var text;
 return (function () {
 (function () {
 return (text = (function () {
+return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
@@ -433,6 +434,9 @@ return this.handleStringPattern("~");
 }));
 }), (function () {
 return this.handleStringPattern("?");
+}));
+}), (function () {
+return this.handleStringPattern("::");
 }));
 }), (function () {
 return this.handleStringPattern(":");
