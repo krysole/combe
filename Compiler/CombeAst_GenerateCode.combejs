@@ -6,60 +6,19 @@ var __combe_this = null;
 var __combe_return = null;
 try {
 var crypto = require("crypto");
-var Ast = require("./CombeAst");
-var AnalyseScoping = require("./AnalyseScoping");
-var CombeAstToJS = (module.exports = Object.subclass((function () {
+var AstVisitor = require("./AstVisitor");
+var CombeAst = require("./CombeAst");
+var CombeAstToJS = (module.exports = AstVisitor.subclass((function () {
 var __combe_object = {};
-__combe_defineValueProperty(__combe_object, "translate", (function (ast) {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return (function () {
-(function () { throw (__combe_return = { value: Array.deepJoinIOList(__combe_this.translateToIOList(ast)) }); })();
-})();
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}));
-__combe_defineValueProperty(__combe_object, "translateToIOList", (function (ast) {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return (function () {
-AnalyseScoping.visit(ast);
-ast.visit(__combe_this.new());
-(function () { throw (__combe_return = { value: ast.code }); })();
-})();
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}));
 return __combe_object;
 })(), (function () {
 var __combe_object = {};
-__combe_defineValueProperty(__combe_object, "visitUnspecified", (function (ast) {
+__combe_defineValueProperty(__combe_object, "recurseOverUnspecifiedTypes", false);
+__combe_defineValueProperty(__combe_object, "Script", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-(function () { throw Error.new(("Unrecognized Ast node " + ast)); })();
-})();
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}));
-__combe_defineValueProperty(__combe_object, "visitScript", (function (ast) {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return (function () {
-ast.visitChildren(__combe_this);
 var stmts = ast.statements.map((function (stmt) {
 var __combe_this = this;
 var __combe_return = null;
@@ -81,12 +40,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitVarStatement", (function (ast) {
+__combe_defineValueProperty(__combe_object, "VarStatement", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var decls = ast.declarations.map((function (decl) {
 var __combe_this = this;
 var __combe_return = null;
@@ -108,12 +66,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitIf", (function (ast) {
+__combe_defineValueProperty(__combe_object, "If", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var alt = (/* if */ __combe_infixOperators["!="](ast.alternative, null)
 ? /* then */ ast.alternative.code
 : /* else */ "null");
@@ -125,12 +82,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitWhile", (function (ast) {
+__combe_defineValueProperty(__combe_object, "While", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var body = __combe_this.unwrapBlockAsStatements(ast.body);
 (ast.code = ["(function () {\n", "while (", ast.condition.code, ") {\n", "try {\n", body, "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_break) break;\n", "if (__combe_e === __combe_continue) continue;\n", "throw __combe_e;\n", "}\n", "}\n", "})()"]);
 })();
@@ -140,12 +96,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitDoWhile", (function (ast) {
+__combe_defineValueProperty(__combe_object, "DoWhile", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var body = __combe_this.unwrapBlockAsStatements(ast.body);
 (ast.code = ["(function () {\n", "do {\n", "try {\n", body, "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_break) break;\n", "if (__combe_e === __combe_continue) continue;\n", "throw __combe_e;\n", "}\n", "} while (", ast.condition.code, ");\n", "})()"]);
 })();
@@ -155,12 +110,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitFor", (function (ast) {
+__combe_defineValueProperty(__combe_object, "For", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var init = (/* if */ __combe_infixOperators["!="](ast.initialize, null)
 ? /* then */ ast.initialize.code
 : /* else */ null);
@@ -179,12 +133,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitForDeclaring", (function (ast) {
+__combe_defineValueProperty(__combe_object, "ForDeclaring", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var decls = ["var ", ast.declarations.map((function (decl) {
 var __combe_this = this;
 var __combe_return = null;
@@ -231,12 +184,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitDo", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Do", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var body = __combe_this.unwrapBlockAsStatements(ast.body);
 (ast.code = ["(function () {\n", "/* do */ {\n", "try {\n", body, "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_break) break;\n", "if (__combe_e === __combe_continue) continue;\n", "throw __combe_e;\n", "}\n", "}\n", "})()"]);
 })();
@@ -246,12 +198,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitTryCatch", (function (ast) {
+__combe_defineValueProperty(__combe_object, "TryCatch", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var tryFragment = ["try {\n", ast.tryBody.code, ";\n", "}\n"];
 var catchFragment = null;
 (/* if */ __combe_infixOperators["!="](ast.catchBody, null)
@@ -273,12 +224,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitThrow", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Throw", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(function () { throw ", ast.argument.code, "; })()"]);
 })();
 }
@@ -287,12 +237,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitReturn", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Return", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var valueCode = (/* if */ __combe_infixOperators["!="](ast.argument, null)
 ? /* then */ ast.argument.code
 : /* else */ "undefined");
@@ -304,7 +253,7 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitBreak", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Break", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
@@ -317,7 +266,7 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitContinue", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Continue", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
@@ -330,12 +279,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitSequence", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Sequence", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var exprs = ast.expressions.map((function (expr) {
 var __combe_this = this;
 var __combe_return = null;
@@ -362,12 +310,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitAssignment", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Assignment", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(", ast.lhs.code, " = ", ast.rhs.code, ")"]);
 })();
 }
@@ -376,12 +323,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitOperatorAssignment", (function (ast) {
+__combe_defineValueProperty(__combe_object, "OperatorAssignment", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(", ast.lhs.code, " ", ast.name, " ", ast.rhs.code, ")"]);
 })();
 }
@@ -390,12 +336,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitPrefixOperator", (function (ast) {
+__combe_defineValueProperty(__combe_object, "PrefixOperator", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(", ast.name, ast.argument.code, ")"]);
 })();
 }
@@ -404,12 +349,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitPostfixOperator", (function (ast) {
+__combe_defineValueProperty(__combe_object, "PostfixOperator", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(", ast.argument.code, ast.name, ")"]);
 })();
 }
@@ -418,12 +362,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitInfixOperator", (function (ast) {
+__combe_defineValueProperty(__combe_object, "InfixOperator", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (/* if */ ["==", "!="].include(ast.name)
 ? /* then */ (function () {
 (ast.code = ["__combe_infixOperators[", ast.name.quote(), "](", ast.lhs.code, ", ", ast.rhs.code, ")"]);
@@ -438,12 +381,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitCall", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Call", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = __combe_this.generateCall(ast.function.code, ast.arguments));
 })();
 }
@@ -452,13 +394,12 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitSubscript", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Subscript", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
-(ast.code = __combe_this.generateMethodCall(ast.subject.code, Ast.Literal("subscript"), ast.arguments));
+(ast.code = __combe_this.generateMethodCall(ast.subject.code, CombeAst.Literal("subscript"), ast.arguments));
 })();
 }
 catch (__combe_e) {
@@ -466,12 +407,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitMethodCall", (function (ast) {
+__combe_defineValueProperty(__combe_object, "MethodCall", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = __combe_this.generateMethodCall(ast.subject.code, ast.name, ast.arguments));
 })();
 }
@@ -480,12 +420,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitDot", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Dot", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (/* if */ ((ast.name.is("Literal") && String.isClassOf(ast.name.value)) && ast.name.value.isJavaScriptPropertyName())
 ? /* then */ (function () {
 (ast.code = [ast.subject.code, ".", ast.name.value]);
@@ -500,12 +439,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitInclusiveRange", (function (ast) {
+__combe_defineValueProperty(__combe_object, "InclusiveRange", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["Range.inclusive(", ast.lhs.code, ", ", ast.rhs.code, ")"]);
 })();
 }
@@ -514,12 +452,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitExclusiveRange", (function (ast) {
+__combe_defineValueProperty(__combe_object, "ExclusiveRange", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["Range.exclusive(", ast.lhs.code, ", ", ast.rhs.code, ")"]);
 })();
 }
@@ -528,7 +465,7 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitThis", (function (ast) {
+__combe_defineValueProperty(__combe_object, "This", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
@@ -541,7 +478,7 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitVariable", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Variable", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
@@ -554,7 +491,7 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitLiteral", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Literal", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
@@ -597,12 +534,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitArray", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Array", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (/* if */ __combe_infixOperators["=="](ast.arguments, null)
 ? /* then */ (ast.arguments = [])
 : /* else */ null);
@@ -631,12 +567,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitObject", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Object", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var prologue = ["var __combe_object = {};\n"];
 var decls = ast.properties.map((function (pdecl) {
 var __combe_this = this;
@@ -660,12 +595,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitFunction", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Function", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var p = __combe_this.generateParameters(ast.parameters);
 (ast.code = ["(function (", p.jsParams, ") {\n", "var __combe_this = this;\n", "var __combe_return = null;\n", p.restParams, "try {\n", "return ", ast.body.code, ";\n", "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_return) return __combe_return.value;\n", "throw __combe_e;\n", "}\n", "})"]);
 })();
@@ -675,12 +609,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitRule", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Rule", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var p = __combe_this.generateParameters(ast.parameters);
 var vars;
 (/* if */ (ast.declareVariables.length >= 1)
@@ -709,12 +642,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitVariableDeclaration", (function (ast) {
+__combe_defineValueProperty(__combe_object, "VariableDeclaration", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (/* if */ __combe_infixOperators["!="](ast.expression, null)
 ? /* then */ (function () {
 (ast.code = [ast.name, " = ", ast.expression.code]);
@@ -729,12 +661,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitBlock", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Block", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var stmts = ast.statements.map((function (stmt) {
 var __combe_this = this;
 var __combe_return = null;
@@ -756,12 +687,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitSplatArgument", (function (ast) {
+__combe_defineValueProperty(__combe_object, "SplatArgument", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ast.argument.code);
 })();
 }
@@ -770,7 +700,7 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitParameter", (function (ast) {
+__combe_defineValueProperty(__combe_object, "Parameter", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
@@ -782,7 +712,7 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitSplatParameter", (function (ast) {
+__combe_defineValueProperty(__combe_object, "SplatParameter", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
@@ -794,12 +724,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitValueProperty", (function (ast) {
+__combe_defineValueProperty(__combe_object, "ValueProperty", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["__combe_defineValueProperty(", "__combe_object, ", ast.name.code, ", ", ast.value.code, ")"]);
 })();
 }
@@ -808,12 +737,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitGetProperty", (function (ast) {
+__combe_defineValueProperty(__combe_object, "GetProperty", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["__combe_defineGetProperty(", "__combe_object, ", ast.name.code, ", ", ast.value.code, ")"]);
 })();
 }
@@ -822,12 +750,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitSetProperty", (function (ast) {
+__combe_defineValueProperty(__combe_object, "SetProperty", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["__combe.defineSetProperty(", "__combe_object, ", ast.name.code, ", ", ast.value.code, ")"]);
 })();
 }
@@ -836,12 +763,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitDescribeProperty", (function (ast) {
+__combe_defineValueProperty(__combe_object, "DescribeProperty", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["__combe.defineDescribedProperty(", "__combe_object, ", ast.name.code, ", ", ast.value.code, ")"]);
 })();
 }
@@ -850,12 +776,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitChoicePattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "ChoicePattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var ps = ast.patterns.map((function (p) {
 var __combe_this = this;
 var __combe_return = null;
@@ -877,12 +802,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitSequencePattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "SequencePattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var ps = ast.patterns.slice(0, (ast.patterns.length - 1)).map((function (p) {
 var __combe_this = this;
 var __combe_return = null;
@@ -905,12 +829,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitNotPattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "NotPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(function () {\n", "return this.__combe_not(", ast.pattern.code, ");\n", "})"]);
 })();
 }
@@ -919,12 +842,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitLookaheadPattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "LookaheadPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(function () {\n", "return this.__combe_lookahead(", ast.pattern.code, ");\n", "})"]);
 })();
 }
@@ -933,12 +855,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitHashOperatorPattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "HashOperatorPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(function () {\n", "return this.handleHashPattern(", ast.pattern.code, ");\n", "})"]);
 })();
 }
@@ -947,12 +868,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitRepeatPattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "RepeatPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(function () {\n", "return this.__combe_repeat(", ast.pattern.code, ");\n", "})"]);
 })();
 }
@@ -961,12 +881,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitNonZeroRepeatPattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "NonZeroRepeatPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(function () {\n", "return this.__combe_nonZeroRepeat(", ast.pattern.code, ");\n", "})"]);
 })();
 }
@@ -975,12 +894,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitOptionalPattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "OptionalPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(function () {\n", "return this.__combe_optional(", ast.pattern.code, ");\n", "})"]);
 })();
 }
@@ -989,12 +907,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitBindPattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "BindPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(function () {\n", "return (", ast.name, " = ", ast.pattern.code, ".call(this));\n", "})"]);
 })();
 }
@@ -1003,12 +920,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitCallPattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "CallPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var argumentsVariable = __combe_this.generateArgumentsVariable(ast.arguments);
 (/* if */ __combe_infixOperators["!="](argumentsVariable, null)
 ? /* then */ (function () {
@@ -1035,12 +951,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitPredicatePattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "PredicatePattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var pattern = ["(function () {\n", "var __combe_this = this;\n", "var __combe_return = null;\n", "try {\n", "return ", ast.body.code, ";\n", "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_return) return __combe_return.value;\n", "throw __combe_e;\n", "}\n", "})"];
 (ast.code = ["(function () {\n", "return this.__combe_predicate(", pattern, ");\n", "})"]);
 })();
@@ -1050,12 +965,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitActionPattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "ActionPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 (ast.code = ["(function () {\n", "var __combe_this = this;\n", "var __combe_return = null;\n", "try {\n", "return ", ast.body.code, ";\n", "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_return) return __combe_return.value;\n", "throw __combe_e;\n", "}\n", "})"]);
 })();
 }
@@ -1064,12 +978,11 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitImmediateActionPattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "ImmediateActionPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
 return (function () {
-ast.visitChildren(__combe_this);
 var pattern = ["(function () {\n", "var __combe_this = this;\n", "var __combe_return = null;\n", "try {\n", "return ", ast.body.code, ";\n", "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_return) return __combe_return.value;\n", "throw __combe_e;\n", "}\n", "})"];
 (ast.code = [pattern, ".call(this)"]);
 })();
@@ -1079,7 +992,7 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitStringPattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "StringPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {
@@ -1092,7 +1005,7 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitVariablePattern", (function (ast) {
+__combe_defineValueProperty(__combe_object, "VariablePattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
 try {

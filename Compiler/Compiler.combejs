@@ -10,7 +10,8 @@ var path = require("path");
 var inspect = require("util").inspect;
 var CombeLexer = require("./CombeLexer");
 var CombeParser = require("./CombeParser");
-var CombeAstToJS = require("./CombeAstToJS");
+var CombeAst_AnalyseScoping = require("./CombeAst_AnalyseScoping");
+var CombeAst_GenerateCode = require("./CombeAst_GenerateCode");
 var Compiler = (module.exports = (function () {
 var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "shouldOutputIntermediates", false);
@@ -44,9 +45,10 @@ var parser = CombeParser.new(source, sourceFilename);
 var ast = parser.match();
 __combe_this.writeIntermediate(options, "tokens", parser.tokens);
 __combe_this.writeIntermediate(options, "ast", ast);
-var jsIOList = CombeAstToJS.translateToIOList(ast);
-__combe_this.writeIntermediate(options, "iolist", jsIOList);
-var jsText = Array.deepJoinIOList(jsIOList);
+CombeAst_AnalyseScoping.visit(ast);
+CombeAst_GenerateCode.visit(ast);
+__combe_this.writeIntermediate(options, "iolist", ast.code);
+var jsText = Array.deepJoinIOList(ast.code);
 fs.writeFileSync(outputFilename, jsText);
 })();
 }

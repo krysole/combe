@@ -22,7 +22,9 @@ var inspect = require('util').inspect
 
 var CombeLexer = require('./CombeLexer')
 var CombeParser = require('./CombeParser')
-var CombeAstToJS = require('./CombeAstToJS')
+
+var CombeAst_AnalyseScoping = require('./CombeAst_AnalyseScoping')
+var CombeAst_GenerateCode = require('./CombeAst_GenerateCode')
 
 var Compiler = module.exports = {
   
@@ -53,11 +55,11 @@ var Compiler = module.exports = {
     this.writeIntermediate(options, 'tokens', parser.tokens)
     this.writeIntermediate(options, 'ast', ast)
     
-    var jsIOList = CombeAstToJS.translateToIOList(ast)
-    this.writeIntermediate(options, 'iolist', jsIOList)
+    CombeAst_AnalyseScoping.visit(ast)
+    CombeAst_GenerateCode.visit(ast)
+    this.writeIntermediate(options, 'iolist', ast.code)
     
-    var jsText = Array.deepJoinIOList(jsIOList)
-    
+    var jsText = Array.deepJoinIOList(ast.code)
     fs.writeFileSync(outputFilename, jsText)
   },
   
