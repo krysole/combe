@@ -230,19 +230,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       | 'operatorAssignment':op expression:rhs
         -> Ast.OperatorAssignment(op, lhs, rhs)
       )
-    | conditionalExpression
-  },
-  
-  rule conditionalExpression {
-    // Todo: Do I want to keep the conditional operator instead of favoring the
-    // if expression for all conditionals. '?' and ':' could be useful for other
-    // things.
-    logicalOrExpression:condition
-    ( '?' expression:consiquent
-      ':' expression:alternative
-      -> Ast.If(condition, consiquent, alternative)
-    | -> condition
-    )
+    | logicalOrExpression
   },
   
   rule logicalOrExpression {
