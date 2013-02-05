@@ -45,19 +45,19 @@ var Compiler = module.exports = {
     
     var source = fs.readFileSync(sourceFilename, 'utf8')
     
-    var hashbangLine = this.hashbangLine(source)
+    var hashbangLine = self.hashbangLine(source)
     if (hashbangLine != null) {
       source = source.slice(hashbangLine[0].length)
     }
     
     var parser = CombeParser.new(source, sourceFilename)
     var ast = parser.match()
-    this.writeIntermediate(options, 'tokens', parser.tokens)
-    this.writeIntermediate(options, 'ast', ast)
+    self.writeIntermediate(options, 'tokens', parser.tokens)
+    self.writeIntermediate(options, 'ast', ast)
     
     CombeAst_AnalyseScoping.visit(ast)
     CombeAst_GenerateCode.visit(ast)
-    this.writeIntermediate(options, 'iolist', ast.code)
+    self.writeIntermediate(options, 'iolist', ast.code)
     
     var jsText = Array.deepJoinIOList(ast.code)
     fs.writeFileSync(outputFilename, jsText)

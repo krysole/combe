@@ -15,12 +15,13 @@ var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "initialize", (function (source, filename) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-CombeParser.prototype.__proto__.initialize.call(__combe_this, source, filename);
-(__combe_this.lexer = CombeLexer.new(source, filename));
-__combe_this.pushState("column", 0);
-__combe_this.pushState("enclosed", false);
+CombeParser.prototype.__proto__.initialize.call(self, source, filename);
+(self.lexer = CombeLexer.new(source, filename));
+self.pushState("column", 0);
+self.pushState("enclosed", false);
 })();
 }
 catch (__combe_e) {
@@ -29,12 +30,14 @@ throw __combe_e;
 }
 }));
 __combe_defineValueProperty(__combe_object, "start", (function () {
-return this.__combe_memoize("OmyunMTJiDGabsHAASyfkg", (function () {
+return this.__combe_memoize("LM2vGcr3z7fSkXz+iLgXgg", (function () {
+var self = this;
 return this.script.call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "script", (function () {
-return this.__combe_memoize("cmLt9GmJuCmASKJYekustQ", (function () {
+return this.__combe_memoize("G6CpjzpykG8odxB5NR0xpg", (function () {
+var self = this;
 var stmts;
 return (function () {
 (function () {
@@ -60,7 +63,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "statement", (function () {
-return this.__combe_memoize("w8Y0PvXWJYBRre5+L2w5Ng", (function () {
+return this.__combe_memoize("Pc/siiDWF8N1/jyiBShmQQ", (function () {
+var self = this;
 return (function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
@@ -81,7 +85,8 @@ return this.__combe_choice(this.varStatement, this.ifStatement);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "varStatement", (function () {
-return this.__combe_memoize("iA+x3oB1PnND8wJ+KByfAA", (function () {
+return this.__combe_memoize("l4aN0xL8eryaoJi/JicIYA", (function () {
+var self = this;
 var decls;
 return (function () {
 (function () {
@@ -114,7 +119,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "variableDeclaration", (function () {
-return this.__combe_memoize("yaOQehakpF2D6XvT5cyBfQ", (function () {
+return this.__combe_memoize("cSMDHIqw8zVlOqhhqkz1cg", (function () {
+var self = this;
 var name, expr;
 return (function () {
 (function () {
@@ -147,7 +153,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "ifStatement", (function () {
-return this.__combe_memoize("6qQcIb2n1VK/KSN5AyPYfA", (function () {
+return this.__combe_memoize("NobzOiueJmdB5LKTAgVFLQ", (function () {
+var self = this;
 var condition, consiquent, alternative;
 return (function () {
 (function () {
@@ -190,7 +197,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "whileStatement", (function () {
-return this.__combe_memoize("y2dy9u/Xk4sMbnUgjvVOhQ", (function () {
+return this.__combe_memoize("BSn7Y3/+AxAhxLCyI7H9uw", (function () {
+var self = this;
 var condition, b;
 return (function () {
 (function () {
@@ -222,7 +230,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "doWhileStatement", (function () {
-return this.__combe_memoize("+9j7KKGj1LoRbylpZsH5PA", (function () {
+return this.__combe_memoize("0O8hcSQLnp+vrvwadBM7zw", (function () {
+var self = this;
 var b, condition;
 return (function () {
 (function () {
@@ -259,7 +268,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "forStatement", (function () {
-return this.__combe_memoize("81Fh1PxN2g7Emmb5tUAp0g", (function () {
+return this.__combe_memoize("Gg87t3Wn2HuVbs/V/VjVow", (function () {
+var self = this;
 var initExpr, condExpr, incExpr, b, decls;
 return (function () {
 return this.__combe_choice((function () {
@@ -362,7 +372,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "doStatement", (function () {
-return this.__combe_memoize("1msQNltdB3JMEE2LZdRDmA", (function () {
+return this.__combe_memoize("NmjzYBDDLAG1OypsI0deQg", (function () {
+var self = this;
 var b;
 return (function () {
 (function () {
@@ -389,7 +400,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "tryCatchStatement", (function () {
-return this.__combe_memoize("ibE2WBy4vNzZGZQxBzKWKw", (function () {
+return this.__combe_memoize("KibJ0fcQ6P+AfYvzjIfEGw", (function () {
+var self = this;
 var tryBody, catchBinding, catchBody, finallyBody;
 return (function () {
 (function () {
@@ -456,7 +468,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "expressionStatement", (function () {
-return this.__combe_memoize("36ufY3E5aZAvojrM/XbT/A", (function () {
+return this.__combe_memoize("TFb9i2fnBHeg1Nmml7tmNQ", (function () {
+var self = this;
 var expr;
 return (function () {
 (function () {
@@ -480,7 +493,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "emptyStatement", (function () {
-return this.__combe_memoize("7ogcRCU/P6hKV5lrXuLWPA", (function () {
+return this.__combe_memoize("ASKI2qlwZvjcP/iMVpptiA", (function () {
+var self = this;
 return (function () {
 (function () {
 (function () {
@@ -505,7 +519,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "expression", (function () {
-return this.__combe_memoize("T0WiNxrEKDAOBxqeBsNrug", (function () {
+return this.__combe_memoize("KjrdUcV1qBmO6N5zYrQqIQ", (function () {
+var self = this;
 return (function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
@@ -530,7 +545,8 @@ return this.__combe_choice(this.ifExpression, this.whileExpression);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "ifExpression", (function () {
-return this.__combe_memoize("y0Ywe9nC1/UpvKcad8yk/Q", (function () {
+return this.__combe_memoize("DPMIuB2/CXWHoi9wVRkV/A", (function () {
+var self = this;
 var condition, consiquent, alternative;
 return (function () {
 (function () {
@@ -573,7 +589,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "whileExpression", (function () {
-return this.__combe_memoize("7++bzkB95B2QgNswfWuBgw", (function () {
+return this.__combe_memoize("OBwT91fo4mU6kCKWsC7IoA", (function () {
+var self = this;
 var condition, b;
 return (function () {
 (function () {
@@ -607,7 +624,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "doWhileExpression", (function () {
-return this.__combe_memoize("Ohvo+lARlG0jRQklazFFGQ", (function () {
+return this.__combe_memoize("7zaNFISWZ6ER9BtFHCGmrg", (function () {
+var self = this;
 var b, condition;
 return (function () {
 (function () {
@@ -643,7 +661,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "forExpression", (function () {
-return this.__combe_memoize("y3nhB/GyxYSOj6epG1JJrA", (function () {
+return this.__combe_memoize("pWreJ745OF+ysNspw0puQA", (function () {
+var self = this;
 var initExpr, condExpr, incExpr, b, decls;
 return (function () {
 return this.__combe_choice((function () {
@@ -750,7 +769,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "doExpression", (function () {
-return this.__combe_memoize("CuEPyzhXyMq7LjR4WkekUg", (function () {
+return this.__combe_memoize("G2iBSGYIBPUP10/M0RNNLQ", (function () {
+var self = this;
 var b;
 return (function () {
 (function () {
@@ -777,7 +797,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "tryCatchExpression", (function () {
-return this.__combe_memoize("HERL7M0FXhwh2kVjEhGrDw", (function () {
+return this.__combe_memoize("Zk/yCsoJuP5Q0b6VZGdNXQ", (function () {
+var self = this;
 var tryBody, catchBinding, catchBody, finallyBody;
 return (function () {
 (function () {
@@ -844,7 +865,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "throwExpression", (function () {
-return this.__combe_memoize("KOvDJv/bDmwHVMohSWYK2Q", (function () {
+return this.__combe_memoize("1FZBl6b6t2BhJDl7MrtoCw", (function () {
+var self = this;
 var expr;
 return (function () {
 (function () {
@@ -871,7 +893,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "returnExpression", (function () {
-return this.__combe_memoize("/imx1CzW/dt3b/DWfEW4Mw", (function () {
+return this.__combe_memoize("bWKVrH9PSc1P+vyB7DLt8w", (function () {
+var self = this;
 var expr;
 return (function () {
 (function () {
@@ -900,7 +923,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "breakExpression", (function () {
-return this.__combe_memoize("Iael2cO6Vlz14ON8RVVN+A", (function () {
+return this.__combe_memoize("5wBsmPtotmTA8sgMeFEhvg", (function () {
+var self = this;
 return (function () {
 (function () {
 var __combe_this = this;
@@ -921,7 +945,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "continueExpression", (function () {
-return this.__combe_memoize("uS3XY1XF82aE/bgF7bGFuA", (function () {
+return this.__combe_memoize("ut6svYQfegifYfeW32VVZg", (function () {
+var self = this;
 return (function () {
 (function () {
 var __combe_this = this;
@@ -942,7 +967,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "statementBody", (function () {
-return this.__combe_memoize("OFBwPVPrfiuJgejMWvWBEQ", (function () {
+return this.__combe_memoize("K+l+rzRvYdtoKvye8SXhSA", (function () {
+var self = this;
 var b;
 return (function () {
 return this.__combe_choice((function () {
@@ -968,14 +994,16 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "expressionBody", (function () {
-return this.__combe_memoize("QtmrDYTNT8s+aiENkGC70w", (function () {
+return this.__combe_memoize("1m3DJuf5LQWQN00A+UlBZA", (function () {
+var self = this;
 return (function () {
 return this.__combe_choice(this.block, this.expression);
 }).call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "block", (function () {
-return this.__combe_memoize("SV6gRobVv+kpXhG5BzTkzg", (function () {
+return this.__combe_memoize("SE6tzsEt93K4ILVUN6bI1w", (function () {
+var self = this;
 var stmts;
 return (function () {
 return this.__combe_choice((function () {
@@ -1017,13 +1045,15 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "operatorExpression", (function () {
-return this.__combe_memoize("XK4plZl/6zvnQFUngRkzpQ", (function () {
+return this.__combe_memoize("MxvF6KzmYFQ2mzwob0SRzg", (function () {
+var self = this;
 return this.assignmentExpression.call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "lvalueTypes", ["Variable", "Subscript", "Dot"]);
 __combe_defineValueProperty(__combe_object, "assignmentExpression", (function () {
-return this.__combe_memoize("XzAHJCt2H2vusHd+kgtcWg", (function () {
+return this.__combe_memoize("UrHcbQJWNTw45wM1oFUabQ", (function () {
+var self = this;
 var lhs, rhs, op;
 return (function () {
 return this.__combe_choice((function () {
@@ -1035,7 +1065,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return __combe_this.lvalueTypes.include(lhs.type);
+return self.lvalueTypes.include(lhs.type);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1093,7 +1123,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "conditionalExpression", (function () {
-return this.__combe_memoize("HJ1c/ZV1DHQDqgudD9kkhw", (function () {
+return this.__combe_memoize("5RAkVLW90WmlvrojcTYp4A", (function () {
+var self = this;
 var condition, consiquent, alternative;
 return (function () {
 (function () {
@@ -1142,7 +1173,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "logicalOrExpression", (function () {
-return this.__combe_memoize("1Uay6yVL3NUc0tCOFhrkoQ", (function () {
+return this.__combe_memoize("T9lWDDRYC6AfWGZ4uKIMiw", (function () {
+var self = this;
 return (function () {
 var __combe_this = this;
 return this.leftAssociative.call(this, this.logicalXorExpression, (function () {
@@ -1152,7 +1184,8 @@ return this.handleStringPattern("||");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "logicalXorExpression", (function () {
-return this.__combe_memoize("ei/Ki+hkeJLHXXpgV0eMZQ", (function () {
+return this.__combe_memoize("zxxEJPGt0gYWE4KjpXWAYg", (function () {
+var self = this;
 return (function () {
 var __combe_this = this;
 return this.leftAssociative.call(this, this.logicalAndExpression, (function () {
@@ -1162,7 +1195,8 @@ return this.handleStringPattern("^^");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "logicalAndExpression", (function () {
-return this.__combe_memoize("AtaQ3Ct1A6o7z6+VeWd1OQ", (function () {
+return this.__combe_memoize("GopzFeIGVvn72DaMoIxdlg", (function () {
+var self = this;
 return (function () {
 var __combe_this = this;
 return this.leftAssociative.call(this, this.equalityExpression, (function () {
@@ -1172,7 +1206,8 @@ return this.handleStringPattern("&&");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "equalityExpression", (function () {
-return this.__combe_memoize("h77VxU41921QLaBw1vTBtw", (function () {
+return this.__combe_memoize("M5WIAUY4VM8ke+ye1M57gQ", (function () {
+var self = this;
 return (function () {
 var __combe_this = this;
 return this.leftAssociative.call(this, this.relationalExpression, (function () {
@@ -1194,7 +1229,8 @@ return this.handleStringPattern("!==");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "relationalExpression", (function () {
-return this.__combe_memoize("hqQ8Rrven2vHoI/w+EzlOw", (function () {
+return this.__combe_memoize("2YM6CGe4KbNeTuyu8gqyNQ", (function () {
+var self = this;
 return (function () {
 var __combe_this = this;
 return this.leftAssociative.call(this, this.bitwiseOrExpression, (function () {
@@ -1216,7 +1252,8 @@ return this.handleStringPattern(">");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "bitwiseOrExpression", (function () {
-return this.__combe_memoize("YUaSMA1j8A7qxAILKPCYOw", (function () {
+return this.__combe_memoize("wE1sGkN+mUsrciHGtlgGMQ", (function () {
+var self = this;
 return (function () {
 var __combe_this = this;
 return this.leftAssociative.call(this, this.bitwiseXorExpression, (function () {
@@ -1226,7 +1263,8 @@ return this.handleStringPattern("|");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "bitwiseXorExpression", (function () {
-return this.__combe_memoize("w/W5ep9NRlMoDWBCWzsxWA", (function () {
+return this.__combe_memoize("TRTOFcGBYVYTEKpDUezY5w", (function () {
+var self = this;
 return (function () {
 var __combe_this = this;
 return this.leftAssociative.call(this, this.bitwiseAndExpression, (function () {
@@ -1236,7 +1274,8 @@ return this.handleStringPattern("^");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "bitwiseAndExpression", (function () {
-return this.__combe_memoize("8NcIRwZut10XBctbypG1ag", (function () {
+return this.__combe_memoize("RRve5R0+Gb2HeyBvMqhyTg", (function () {
+var self = this;
 return (function () {
 var __combe_this = this;
 return this.leftAssociative.call(this, this.shiftExpression, (function () {
@@ -1246,7 +1285,8 @@ return this.handleStringPattern("&");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "shiftExpression", (function () {
-return this.__combe_memoize("zlDJMSeVi9yApQvQXVlJjg", (function () {
+return this.__combe_memoize("m3NTaIuYxcvUVmTryktjdg", (function () {
+var self = this;
 return (function () {
 var __combe_this = this;
 return this.leftAssociative.call(this, this.additiveExpression, (function () {
@@ -1264,7 +1304,8 @@ return this.handleStringPattern(">>>");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "additiveExpression", (function () {
-return this.__combe_memoize("enj8RTKjWym4M32NWvzrWw", (function () {
+return this.__combe_memoize("hHOFIZ/YcIYIwL5+mOnVpQ", (function () {
+var self = this;
 return (function () {
 var __combe_this = this;
 return this.leftAssociative.call(this, this.multiplicativeExpression, (function () {
@@ -1278,7 +1319,8 @@ return this.handleStringPattern("-");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "multiplicativeExpression", (function () {
-return this.__combe_memoize("/wrUV9BMImocfDRmxkcqUA", (function () {
+return this.__combe_memoize("YGkXd7O9Z6RvUOOpn/LQrQ", (function () {
+var self = this;
 return (function () {
 var __combe_this = this;
 return this.leftAssociative.call(this, this.rangeExpression, (function () {
@@ -1296,7 +1338,8 @@ return this.handleStringPattern("%");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "rangeExpression", (function () {
-return this.__combe_memoize("5r2Bh32wfFsDAj3WRKurjA", (function () {
+return this.__combe_memoize("Y7qgebTmWfQkoKMmjSTDqw", (function () {
+var self = this;
 var expr, rhs;
 return (function () {
 (function () {
@@ -1365,7 +1408,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "rangeInfinity", (function () {
-return this.__combe_memoize("8xLNPobPugdrEyiMwYJ8/Q", (function () {
+return this.__combe_memoize("GU8rtkEiZYR+oRL2zpc54Q", (function () {
+var self = this;
 return (function () {
 (function () {
 return this.handleStringPattern("*");
@@ -1385,7 +1429,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "prefixExpression", (function () {
-return this.__combe_memoize("YA976+so7jL3iz/pOvRGlQ", (function () {
+return this.__combe_memoize("AUt/zMA2Qr0SrZG++0CtPQ", (function () {
+var self = this;
 var op, expr;
 return (function () {
 return this.__combe_choice((function () {
@@ -1435,7 +1480,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "postfixExpression", (function () {
-return this.__combe_memoize("Z/E4LownqO+Kob3JUT5/JQ", (function () {
+return this.__combe_memoize("xN4bPtJ8SYO3TPcbgHBSAA", (function () {
+var self = this;
 var expr, op;
 return (function () {
 (function () {
@@ -1479,6 +1525,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "leftAssociative", (function (operand, operator) {
+var self = this;
 var expr, op, rhs;
 return (function () {
 (function () {
@@ -1521,6 +1568,7 @@ throw __combe_e;
 }).call(this);
 }));
 __combe_defineValueProperty(__combe_object, "rightAssociative", (function (operand, operator) {
+var self = this;
 var expr, op, rhs;
 return (function () {
 (function () {
@@ -1565,7 +1613,8 @@ throw __combe_e;
 }).call(this);
 }));
 __combe_defineValueProperty(__combe_object, "secondaryExpression", (function () {
-return this.__combe_memoize("1vU6ajiJyn7BcYHfGPuyrQ", (function () {
+return this.__combe_memoize("2tlOBLrkGRJ61JZtpgFqlg", (function () {
+var self = this;
 var expr;
 return (function () {
 (function () {
@@ -1596,6 +1645,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "secondaryExpressionFragment", (function (subject) {
+var self = this;
 var args, name;
 return (function () {
 return this.__combe_choice((function () {
@@ -1679,7 +1729,8 @@ throw __combe_e;
 }).call(this);
 }));
 __combe_defineValueProperty(__combe_object, "bracketedArgumentList", (function () {
-return this.__combe_memoize("GV3Uy6h3U6588xKq1rMOCA", (function () {
+return this.__combe_memoize("5xL5A8tdLJn6zb7qA3RYSQ", (function () {
+var self = this;
 var args;
 return (function () {
 (function () {
@@ -1709,7 +1760,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "argumentList", (function () {
-return this.__combe_memoize("NwGmPX5nL+bHGd/VmYHR8g", (function () {
+return this.__combe_memoize("BOiy0KzRbVfvRTXw8RnPlw", (function () {
+var self = this;
 var args;
 return (function () {
 (function () {
@@ -1739,7 +1791,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "argument", (function () {
-return this.__combe_memoize("F3Tm6MJnYbJq478E/OGJdg", (function () {
+return this.__combe_memoize("SUaKKax71YUohJPaF+A3xA", (function () {
+var self = this;
 var e;
 return (function () {
 return this.__combe_choice((function () {
@@ -1767,7 +1820,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "parameterList", (function () {
-return this.__combe_memoize("0aN35yOqusxUrcYFgDqXgw", (function () {
+return this.__combe_memoize("QLhkDdvH7tN4suGlO+6PkQ", (function () {
+var self = this;
 var args;
 return (function () {
 (function () {
@@ -1797,7 +1851,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "parameter", (function () {
-return this.__combe_memoize("+d/Xz014H9pc1eUCOx385Q", (function () {
+return this.__combe_memoize("9kZf/jOS2x0Akr6jMZIeAA", (function () {
+var self = this;
 var name;
 return (function () {
 return this.__combe_choice((function () {
@@ -1840,7 +1895,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "functionBody", (function () {
-return this.__combe_memoize("vGGzP9qS6w8uHrAHXdlUsw", (function () {
+return this.__combe_memoize("taahnQaZ8aktUrrWnNTpkA", (function () {
+var self = this;
 return (function () {
 return this.__combe_choice((function () {
 (function () {
@@ -1852,7 +1908,8 @@ return this.expression.call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "primaryExpression", (function () {
-return this.__combe_memoize("rLBUonRfTZ34zQDVwGxmMg", (function () {
+return this.__combe_memoize("73cxlepgYGNXhS205wsG2w", (function () {
+var self = this;
 var name;
 return (function () {
 return this.__combe_choice((function () {
@@ -1861,7 +1918,8 @@ return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
-return this.__combe_choice(this.valueLiteral, (function () {
+return this.__combe_choice(this.functionLiteral, this.valueLiteral);
+}), (function () {
 (function () {
 var __combe_this = this;
 return this.id.call(this, "this");
@@ -1896,14 +1954,14 @@ throw __combe_e;
 }));
 }), this.arrayLiteral);
 }), this.objectLiteral);
-}), this.functionLiteral);
 }), this.ruleLiteral);
 }), this.subexpression);
 }).call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "valueLiteral", (function () {
-return this.__combe_memoize("YHKCRqLkalkQdur2SiJ4Ag", (function () {
+return this.__combe_memoize("trkZ98xUjwDf9Bzrk759Gg", (function () {
+var self = this;
 var value, n, s, r;
 return (function () {
 (function () {
@@ -2051,7 +2109,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "arrayLiteral", (function () {
-return this.__combe_memoize("clG1QZum9xlC6IyG0l6KJA", (function () {
+return this.__combe_memoize("VbhJBzPV6/74cuc9SvzcxQ", (function () {
+var self = this;
 var elems;
 return (function () {
 (function () {
@@ -2086,7 +2145,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "arrayElement", (function () {
-return this.__combe_memoize("CM+jB9MeNLE8mudk1Tlk3w", (function () {
+return this.__combe_memoize("pWzvneZDK0Hl4+DGuM82FQ", (function () {
+var self = this;
 return (function () {
 return this.__combe_choice(this.argument, (function () {
 (function () {
@@ -2110,7 +2170,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "objectLiteral", (function () {
-return this.__combe_memoize("8vWd5ZmQclr82oi4TIpZ+w", (function () {
+return this.__combe_memoize("bCGZKP5l+Ab0rQtsj7gXRA", (function () {
+var self = this;
 var decls;
 return (function () {
 (function () {
@@ -2145,7 +2206,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "property", (function () {
-return this.__combe_memoize("G71ql4AVKyHwuS/+ZkxMcw", (function () {
+return this.__combe_memoize("i8+d2qEMyUtfmlq8J4bi8g", (function () {
+var self = this;
 var name, pv, params, body, expr;
 return (function () {
 return this.__combe_choice((function () {
@@ -2283,7 +2345,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "propertyValue", (function () {
-return this.__combe_memoize("F5Kfo+hmiwqnFa8BVTOHxQ", (function () {
+return this.__combe_memoize("7zcg+foN9vZXKLx5XfHLWQ", (function () {
+var self = this;
 var expr, params, body;
 return (function () {
 return this.__combe_choice((function () {
@@ -2308,7 +2371,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return Ast.Function(params, body);
+return Ast.Method(params, body);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -2320,7 +2383,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "functionLiteral", (function () {
-return this.__combe_memoize("HKRiRmDRIDa8tdUoUfDPBw", (function () {
+return this.__combe_memoize("Y+M5F/fn+hq5V/m5frGkxw", (function () {
+var self = this;
 var params, e, p, body;
 return (function () {
 return this.__combe_choice((function () {
@@ -2403,8 +2467,42 @@ throw __combe_e;
 }).call(this);
 }));
 }));
+__combe_defineValueProperty(__combe_object, "methodLiteral", (function () {
+return this.__combe_memoize("+6Bth3iUgSNeV1fIXdEi8w", (function () {
+var self = this;
+var params, body;
+return (function () {
+(function () {
+(function () {
+var __combe_this = this;
+return this.id.call(this, "method");
+}).call(this);
+(function () {
+return (params = (function () {
+return this.__combe_optional(this.parameterList);
+}).call(this));
+}).call(this);
+return (function () {
+return (body = this.functionBody.call(this));
+}).call(this);
+}).call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return Ast.Method(params, body);
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
+}).call(this);
+}));
+}));
 __combe_defineValueProperty(__combe_object, "ruleLiteral", (function () {
-return this.__combe_memoize("Agr0W90YI76kKXcw7BAFnA", (function () {
+return this.__combe_memoize("+1iQhroXzTd/SC98lLmV6A", (function () {
+var self = this;
 var params, body;
 return (function () {
 (function () {
@@ -2436,7 +2534,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "ruleBody", (function () {
-return this.__combe_memoize("IQD4H0qBBPrBVI9b8l0okw", (function () {
+return this.__combe_memoize("KnQNkZAPnXipi41EP0P2XA", (function () {
+var self = this;
 var p;
 return (function () {
 return this.__combe_choice((function () {
@@ -2463,7 +2562,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "subexpression", (function () {
-return this.__combe_memoize("GCuaRE68/UXLLCTnKmIqFg", (function () {
+return this.__combe_memoize("6VOKuc+JsIsu7BVkz7aWuA", (function () {
+var self = this;
 var expr;
 return (function () {
 (function () {
@@ -2488,7 +2588,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "expressionSequence", (function () {
-return this.__combe_memoize("8QiNINGaCEiaqEZQnDMXYA", (function () {
+return this.__combe_memoize("b7W9vZveofDTb1qQVAG7Kw", (function () {
+var self = this;
 var exprs;
 return (function () {
 (function () {
@@ -2546,12 +2647,14 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "pattern", (function () {
-return this.__combe_memoize("VvZw2AKECVHfigCxjvi9Xg", (function () {
+return this.__combe_memoize("ATxfex2cI5FFNWnNMeUPmg", (function () {
+var self = this;
 return this.choicePattern.call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "choicePattern", (function () {
-return this.__combe_memoize("H2E9s7E3x7LAWg0D17A1jg", (function () {
+return this.__combe_memoize("PuNfAtAncUmxqLQ7K/h5fw", (function () {
+var self = this;
 var p, p2;
 return (function () {
 (function () {
@@ -2600,7 +2703,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "returnPattern", (function () {
-return this.__combe_memoize("Fs3Rh56zmjNI1UWmFadnQQ", (function () {
+return this.__combe_memoize("3mjS9R7K2QbksAJM2FaHLg", (function () {
+var self = this;
 var p, e;
 return (function () {
 return this.__combe_choice((function () {
@@ -2665,7 +2769,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "sequencePattern", (function () {
-return this.__combe_memoize("4vZVnsfJ1kFMdnwZQ0fZ0w", (function () {
+return this.__combe_memoize("E53sKFxuN3aAxH/h38WWnw", (function () {
+var self = this;
 var ps;
 return (function () {
 (function () {
@@ -2715,12 +2820,14 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "operatorPattern", (function () {
-return this.__combe_memoize("7fqQCaZ51ZkuU00xbe9ETw", (function () {
+return this.__combe_memoize("IPENf9dlDZW9T6YLiex0Gw", (function () {
+var self = this;
 return this.prefixOperatorPattern.call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "prefixOperatorPattern", (function () {
-return this.__combe_memoize("/eEcnF3SJ7rccfoPaYSwng", (function () {
+return this.__combe_memoize("ZF6m3xFuWW1rVjm7woVQtg", (function () {
+var self = this;
 var p;
 return (function () {
 return this.__combe_choice((function () {
@@ -2801,7 +2908,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "postfixOperatorPattern", (function () {
-return this.__combe_memoize("+n6waD/v2KVyyjHEi/w/8Q", (function () {
+return this.__combe_memoize("MUAS2De/Kx8RzP8ga+UjDQ", (function () {
+var self = this;
 var p, name;
 return (function () {
 (function () {
@@ -2911,7 +3019,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "callPattern", (function () {
-return this.__combe_memoize("4LBmxEeXcMQ/LGKoPggZmQ", (function () {
+return this.__combe_memoize("+9sSv0J9eK+UTdUubzrI/A", (function () {
+var self = this;
 var p, args;
 return (function () {
 (function () {
@@ -2975,7 +3084,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "patternArguments", (function () {
-return this.__combe_memoize("hW9N0L0EJ44mBA+6i1yKJg", (function () {
+return this.__combe_memoize("Qm8mFTffuIMxpewnaJ8MeA", (function () {
+var self = this;
 var args;
 return (function () {
 (function () {
@@ -3005,7 +3115,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "primaryPattern", (function () {
-return this.__combe_memoize("czj3jrUpv+puisToSgkRbQ", (function () {
+return this.__combe_memoize("NGYLaU/+2as26MwccKFBLw", (function () {
+var self = this;
 var p;
 return (function () {
 return this.__combe_choice((function () {
@@ -3040,7 +3151,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "predicatePattern", (function () {
-return this.__combe_memoize("ok60JzhIiM5hd9DXyOT4FA", (function () {
+return this.__combe_memoize("feGpykYHQUctJ47n5Z9Ctg", (function () {
+var self = this;
 var e;
 return (function () {
 (function () {
@@ -3069,7 +3181,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "actionPattern", (function () {
-return this.__combe_memoize("P4Ya/fUaIYTS5FlxV2HBfg", (function () {
+return this.__combe_memoize("sfn6KqEfnezLftqRkn2C3g", (function () {
+var self = this;
 var e;
 return (function () {
 (function () {
@@ -3098,7 +3211,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "immediateActionPattern", (function () {
-return this.__combe_memoize("h2NUqYAeKkWfcjUo1JZ1hQ", (function () {
+return this.__combe_memoize("wjFLBEsLlAE7NeLe9DsUlQ", (function () {
+var self = this;
 var e;
 return (function () {
 (function () {
@@ -3127,7 +3241,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "actionBody", (function () {
-return this.__combe_memoize("dDBaF1mHqiq4c5JkRe1b9g", (function () {
+return this.__combe_memoize("pm/uPGMGGqr8H+muiOuY4g", (function () {
+var self = this;
 var e;
 return (function () {
 return this.__combe_choice((function () {
@@ -3156,7 +3271,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "stringPattern", (function () {
-return this.__combe_memoize("GBjsIx7HpAT/rR9Gdfc3lw", (function () {
+return this.__combe_memoize("PVHKKGsI+INuDTxpMWZ4QA", (function () {
+var self = this;
 var s;
 return (function () {
 (function () {
@@ -3179,7 +3295,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "variablePattern", (function () {
-return this.__combe_memoize("Vb3b0lk/rx8GTzE7cVGUWw", (function () {
+return this.__combe_memoize("BOSZV/mabn2/gov6jj5Zew", (function () {
+var self = this;
 var name;
 return (function () {
 (function () {
@@ -3200,6 +3317,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "id", (function (expectedName) {
+var self = this;
 var name;
 return (function () {
 (function () {
@@ -3236,7 +3354,8 @@ throw __combe_e;
 }).call(this);
 }));
 __combe_defineValueProperty(__combe_object, "variableIdentifier", (function () {
-return this.__combe_memoize("3jgXjH1xRQVcSoknoKX0YA", (function () {
+return this.__combe_memoize("ri8LrzkjmC+RE9wGg8VoXw", (function () {
+var self = this;
 var name;
 return (function () {
 (function () {
@@ -3274,7 +3393,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "propertyName", (function () {
-return this.__combe_memoize("/EtQ9vYeAk311ZRQqSPa6A", (function () {
+return this.__combe_memoize("9X1wfWca+QdQy992Rep38g", (function () {
+var self = this;
 var expr, t;
 return (function () {
 return this.__combe_choice((function () {
@@ -3358,14 +3478,15 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "ws", (function () {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-(/* if */ (__combe_this.last().is("newline") || ((__combe_this.last().position + __combe_this.last().length) !== __combe_this.peek().position))
+(/* if */ (self.last().is("newline") || ((self.last().position + self.last().length) !== self.peek().position))
 ? /* then */ (function () {
 (function () { throw (__combe_return = { value: null }); })();
 })()
 : /* else */ (function () {
-__combe_this.fail();
+self.fail();
 })());
 })();
 }
@@ -3377,9 +3498,10 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "newline", (function () {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-var token = __combe_this.at((__combe_this.position++));
+var token = self.at((self.position++));
 (/* if */ token.is("newline")
 ? /* then */ (function () { throw (__combe_return = { value: token }); })()
 : /* else */ (function () { throw Backtrack; })());
@@ -3393,9 +3515,10 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "ignoreToken", (function (token) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-(function () { throw (__combe_return = { value: (token.is("newline") && (__combe_this.getState("enclosed") || (token.value > __combe_this.getState("column")))) }); })();
+(function () { throw (__combe_return = { value: (token.is("newline") && (self.getState("enclosed") || (token.value > self.getState("column")))) }); })();
 })();
 }
 catch (__combe_e) {
@@ -3404,7 +3527,8 @@ throw __combe_e;
 }
 }));
 __combe_defineValueProperty(__combe_object, "blockIndentation", (function () {
-return this.__combe_memoize("m+bDoHnbmCpgZnFHwB0kQQ", (function () {
+return this.__combe_memoize("76qflTMCBYIX3Ec7xSTeKA", (function () {
+var self = this;
 var nl;
 return (function () {
 (function () {
@@ -3415,7 +3539,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (nl.value > __combe_this.getState("column"));
+return (nl.value > self.getState("column"));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3435,7 +3559,8 @@ return this.pushState.call(this, "enclosed", false);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "blockDedentation", (function () {
-return this.__combe_memoize("JhaPfQvXBAXqi7XtyCraUw", (function () {
+return this.__combe_memoize("VH+/ciUYNZjPxXN2EH5uWw", (function () {
+var self = this;
 var nl;
 return (function () {
 (function () {
@@ -3443,7 +3568,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (!__combe_this.getState("enclosed"));
+return (!self.getState("enclosed"));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3461,7 +3586,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (nl.value < __combe_this.getState("column"));
+return (nl.value < self.getState("column"));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3483,7 +3608,8 @@ return this.popState.call(this, "column");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "emptyBlock", (function () {
-return this.__combe_memoize("IiQCLu+o2RxnxcgRRsOCdg", (function () {
+return this.__combe_memoize("coBLHjYoPob5zjpZFIWEpg", (function () {
+var self = this;
 return (function () {
 this.lbrace.call(this);
 (function () {
@@ -3494,7 +3620,8 @@ return this.rbrace.call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "newlineTerminator", (function () {
-return this.__combe_memoize("UmawzvygBbWY0E+YHuIewg", (function () {
+return this.__combe_memoize("mBwf1nncQc9wvnuUh3wRPQ", (function () {
+var self = this;
 var nl;
 return (function () {
 (function () {
@@ -3502,7 +3629,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (!__combe_this.getState("enclosed"));
+return (!self.getState("enclosed"));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3521,7 +3648,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return __combe_infixOperators["=="](nl.value, __combe_this.getState("column"));
+return __combe_infixOperators["=="](nl.value, self.getState("column"));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3540,7 +3667,7 @@ return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return (nl.value < __combe_this.getState("column"));
+return (nl.value < self.getState("column"));
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3555,7 +3682,8 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "statementTerminator", (function () {
-return this.__combe_memoize("mrftTXQKugLxwHMcLChUDA", (function () {
+return this.__combe_memoize("cXXKVJwpNRubG04QN+/E3A", (function () {
+var self = this;
 return (function () {
 return this.__combe_choice((function () {
 (function () {
@@ -3569,7 +3697,8 @@ return this.__combe_optional(this.newlineTerminator);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "beginBlock", (function () {
-return this.__combe_memoize("94RCPEHRozpOjJwr7Cesfw", (function () {
+return this.__combe_memoize("nx+Itddtnb0+idePG/ab2A", (function () {
+var self = this;
 return (function () {
 return this.__combe_choice((function () {
 this.lbrace.call(this);
@@ -3579,7 +3708,8 @@ return this.blockIndentation.call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "endBlock", (function () {
-return this.__combe_memoize("iyb0S5cqmvR9XpT6KH+OeA", (function () {
+return this.__combe_memoize("QwkVSOEDaeMcmZtKxXFZnw", (function () {
+var self = this;
 return (function () {
 return this.__combe_choice((function () {
 this.blockDedentation.call(this);
@@ -3589,7 +3719,8 @@ return this.rbrace.call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "lparen", (function () {
-return this.__combe_memoize("FbURoLGdLPHQ3RIwgNClzg", (function () {
+return this.__combe_memoize("hyhq3GPdoyluH+mfNAUsUw", (function () {
+var self = this;
 return (function () {
 (function () {
 return this.handleStringPattern("(");
@@ -3602,14 +3733,15 @@ return this.pushState.call(this, "enclosed", true);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "rparen", (function () {
-return this.__combe_memoize("dL8wIEowReTIcRu47EvKGQ", (function () {
+return this.__combe_memoize("inmDNPuexRCcpE2dP4EMZQ", (function () {
+var self = this;
 return (function () {
 (function () {
 return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return __combe_this.getState("enclosed");
+return self.getState("enclosed");
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3628,7 +3760,8 @@ return this.popState.call(this, "enclosed");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "lbracket", (function () {
-return this.__combe_memoize("oi7Zii+bpoU6FSSv4RVp3w", (function () {
+return this.__combe_memoize("1iDVmR1wHowUhtIBIn303w", (function () {
+var self = this;
 return (function () {
 (function () {
 return this.handleStringPattern("[");
@@ -3641,14 +3774,15 @@ return this.pushState.call(this, "enclosed", true);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "rbracket", (function () {
-return this.__combe_memoize("1VizaZbriVwN3qJS5A5PSw", (function () {
+return this.__combe_memoize("bILeSXMDWumK90I8n/BQfA", (function () {
+var self = this;
 return (function () {
 (function () {
 return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return __combe_this.getState("enclosed");
+return self.getState("enclosed");
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -3667,7 +3801,8 @@ return this.popState.call(this, "enclosed");
 }));
 }));
 __combe_defineValueProperty(__combe_object, "lbrace", (function () {
-return this.__combe_memoize("HD0KkxfpjJlzZVFHPV2qbw", (function () {
+return this.__combe_memoize("vDq88cj92vD6ilo/dkiq4w", (function () {
+var self = this;
 return (function () {
 (function () {
 return this.handleStringPattern("{");
@@ -3680,14 +3815,15 @@ return this.pushState.call(this, "enclosed", true);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "rbrace", (function () {
-return this.__combe_memoize("APLMjPEhvB1BgpH2GJaDGQ", (function () {
+return this.__combe_memoize("6LZ8MJTz+bECOBJWbALNZQ", (function () {
+var self = this;
 return (function () {
 (function () {
 return this.__combe_predicate((function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return __combe_this.getState("enclosed");
+return self.getState("enclosed");
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;

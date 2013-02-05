@@ -19,7 +19,7 @@
 var CombeLexer = module.exports = TextGrammar.subclass({
   
   allTokens(source, filename) {
-    var lexer = this.new(source, filename)
+    var lexer = self.new(source, filename)
     var tokens = []
     
     while (tokens.isEmpty() || !tokens.last.is('eof')) {
@@ -32,23 +32,23 @@ var CombeLexer = module.exports = TextGrammar.subclass({
 }, {
   
   createToken(type, value) {
-    var text = this.slice(this.tokenPosition, this.position)
-    return (this.lastToken = Token.new(
+    var text = self.slice(self.tokenPosition, self.position)
+    return (self.lastToken = Token.new(
       type,
       value,
-      this.tokenPosition,
+      self.tokenPosition,
       text.length,
       text
     ))
   },
   
   rule nextToken {
-    !(this.furthestPosition = this.position, this.emitNewline = false, this.tokenPosition = this.position)
+    !(self.furthestPosition = self.position, self.emitNewline = false, self.tokenPosition = self.position)
     ws?
     
-    ( ?(this.emitNewline) ~eof ?(this.tokenPosition != 0) newlineToken 
+    ( ?(self.emitNewline) ~eof ?(self.tokenPosition != 0) newlineToken 
     
-    | !(this.tokenPosition = this.position)
+    | !(self.tokenPosition = self.position)
       ( identifier
       | number
       | operatorAssignment
@@ -56,7 +56,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
       | string
       | regex
       | eof createToken('eof')
-      | error('Lexer failed at position ' + this.positionString())
+      | error('Lexer failed at position ' + self.positionString())
       )
     )
   },
@@ -65,13 +65,13 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   rule identifier {
     ~'r/' initialIdChar idChar*
     createToken('identifier'):token
-    !(token.reserved = this.ReservedWords.include(token.text))
+    !(token.reserved = self.ReservedWords.include(token.text))
     -> token
   },
   
   ReservedWords: [
     'var',
-    'function', 'rule',
+    // 'function', 'rule',
     'if', 'else', 'while', 'do', 'for',
     'return', 'break', 'continue',
     'try', 'catch', 'finally',
@@ -183,7 +183,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   
   
   rule newlineToken {
-    createToken('newline', this.lineColumn()[1] - 1)
+    createToken('newline', self.lineColumn()[1] - 1)
   },
   
   
@@ -195,7 +195,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   rule ws {
     ( spaces 
     | comment
-    | newline !(this.emitNewline = true)
+    | newline !(self.emitNewline = true)
     )+
   },
   

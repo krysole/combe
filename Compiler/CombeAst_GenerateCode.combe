@@ -73,7 +73,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
   },
   
   While(ast) { // [ condition, body ]
-    var body = this.unwrapBlockAsStatements(ast.body)
+    var body = self.unwrapBlockAsStatements(ast.body)
     
     ast.code = [
       '(function () {\n',
@@ -92,7 +92,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
   },
   
   DoWhile(ast) { // [ body, condition ]
-    var body = this.unwrapBlockAsStatements(ast.body)
+    var body = self.unwrapBlockAsStatements(ast.body)
     
     ast.code = [
       '(function () {\n',
@@ -120,7 +120,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     var inc = if (ast.increment != null) ast.increment.code
               else null
     
-    var body = this.unwrapBlockAsStatements(ast.body)
+    var body = self.unwrapBlockAsStatements(ast.body)
     
     ast.code = [
       '(function () {\n',
@@ -159,7 +159,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     var inc = if (ast.increment != null) ast.increment.code
               else null
     
-    var body = this.unwrapBlockAsStatements(ast.body, true)
+    var body = self.unwrapBlockAsStatements(ast.body, true)
     
     ast.code = [
       '(function (', names, ') {\n',
@@ -178,7 +178,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
   },
   
   Do(ast) { // [ body ]
-    var body = this.unwrapBlockAsStatements(ast.body)
+    var body = self.unwrapBlockAsStatements(ast.body)
     
     ast.code = [
       '(function () {\n',
@@ -314,15 +314,15 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
   
   
   Call(ast) { // [ function, arguments ]
-    ast.code = this.generateCall(ast.function.code, ast.arguments)
+    ast.code = self.generateCall(ast.function.code, ast.arguments)
   },
   
   Subscript(ast) { // [ subject, arguments ]
-    ast.code = this.generateMethodCall(ast.subject.code, CombeAst.Literal('subscript'), ast.arguments)
+    ast.code = self.generateMethodCall(ast.subject.code, CombeAst.Literal('subscript'), ast.arguments)
   },
   
   MethodCall(ast) { // [ subject, name, arguments ]
-    ast.code = this.generateMethodCall(ast.subject.code, ast.name, ast.arguments)
+    ast.code = self.generateMethodCall(ast.subject.code, ast.name, ast.arguments)
   },
   
   Dot(ast) { // [ subject, name ]
@@ -393,7 +393,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
   Array(ast) { // [ arguments ]
     if (ast.arguments == null) ast.arguments = []
     
-    var argumentsVariable = this.generateArgumentsVariable(ast.arguments)
+    var argumentsVariable = self.generateArgumentsVariable(ast.arguments)
     if (argumentsVariable != null) {
       ast.code = [
         '(function () {\n',
@@ -431,7 +431,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
   
   
   Function(ast) { // [ parameters, body ]
-    var p = this.generateParameters(ast.parameters)
+    var p = self.generateParameters(ast.parameters)
     
     ast.code = [
       '(function (', p.jsParams, ') {\n',
@@ -449,23 +449,41 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     ]
   },
   
-  Rule(ast) { // [ parameters, body ]
-    var p = this.generateParameters(ast.parameters)
+  Method(ast) { // [ parameters, body ]
+    var p = self.generateParameters(ast.parameters)
     
-    var vars
+    ast.code = [
+      '(function (', p.jsParams, ') {\n',
+        'var __combe_this = this;\n',
+        'var __combe_return = null;\n',
+        'var self = this;\n',
+        p.restParams,
+        'try {\n',
+          'return ', ast.body.code, ';\n',
+        '}\n',
+        'catch (__combe_e) {\n',
+          'if (__combe_e === __combe_return) return __combe_return.value;\n',
+          'throw __combe_e;\n',
+        '}\n',
+      '})'
+    ]
+  },
+  
+  Rule(ast) { // [ parameters, body ]
+    var p = self.generateParameters(ast.parameters)
+    
+    var declareVars = null
     if (ast.declareVariables.length >= 1) {
-      vars = [
+      declareVars = [
         'var ', ast.declareVariables.separatedBy(', '), ';\n'
       ]
-    }
-    else {
-      vars = null
     }
     
     if (p.jsParams == null && p.restParams == null) {
       var innerFunction = [
         '(function () {\n',
-          vars,
+          'var self = this;\n',
+          declareVars,
           'return ', ast.body.code, '.call(this);\n',
         '})'
       ]
@@ -485,7 +503,8 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
       ast.code = [
         '(function (', p.jsParams, ') {\n',
           p.restParams,
-          vars,
+          'var self = this;\n',
+          declareVars,
           'return ', ast.body.code, '.call(this);\n',
         '})'
       ]
@@ -653,7 +672,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
   },
   
   CallPattern(ast) { // [ pattern, arguments ]
-    var argumentsVariable = this.generateArgumentsVariable(ast.arguments);
+    var argumentsVariable = self.generateArgumentsVariable(ast.arguments);
     if (argumentsVariable != null) {
       ast.code = [
         '(function () {\n',
@@ -816,7 +835,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
   generateCall(functionCode, args) {
     if (args == null) args = []
     
-    var argumentsVariable = this.generateArgumentsVariable(args);
+    var argumentsVariable = self.generateArgumentsVariable(args);
     if (argumentsVariable != null) {
       return [
         '(function () {\n',
@@ -836,7 +855,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
   generateMethodCall(subjectCode, name, args) {
     if (args == null) args = []
     
-    var argumentsVariable = this.generateArgumentsVariable(args);
+    var argumentsVariable = self.generateArgumentsVariable(args);
     if (argumentsVariable != null) {
       return [
         '(function () {\n',
@@ -910,7 +929,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
   gensym(name) {
     if (name == null) name = '__unnamed'
     
-    return '__combe_gensym_' + name + this.gensymIndex++
+    return '__combe_gensym_' + name + self.gensymIndex++
   },
   
 })

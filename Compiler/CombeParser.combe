@@ -22,12 +22,12 @@ var CombeLexer = require('./CombeLexer')
 var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   initialize(source, filename) {
-    CombeParser.prototype.__proto__.initialize.call(this, source, filename)
+    CombeParser.prototype.__proto__.initialize.call(self, source, filename)
     
-    this.lexer = CombeLexer.new(source, filename)
+    self.lexer = CombeLexer.new(source, filename)
     
-    this.pushState('column', 0)
-    this.pushState('enclosed', false)
+    self.pushState('column', 0)
+    self.pushState('enclosed', false)
   },
   
   rule start { script },
@@ -224,7 +224,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   rule assignmentExpression {
     | secondaryExpression:lhs
-      ?(this.lvalueTypes.include(lhs.type))
+      ?(self.lvalueTypes.include(lhs.type))
       ( '=' expression:rhs
         -> Ast.Assignment(lhs, rhs)
       | 'operatorAssignment':op expression:rhs
@@ -368,12 +368,13 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   
   rule primaryExpression {
+    | functionLiteral
+    
     | valueLiteral
     | id('this') -> Ast.This()
     | variableIdentifier:name -> Ast.Variable(name)
     | arrayLiteral
     | objectLiteral
-    | functionLiteral
     | ruleLiteral
     | subexpression
   },
@@ -421,7 +422,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   rule propertyValue {
     | ':' expression:expr
     | parameterList?:params functionBody:body
-      -> Ast.Function(params, body)
+      -> Ast.Method(params, body)
   },
   
   rule functionLiteral {
@@ -431,6 +432,11 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       -> Ast.Function([p], e)
     | id('function') parameterList?:params functionBody:body
       -> Ast.Function(params, body)
+  },
+  
+  rule methodLiteral {
+    id('method') parameterList?:params functionBody:body
+    -> Ast.Method(params, body)
   },
   
   rule ruleLiteral {
@@ -572,18 +578,18 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   
   ws {
-    if (this.last().is('newline') ||
-        this.last().position + this.last().length !== this.peek().position) {
+    if (self.last().is('newline') ||
+        self.last().position + self.last().length !== self.peek().position) {
       return null
     }
     else {
-      this.fail()
+      self.fail()
     }
   },
   
   newline {
     // ignoreToken causes next to ignore sometimes ignore newlines we want
-    var token = this.at(this.position++)
+    var token = self.at(self.position++)
     if (token.is('newline')) return token
     else throw Backtrack
   },
@@ -593,22 +599,22 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     return (
       token.is('newline') &&
       (
-        this.getState('enclosed') ||
-        token.value > this.getState('column')
+        self.getState('enclosed') ||
+        token.value > self.getState('column')
       )
     )
   },
   
   rule blockIndentation {
     // workaround to ignoreToken eating token it as a continuation line
-    newline:nl ?(nl.value > this.getState('column'))
+    newline:nl ?(nl.value > self.getState('column'))
     pushState('column', nl.value)
     pushState('enclosed', false)
   },
   
   rule blockDedentation {
-    ?(!this.getState('enclosed'))
-    ( newline:nl ?(nl.value < this.getState('column'))
+    ?(!self.getState('enclosed'))
+    ( newline:nl ?(nl.value < self.getState('column'))
     | eof
     )
     popState('enclosed')
@@ -620,9 +626,9 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   },
   
   rule newlineTerminator {
-    ?(!this.getState('enclosed'))
-    ( newline:nl ?(nl.value == this.getState('column'))
-    | &newline:nl ?(nl.value < this.getState('column'))
+    ?(!self.getState('enclosed'))
+    ( newline:nl ?(nl.value == self.getState('column'))
+    | &newline:nl ?(nl.value < self.getState('column'))
     | eof
     )
   },
@@ -634,12 +640,12 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   rule endBlock   { blockDedentation rbrace | rbrace },
   
   rule lparen { '(' pushState('enclosed', true) },
-  rule rparen { ?(this.getState('enclosed')) ')' popState('enclosed') },
+  rule rparen { ?(self.getState('enclosed')) ')' popState('enclosed') },
   
   rule lbracket { '[' pushState('enclosed', true) },
-  rule rbracket { ?(this.getState('enclosed')) ']' popState('enclosed') },
+  rule rbracket { ?(self.getState('enclosed')) ']' popState('enclosed') },
   
   rule lbrace { '{' pushState('enclosed', true) },
-  rule rbrace { ?(this.getState('enclosed')) '}' popState('enclosed') },
+  rule rbrace { ?(self.getState('enclosed')) '}' popState('enclosed') },
   
 })

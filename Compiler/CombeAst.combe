@@ -57,6 +57,7 @@ var CombeAst = module.exports = Ast.subclass({
     
     
     Function:               ['parameters', 'body'],
+    Method:                 ['parameters', 'body'],
     Rule:                   ['parameters', 'body'],
     
     VariableDeclaration:    ['name', 'expression'],

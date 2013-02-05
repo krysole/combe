@@ -19,7 +19,7 @@
 var AstVisitor = module.exports = Object.subclass({
   
   visit(ast) {
-    this.new().visit(ast)
+    self.new().visit(ast)
   },
   
 }, {
@@ -30,23 +30,23 @@ var AstVisitor = module.exports = Object.subclass({
   recurseOverUnspecifiedTypes: true,
   
   visit(ast) {
-    assert(this.defaultVisitOrder != null)
-    var orderingMethod = this.('visitWithOrder_' + this.defaultVisitOrder)
+    assert(self.defaultVisitOrder != null)
+    var orderingMethod = self.('visitWithOrder_' + self.defaultVisitOrder)
     if (orderingMethod != null) {
-      var method = this.(ast.type)
+      var method = self.(ast.type)
       if (method != null) {
-        return orderingMethod.call(this, ast, method)
+        return orderingMethod.call(self, ast, method)
       }
-      else if (this.handleUnknownType != null) {
-        if (this.recurseOverUnspecifiedTypes) {
-          return orderingMethod.call(this, ast, this.handleUnspecifiedType)
+      else if (self.handleUnknownType != null) {
+        if (self.recurseOverUnspecifiedTypes) {
+          return orderingMethod.call(self, ast, self.handleUnspecifiedType)
         }
         else {
-          return this.visitWithOrder_NoOrder(ast, this.handleUnspecifiedType)
+          return self.visitWithOrder_NoOrder(ast, self.handleUnspecifiedType)
         }
       }
-      else if (this.recurseOverUnspecifiedTypes) {
-        this.visitChildren(ast)
+      else if (self.recurseOverUnspecifiedTypes) {
+        self.visitChildren(ast)
         return null
       }
       else {
@@ -54,30 +54,29 @@ var AstVisitor = module.exports = Object.subclass({
       }
     }
     else {
-      throw Error.new("Invalid visit order '" + this.defaultVisitOrder + "'")
+      throw Error.new("Invalid visit order '" + self.defaultVisitOrder + "'")
     }
   },
   
   visitWithOrder_NoOrder(ast, method) {
-    return method.call(this, ast)
+    return method.call(self, ast)
   },
   
   visitWithOrder_PreOrder(ast, method) {
-    this.visitChildren(ast)
-    return method.call(this, ast)
+    self.visitChildren(ast)
+    return method.call(self, ast)
   },
   
   visitWithOrder_PostOrder(ast, method) {
-    var result = method.call(this, ast)
-    this.visitChildren(ast)
+    var result = method.call(self, ast)
+    self.visitChildren(ast)
   },
   
   visitChildren(ast) {
-    return this.visitAll(ast.children)
+    return self.visitAll(ast.children)
   },
   
   visitAll(array) {
-    var self = this;
     return array.map((a) -> self.visit(a))
   },
   

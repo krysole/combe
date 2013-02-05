@@ -14,9 +14,10 @@ var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "initialize", (function () {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-(__combe_this.scopes = []);
+(self.scopes = []);
 })();
 }
 catch (__combe_e) {
@@ -28,8 +29,9 @@ __combe_defineValueProperty(__combe_object, "defaultVisitOrder", "NoOrder");
 __combe_defineValueProperty(__combe_object, "Script", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
-return __combe_this.visitCreatingScope(ast);
+return self.visitCreatingScope(ast);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -39,8 +41,9 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Block", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
-return __combe_this.visitCreatingScope(ast);
+return self.visitCreatingScope(ast);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -50,22 +53,29 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Rule", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
-return __combe_this.visitCreatingScope(ast);
+return self.visitCreatingScope(ast, true);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "visitCreatingScope", (function (ast) {
+__combe_defineValueProperty(__combe_object, "visitCreatingScope", (function (ast, hasSelf) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-__combe_this.scopes.push(ast);
+self.scopes.push(ast);
 (ast.variables = []);
 (ast.declareVariables = []);
+(/* if */ hasSelf
+? /* then */ (function () {
+ast.variables.push("self");
+})()
+: /* else */ null);
 (/* if */ __combe_infixOperators["!="](ast.parameters, null)
 ? /* then */ (function () {
 ast.variables.pushAll(ast.parameters.map((function (p) {
@@ -81,9 +91,9 @@ throw __combe_e;
 })));
 })()
 : /* else */ null);
-__combe_this.visitChildren(ast);
+self.visitChildren(ast);
 ast.variables.pushAll(ast.declareVariables);
-__combe_this.scopes.pop();
+self.scopes.pop();
 })();
 }
 catch (__combe_e) {
@@ -94,10 +104,11 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "VariableDeclaration", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-assert(((__combe_this.scopes.top.type === "Block") || (__combe_this.scopes.top.type === "Script")));
-(function () { throw (__combe_return = { value: __combe_this.visitDeclaringVariable(ast) }); })();
+assert(((self.scopes.top.type === "Block") || (self.scopes.top.type === "Script")));
+(function () { throw (__combe_return = { value: self.visitDeclaringVariable(ast) }); })();
 })();
 }
 catch (__combe_e) {
@@ -108,10 +119,11 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "BindPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-assert((__combe_this.scopes.top.type === "Rule"));
-(function () { throw (__combe_return = { value: __combe_this.visitDeclaringVariable(ast) }); })();
+assert((self.scopes.top.type === "Rule"));
+(function () { throw (__combe_return = { value: self.visitDeclaringVariable(ast) }); })();
 })();
 }
 catch (__combe_e) {
@@ -122,14 +134,15 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "visitDeclaringVariable", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-(/* if */ (!__combe_this.scopes.last.variables.include(ast.name))
+(/* if */ (!self.scopes.last.variables.include(ast.name))
 ? /* then */ (function () {
-__combe_this.scopes.last.declareVariables.pushIfAbsent(ast.name);
+self.scopes.last.declareVariables.pushIfAbsent(ast.name);
 })()
 : /* else */ null);
-__combe_this.visitChildren(ast);
+self.visitChildren(ast);
 })();
 }
 catch (__combe_e) {
@@ -140,6 +153,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Variable", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 })();
@@ -152,10 +166,11 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "VariablePattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-assert((__combe_this.scopes.top.type === "Rule"));
-(ast.containingScope = __combe_this.scopes.top);
+assert((self.scopes.top.type === "Rule"));
+(ast.containingScope = self.scopes.top);
 })();
 }
 catch (__combe_e) {

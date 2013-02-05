@@ -10,9 +10,10 @@ var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "visit", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-__combe_this.new().visit(ast);
+self.new().visit(ast);
 })();
 }
 catch (__combe_e) {
@@ -29,30 +30,31 @@ __combe_defineValueProperty(__combe_object, "recurseOverUnspecifiedTypes", true)
 __combe_defineValueProperty(__combe_object, "visit", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-assert(__combe_infixOperators["!="](__combe_this.defaultVisitOrder, null));
-var orderingMethod = __combe_this[("visitWithOrder_" + __combe_this.defaultVisitOrder)];
+assert(__combe_infixOperators["!="](self.defaultVisitOrder, null));
+var orderingMethod = self[("visitWithOrder_" + self.defaultVisitOrder)];
 (/* if */ __combe_infixOperators["!="](orderingMethod, null)
 ? /* then */ (function () {
-var method = __combe_this[ast.type];
+var method = self[ast.type];
 (/* if */ __combe_infixOperators["!="](method, null)
 ? /* then */ (function () {
-(function () { throw (__combe_return = { value: orderingMethod.call(__combe_this, ast, method) }); })();
+(function () { throw (__combe_return = { value: orderingMethod.call(self, ast, method) }); })();
 })()
-: /* else */ (/* if */ __combe_infixOperators["!="](__combe_this.handleUnknownType, null)
+: /* else */ (/* if */ __combe_infixOperators["!="](self.handleUnknownType, null)
 ? /* then */ (function () {
-(/* if */ __combe_this.recurseOverUnspecifiedTypes
+(/* if */ self.recurseOverUnspecifiedTypes
 ? /* then */ (function () {
-(function () { throw (__combe_return = { value: orderingMethod.call(__combe_this, ast, __combe_this.handleUnspecifiedType) }); })();
+(function () { throw (__combe_return = { value: orderingMethod.call(self, ast, self.handleUnspecifiedType) }); })();
 })()
 : /* else */ (function () {
-(function () { throw (__combe_return = { value: __combe_this.visitWithOrder_NoOrder(ast, __combe_this.handleUnspecifiedType) }); })();
+(function () { throw (__combe_return = { value: self.visitWithOrder_NoOrder(ast, self.handleUnspecifiedType) }); })();
 })());
 })()
-: /* else */ (/* if */ __combe_this.recurseOverUnspecifiedTypes
+: /* else */ (/* if */ self.recurseOverUnspecifiedTypes
 ? /* then */ (function () {
-__combe_this.visitChildren(ast);
+self.visitChildren(ast);
 (function () { throw (__combe_return = { value: null }); })();
 })()
 : /* else */ (function () {
@@ -60,7 +62,7 @@ __combe_this.visitChildren(ast);
 })())));
 })()
 : /* else */ (function () {
-(function () { throw Error.new((("Invalid visit order '" + __combe_this.defaultVisitOrder) + "'")); })();
+(function () { throw Error.new((("Invalid visit order '" + self.defaultVisitOrder) + "'")); })();
 })());
 })();
 }
@@ -72,9 +74,10 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "visitWithOrder_NoOrder", (function (ast, method) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-(function () { throw (__combe_return = { value: method.call(__combe_this, ast) }); })();
+(function () { throw (__combe_return = { value: method.call(self, ast) }); })();
 })();
 }
 catch (__combe_e) {
@@ -85,10 +88,11 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "visitWithOrder_PreOrder", (function (ast, method) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-__combe_this.visitChildren(ast);
-(function () { throw (__combe_return = { value: method.call(__combe_this, ast) }); })();
+self.visitChildren(ast);
+(function () { throw (__combe_return = { value: method.call(self, ast) }); })();
 })();
 }
 catch (__combe_e) {
@@ -99,10 +103,11 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "visitWithOrder_PostOrder", (function (ast, method) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-var result = method.call(__combe_this, ast);
-__combe_this.visitChildren(ast);
+var result = method.call(self, ast);
+self.visitChildren(ast);
 })();
 }
 catch (__combe_e) {
@@ -113,9 +118,10 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "visitChildren", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-(function () { throw (__combe_return = { value: __combe_this.visitAll(ast.children) }); })();
+(function () { throw (__combe_return = { value: self.visitAll(ast.children) }); })();
 })();
 }
 catch (__combe_e) {
@@ -126,9 +132,9 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "visitAll", (function (array) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-var self = __combe_this;
 (function () { throw (__combe_return = { value: array.map((function (a) {
 var __combe_this = this;
 var __combe_return = null;

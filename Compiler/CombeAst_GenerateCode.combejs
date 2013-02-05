@@ -17,6 +17,7 @@ __combe_defineValueProperty(__combe_object, "recurseOverUnspecifiedTypes", false
 __combe_defineValueProperty(__combe_object, "Script", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var stmts = ast.statements.map((function (stmt) {
@@ -43,6 +44,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "VarStatement", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var decls = ast.declarations.map((function (decl) {
@@ -69,6 +71,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "If", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var alt = (/* if */ __combe_infixOperators["!="](ast.alternative, null)
@@ -85,9 +88,10 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "While", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-var body = __combe_this.unwrapBlockAsStatements(ast.body);
+var body = self.unwrapBlockAsStatements(ast.body);
 (ast.code = ["(function () {\n", "while (", ast.condition.code, ") {\n", "try {\n", body, "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_break) break;\n", "if (__combe_e === __combe_continue) continue;\n", "throw __combe_e;\n", "}\n", "}\n", "})()"]);
 })();
 }
@@ -99,9 +103,10 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "DoWhile", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-var body = __combe_this.unwrapBlockAsStatements(ast.body);
+var body = self.unwrapBlockAsStatements(ast.body);
 (ast.code = ["(function () {\n", "do {\n", "try {\n", body, "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_break) break;\n", "if (__combe_e === __combe_continue) continue;\n", "throw __combe_e;\n", "}\n", "} while (", ast.condition.code, ");\n", "})()"]);
 })();
 }
@@ -113,6 +118,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "For", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var init = (/* if */ __combe_infixOperators["!="](ast.initialize, null)
@@ -124,7 +130,7 @@ var cond = (/* if */ __combe_infixOperators["!="](ast.condition, null)
 var inc = (/* if */ __combe_infixOperators["!="](ast.increment, null)
 ? /* then */ ast.increment.code
 : /* else */ null);
-var body = __combe_this.unwrapBlockAsStatements(ast.body);
+var body = self.unwrapBlockAsStatements(ast.body);
 (ast.code = ["(function () {\n", "for (", init, "; ", cond, "; ", inc, ") {\n", "try {\n", body, "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_break) break;\n", "if (__combe_e === __combe_continue) continue;\n", "throw __combe_e;\n", "}\n", "}\n", "})()"]);
 })();
 }
@@ -136,6 +142,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "ForDeclaring", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var decls = ["var ", ast.declarations.map((function (decl) {
@@ -175,7 +182,7 @@ var cond = (/* if */ __combe_infixOperators["!="](ast.condition, null)
 var inc = (/* if */ __combe_infixOperators["!="](ast.increment, null)
 ? /* then */ ast.increment.code
 : /* else */ null);
-var body = __combe_this.unwrapBlockAsStatements(ast.body, true);
+var body = self.unwrapBlockAsStatements(ast.body, true);
 (ast.code = ["(function (", names, ") {\n", "while (", cond, ") {\n", "try {\n", body, "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_break) break;\n", "if (__combe_e !== __combe_continue) throw __combe_e;\n", "}\n", inc, ";\n", "}\n", "})(", inits, ")"]);
 })();
 }
@@ -187,9 +194,10 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Do", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-var body = __combe_this.unwrapBlockAsStatements(ast.body);
+var body = self.unwrapBlockAsStatements(ast.body);
 (ast.code = ["(function () {\n", "/* do */ {\n", "try {\n", body, "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_break) break;\n", "if (__combe_e === __combe_continue) continue;\n", "throw __combe_e;\n", "}\n", "}\n", "})()"]);
 })();
 }
@@ -201,6 +209,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "TryCatch", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var tryFragment = ["try {\n", ast.tryBody.code, ";\n", "}\n"];
@@ -227,6 +236,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Throw", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(function () { throw ", ast.argument.code, "; })()"]);
@@ -240,6 +250,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Return", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var valueCode = (/* if */ __combe_infixOperators["!="](ast.argument, null)
@@ -256,6 +267,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Break", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(function () { throw __combe_break; })()"]);
@@ -269,6 +281,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Continue", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(function () { throw __combe_continue; })()"]);
@@ -282,6 +295,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Sequence", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var exprs = ast.expressions.map((function (expr) {
@@ -313,6 +327,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Assignment", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(", ast.lhs.code, " = ", ast.rhs.code, ")"]);
@@ -326,6 +341,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "OperatorAssignment", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(", ast.lhs.code, " ", ast.name, " ", ast.rhs.code, ")"]);
@@ -339,6 +355,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "PrefixOperator", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(", ast.name, ast.argument.code, ")"]);
@@ -352,6 +369,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "PostfixOperator", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(", ast.argument.code, ast.name, ")"]);
@@ -365,6 +383,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "InfixOperator", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (/* if */ ["==", "!="].include(ast.name)
@@ -384,9 +403,10 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Call", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-(ast.code = __combe_this.generateCall(ast.function.code, ast.arguments));
+(ast.code = self.generateCall(ast.function.code, ast.arguments));
 })();
 }
 catch (__combe_e) {
@@ -397,9 +417,10 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Subscript", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-(ast.code = __combe_this.generateMethodCall(ast.subject.code, CombeAst.Literal("subscript"), ast.arguments));
+(ast.code = self.generateMethodCall(ast.subject.code, CombeAst.Literal("subscript"), ast.arguments));
 })();
 }
 catch (__combe_e) {
@@ -410,9 +431,10 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "MethodCall", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-(ast.code = __combe_this.generateMethodCall(ast.subject.code, ast.name, ast.arguments));
+(ast.code = self.generateMethodCall(ast.subject.code, ast.name, ast.arguments));
 })();
 }
 catch (__combe_e) {
@@ -423,6 +445,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Dot", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (/* if */ ((ast.name.is("Literal") && String.isClassOf(ast.name.value)) && ast.name.value.isJavaScriptPropertyName())
@@ -442,6 +465,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "InclusiveRange", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["Range.inclusive(", ast.lhs.code, ", ", ast.rhs.code, ")"]);
@@ -455,6 +479,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "ExclusiveRange", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["Range.exclusive(", ast.lhs.code, ", ", ast.rhs.code, ")"]);
@@ -468,6 +493,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "This", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = "__combe_this");
@@ -481,6 +507,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Variable", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ast.name);
@@ -494,6 +521,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Literal", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (/* if */ (ast.value === null)
@@ -537,12 +565,13 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Array", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (/* if */ __combe_infixOperators["=="](ast.arguments, null)
 ? /* then */ (ast.arguments = [])
 : /* else */ null);
-var argumentsVariable = __combe_this.generateArgumentsVariable(ast.arguments);
+var argumentsVariable = self.generateArgumentsVariable(ast.arguments);
 (/* if */ __combe_infixOperators["!="](argumentsVariable, null)
 ? /* then */ (function () {
 (ast.code = ["(function () {\n", argumentsVariable, "return __combe_arguments;\n", "})()"]);
@@ -570,6 +599,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Object", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var prologue = ["var __combe_object = {};\n"];
@@ -598,10 +628,26 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Function", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-var p = __combe_this.generateParameters(ast.parameters);
+var p = self.generateParameters(ast.parameters);
 (ast.code = ["(function (", p.jsParams, ") {\n", "var __combe_this = this;\n", "var __combe_return = null;\n", p.restParams, "try {\n", "return ", ast.body.code, ";\n", "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_return) return __combe_return.value;\n", "throw __combe_e;\n", "}\n", "})"]);
+})();
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}));
+__combe_defineValueProperty(__combe_object, "Method", (function (ast) {
+var __combe_this = this;
+var __combe_return = null;
+var self = this;
+try {
+return (function () {
+var p = self.generateParameters(ast.parameters);
+(ast.code = ["(function (", p.jsParams, ") {\n", "var __combe_this = this;\n", "var __combe_return = null;\n", "var self = this;\n", p.restParams, "try {\n", "return ", ast.body.code, ";\n", "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_return) return __combe_return.value;\n", "throw __combe_e;\n", "}\n", "})"]);
 })();
 }
 catch (__combe_e) {
@@ -612,20 +658,19 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Rule", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-var p = __combe_this.generateParameters(ast.parameters);
-var vars;
+var p = self.generateParameters(ast.parameters);
+var declareVars = null;
 (/* if */ (ast.declareVariables.length >= 1)
 ? /* then */ (function () {
-(vars = ["var ", ast.declareVariables.separatedBy(", "), ";\n"]);
+(declareVars = ["var ", ast.declareVariables.separatedBy(", "), ";\n"]);
 })()
-: /* else */ (function () {
-(vars = null);
-})());
+: /* else */ null);
 (/* if */ (__combe_infixOperators["=="](p.jsParams, null) && __combe_infixOperators["=="](p.restParams, null))
 ? /* then */ (function () {
-var innerFunction = ["(function () {\n", vars, "return ", ast.body.code, ".call(this);\n", "})"];
+var innerFunction = ["(function () {\n", "var self = this;\n", declareVars, "return ", ast.body.code, ".call(this);\n", "})"];
 var innerFunctionCode = Array.deepJoinIOList(innerFunction);
 var hash = crypto.createHash("md5");
 hash.update(innerFunctionCode);
@@ -633,7 +678,7 @@ var digest = hash.digest("base64").slice(0, (-2));
 (ast.code = ["(function () {\n", "return this.__combe_memoize(", digest.quote(), ", ", innerFunction, ");\n", "})"]);
 })()
 : /* else */ (function () {
-(ast.code = ["(function (", p.jsParams, ") {\n", p.restParams, vars, "return ", ast.body.code, ".call(this);\n", "})"]);
+(ast.code = ["(function (", p.jsParams, ") {\n", p.restParams, "var self = this;\n", declareVars, "return ", ast.body.code, ".call(this);\n", "})"]);
 })());
 })();
 }
@@ -645,6 +690,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "VariableDeclaration", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (/* if */ __combe_infixOperators["!="](ast.expression, null)
@@ -664,6 +710,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Block", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var stmts = ast.statements.map((function (stmt) {
@@ -690,6 +737,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "SplatArgument", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ast.argument.code);
@@ -703,6 +751,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "Parameter", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 })();
@@ -715,6 +764,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "SplatParameter", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 })();
@@ -727,6 +777,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "ValueProperty", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["__combe_defineValueProperty(", "__combe_object, ", ast.name.code, ", ", ast.value.code, ")"]);
@@ -740,6 +791,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "GetProperty", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["__combe_defineGetProperty(", "__combe_object, ", ast.name.code, ", ", ast.value.code, ")"]);
@@ -753,6 +805,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "SetProperty", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["__combe.defineSetProperty(", "__combe_object, ", ast.name.code, ", ", ast.value.code, ")"]);
@@ -766,6 +819,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "DescribeProperty", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["__combe.defineDescribedProperty(", "__combe_object, ", ast.name.code, ", ", ast.value.code, ")"]);
@@ -779,6 +833,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "ChoicePattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var ps = ast.patterns.map((function (p) {
@@ -805,6 +860,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "SequencePattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var ps = ast.patterns.slice(0, (ast.patterns.length - 1)).map((function (p) {
@@ -832,6 +888,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "NotPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(function () {\n", "return this.__combe_not(", ast.pattern.code, ");\n", "})"]);
@@ -845,6 +902,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "LookaheadPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(function () {\n", "return this.__combe_lookahead(", ast.pattern.code, ");\n", "})"]);
@@ -858,6 +916,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "HashOperatorPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(function () {\n", "return this.handleHashPattern(", ast.pattern.code, ");\n", "})"]);
@@ -871,6 +930,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "RepeatPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(function () {\n", "return this.__combe_repeat(", ast.pattern.code, ");\n", "})"]);
@@ -884,6 +944,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "NonZeroRepeatPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(function () {\n", "return this.__combe_nonZeroRepeat(", ast.pattern.code, ");\n", "})"]);
@@ -897,6 +958,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "OptionalPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(function () {\n", "return this.__combe_optional(", ast.pattern.code, ");\n", "})"]);
@@ -910,6 +972,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "BindPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(function () {\n", "return (", ast.name, " = ", ast.pattern.code, ".call(this));\n", "})"]);
@@ -923,9 +986,10 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "CallPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
-var argumentsVariable = __combe_this.generateArgumentsVariable(ast.arguments);
+var argumentsVariable = self.generateArgumentsVariable(ast.arguments);
 (/* if */ __combe_infixOperators["!="](argumentsVariable, null)
 ? /* then */ (function () {
 (ast.code = ["(function () {\n", "var __combe_this = this;\n", "var __combe_subject = ", ast.pattern.code, ";\n", argumentsVariable, "return __combe_subject.apply(__combe_this, __combe_arguments);\n", "})"]);
@@ -954,6 +1018,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "PredicatePattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var pattern = ["(function () {\n", "var __combe_this = this;\n", "var __combe_return = null;\n", "try {\n", "return ", ast.body.code, ";\n", "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_return) return __combe_return.value;\n", "throw __combe_e;\n", "}\n", "})"];
@@ -968,6 +1033,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "ActionPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(function () {\n", "var __combe_this = this;\n", "var __combe_return = null;\n", "try {\n", "return ", ast.body.code, ";\n", "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_return) return __combe_return.value;\n", "throw __combe_e;\n", "}\n", "})"]);
@@ -981,6 +1047,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "ImmediateActionPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 var pattern = ["(function () {\n", "var __combe_this = this;\n", "var __combe_return = null;\n", "try {\n", "return ", ast.body.code, ";\n", "}\n", "catch (__combe_e) {\n", "if (__combe_e === __combe_return) return __combe_return.value;\n", "throw __combe_e;\n", "}\n", "})"];
@@ -995,6 +1062,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "StringPattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (ast.code = ["(function () {\n", "return this.handleStringPattern(", ast.value.quote(), ");\n", "})"]);
@@ -1008,6 +1076,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "VariablePattern", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (/* if */ ast.containingScope.variables.include(ast.name)
@@ -1027,6 +1096,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "unwrapBlockAsStatements", (function (ast, ignoreDefAndVarTest) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (/* if */ __combe_infixOperators["=="](ignoreDefAndVarTest, null)
@@ -1084,6 +1154,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "generateArgumentsVariable", (function (args) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (/* if */ (__combe_infixOperators["=="](args, null) || __combe_infixOperators["=="](args.length, 0))
@@ -1183,12 +1254,13 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "generateCall", (function (functionCode, args) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (/* if */ __combe_infixOperators["=="](args, null)
 ? /* then */ (args = [])
 : /* else */ null);
-var argumentsVariable = __combe_this.generateArgumentsVariable(args);
+var argumentsVariable = self.generateArgumentsVariable(args);
 (/* if */ __combe_infixOperators["!="](argumentsVariable, null)
 ? /* then */ (function () {
 (function () { throw (__combe_return = { value: ["(function () {\n", "var __combe_subject = ", functionCode, ";\n", argumentsVariable, "return __combe_subject.apply(null, __combe_arguments);\n", "})()"] }); })();
@@ -1216,12 +1288,13 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "generateMethodCall", (function (subjectCode, name, args) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (/* if */ __combe_infixOperators["=="](args, null)
 ? /* then */ (args = [])
 : /* else */ null);
-var argumentsVariable = __combe_this.generateArgumentsVariable(args);
+var argumentsVariable = self.generateArgumentsVariable(args);
 (/* if */ __combe_infixOperators["!="](argumentsVariable, null)
 ? /* then */ (function () {
 (function () { throw (__combe_return = { value: ["(function () {\n", "var __combe_subject = ", subjectCode, ";\n", "var __combe_name = ", name.code, ";\n", argumentsVariable, "return __combe_subject[__combe_name].apply(__combe_subject, __combe_arguments);\n", "})()"] }); })();
@@ -1256,6 +1329,7 @@ throw __combe_e;
 __combe_defineValueProperty(__combe_object, "generateParameters", (function (params) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (/* if */ (__combe_infixOperators["=="](params, null) || __combe_infixOperators["=="](params.length, 0))
@@ -1380,12 +1454,13 @@ __combe_defineValueProperty(__combe_object, "gensymIndex", 0);
 __combe_defineValueProperty(__combe_object, "gensym", (function (name) {
 var __combe_this = this;
 var __combe_return = null;
+var self = this;
 try {
 return (function () {
 (/* if */ __combe_infixOperators["=="](name, null)
 ? /* then */ (name = "__unnamed")
 : /* else */ null);
-(function () { throw (__combe_return = { value: (("__combe_gensym_" + name) + (__combe_this.gensymIndex++)) }); })();
+(function () { throw (__combe_return = { value: (("__combe_gensym_" + name) + (self.gensymIndex++)) }); })();
 })();
 }
 catch (__combe_e) {

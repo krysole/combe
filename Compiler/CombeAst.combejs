@@ -40,6 +40,7 @@ __combe_defineValueProperty(__combe_object, "Literal", ["value"]);
 __combe_defineValueProperty(__combe_object, "Array", ["arguments"]);
 __combe_defineValueProperty(__combe_object, "Object", ["properties"]);
 __combe_defineValueProperty(__combe_object, "Function", ["parameters", "body"]);
+__combe_defineValueProperty(__combe_object, "Method", ["parameters", "body"]);
 __combe_defineValueProperty(__combe_object, "Rule", ["parameters", "body"]);
 __combe_defineValueProperty(__combe_object, "VariableDeclaration", ["name", "expression"]);
 __combe_defineValueProperty(__combe_object, "Block", ["statements"]);

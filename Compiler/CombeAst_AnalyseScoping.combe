@@ -21,47 +21,51 @@ var AstVisitor = require('./AstVisitor')
 var AnalyseScoping = module.exports = AstVisitor.subclass({}, {
   
   initialize() {
-    this.scopes = []
+    self.scopes = []
   },
   
   defaultVisitOrder: 'NoOrder',
   
-  Script(ast) -> this.visitCreatingScope(ast),
-  Block(ast) -> this.visitCreatingScope(ast),
-  Rule(ast) -> this.visitCreatingScope(ast),
-  visitCreatingScope(ast) {
-    this.scopes.push(ast)
+  Script(ast) -> self.visitCreatingScope(ast),
+  Block(ast) -> self.visitCreatingScope(ast),
+  Rule(ast) -> self.visitCreatingScope(ast, true),
+  visitCreatingScope(ast, hasSelf) {
+    self.scopes.push(ast)
     ast.variables = []
     ast.declareVariables = []
+    
+    if (hasSelf) {
+      ast.variables.push('self')
+    }
     
     if (ast.parameters != null) {
       ast.variables.pushAll(ast.parameters.map((p) -> p.name))
     }
     
-    this.visitChildren(ast)
+    self.visitChildren(ast)
     
     ast.variables.pushAll(ast.declareVariables)
     
-    this.scopes.pop()
+    self.scopes.pop()
   },
   
   VariableDeclaration(ast) {
-    assert(this.scopes.top.type === 'Block' ||
-           this.scopes.top.type === 'Script')
+    assert(self.scopes.top.type === 'Block' ||
+           self.scopes.top.type === 'Script')
            
-    return this.visitDeclaringVariable(ast)
+    return self.visitDeclaringVariable(ast)
   },
   BindPattern(ast) {
-    assert(this.scopes.top.type === 'Rule')
+    assert(self.scopes.top.type === 'Rule')
            
-    return this.visitDeclaringVariable(ast)
+    return self.visitDeclaringVariable(ast)
   },
   visitDeclaringVariable(ast) {
-    if (!this.scopes.last.variables.include(ast.name)) {
-      this.scopes.last.declareVariables.pushIfAbsent(ast.name)
+    if (!self.scopes.last.variables.include(ast.name)) {
+      self.scopes.last.declareVariables.pushIfAbsent(ast.name)
     }
     
-    this.visitChildren(ast)
+    self.visitChildren(ast)
   },
   
   Variable(ast) {
@@ -71,9 +75,9 @@ var AnalyseScoping = module.exports = AstVisitor.subclass({}, {
   },
   
   VariablePattern(ast) {
-    assert(this.scopes.top.type === 'Rule')
+    assert(self.scopes.top.type === 'Rule')
     
-    ast.containingScope = this.scopes.top
+    ast.containingScope = self.scopes.top
   },
   
 })
