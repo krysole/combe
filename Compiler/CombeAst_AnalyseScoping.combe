@@ -22,7 +22,7 @@ var AnalyseScoping = module.exports = AstVisitor.subclass({}, {
   
   initialize() {
     self.scopes = []
-  },
+  }
   
   defaultVisitOrder: 'NoOrder',
   
@@ -47,37 +47,37 @@ var AnalyseScoping = module.exports = AstVisitor.subclass({}, {
     ast.variables.pushAll(ast.declareVariables)
     
     self.scopes.pop()
-  },
+  }
   
   VariableDeclaration(ast) {
     assert(self.scopes.top.type === 'Block' ||
            self.scopes.top.type === 'Script')
            
     return self.visitDeclaringVariable(ast)
-  },
+  }
   BindPattern(ast) {
     assert(self.scopes.top.type === 'Rule')
            
     return self.visitDeclaringVariable(ast)
-  },
+  }
   visitDeclaringVariable(ast) {
     if (!self.scopes.last.variables.include(ast.name)) {
       self.scopes.last.declareVariables.pushIfAbsent(ast.name)
     }
     
     self.visitChildren(ast)
-  },
+  }
   
   Variable(ast) {
     // Note: If I add a strict module system I could do checking here, although
     // that would require the ability to also 'declare' globals that you wish
     // to have access to.
-  },
+  }
   
   VariablePattern(ast) {
     assert(self.scopes.top.type === 'Rule')
     
     ast.containingScope = self.scopes.top
-  },
+  }
   
 })

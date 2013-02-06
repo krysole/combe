@@ -20,14 +20,14 @@ var AstVisitor = module.exports = Object.subclass({
   
   visit(ast) {
     self.new().visit(ast)
-  },
+  }
   
 }, {
   
-  defaultVisitOrder: 'PreOrder',
+  defaultVisitOrder: 'PreOrder'
   
-  handleUnspecifiedType: null,
-  recurseOverUnspecifiedTypes: true,
+  handleUnspecifiedType: null
+  recurseOverUnspecifiedTypes: true
   
   visit(ast) {
     assert(self.defaultVisitOrder != null)
@@ -56,28 +56,28 @@ var AstVisitor = module.exports = Object.subclass({
     else {
       throw Error.new("Invalid visit order '" + self.defaultVisitOrder + "'")
     }
-  },
+  }
   
   visitWithOrder_NoOrder(ast, method) {
     return method.call(self, ast)
-  },
+  }
   
   visitWithOrder_PreOrder(ast, method) {
     self.visitChildren(ast)
     return method.call(self, ast)
-  },
+  }
   
   visitWithOrder_PostOrder(ast, method) {
     var result = method.call(self, ast)
     self.visitChildren(ast)
-  },
+  }
   
   visitChildren(ast) {
     return self.visitAll(ast.children)
-  },
+  }
   
   visitAll(array) {
     return array.map((a) -> self.visit(a))
-  },
+  }
   
 })

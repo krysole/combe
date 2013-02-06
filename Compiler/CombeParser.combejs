@@ -2214,26 +2214,23 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "objectLiteral", (function () {
-return this.__combe_memoize("bCGZKP5l+Ab0rQtsj7gXRA", (function () {
+return this.__combe_memoize("AsM/StTF7DL7HTtPzQYk8A", (function () {
 var self = this;
 var decls;
 return (function () {
+return this.__combe_choice((function () {
 (function () {
-this.lbrace.call(this);
+this.beginBlock.call(this);
 (function () {
 return (decls = (function () {
 var __combe_this = this;
-return this.delimited.call(this, this.property, (function () {
-return this.handleStringPattern(",");
-}));
+return this.delimited.call(this, this.property, this.propertyDelimiter);
 }).call(this));
 }).call(this);
 (function () {
-return this.__combe_optional((function () {
-return this.handleStringPattern(",");
-}));
+return this.__combe_optional(this.propertyDelimiter);
 }).call(this);
-return this.rbrace.call(this);
+return this.endBlock.call(this);
 }).call(this);
 return (function () {
 var __combe_this = this;
@@ -2246,6 +2243,20 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }).call(this);
+}), (function () {
+this.emptyBlock.call(this);
+return (function () {
+var __combe_this = this;
+var __combe_return = null;
+try {
+return Ast.Object([]);
+}
+catch (__combe_e) {
+if (__combe_e === __combe_return) return __combe_return.value;
+throw __combe_e;
+}
+}).call(this);
+}));
 }).call(this);
 }));
 }));
@@ -3732,6 +3743,21 @@ return (function () {
 return this.__combe_choice((function () {
 (function () {
 return this.handleStringPattern(";");
+}).call(this);
+return (function () {
+return this.__combe_optional(this.newlineTerminator);
+}).call(this);
+}), this.newlineTerminator);
+}).call(this);
+}));
+}));
+__combe_defineValueProperty(__combe_object, "propertyDelimiter", (function () {
+return this.__combe_memoize("nLFrGfVN/qXxjG3uQJEPsg", (function () {
+var self = this;
+return (function () {
+return this.__combe_choice((function () {
+(function () {
+return this.handleStringPattern(",");
 }).call(this);
 return (function () {
 return this.__combe_optional(this.newlineTerminator);

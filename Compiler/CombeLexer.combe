@@ -27,7 +27,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     }
     
     return tokens
-  },
+  }
   
 }, {
   
@@ -40,7 +40,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
       text.length,
       text
     ))
-  },
+  }
   
   rule nextToken {
     !(self.furthestPosition = self.position, self.emitNewline = false, self.tokenPosition = self.position)
@@ -59,7 +59,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
       | error('Lexer failed at position ' + self.positionString())
       )
     )
-  },
+  }
   
   
   rule identifier {
@@ -67,7 +67,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     createToken('identifier'):token
     !(token.reserved = self.ReservedWords.include(token.text))
     -> token
-  },
+  }
   
   ReservedWords: [
     'var',
@@ -84,7 +84,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     | '<<=' | '>>>=' | '>>='
     )
     createToken('operatorAssignment')
-  },
+  }
   
   
   rule punctuation {
@@ -98,13 +98,13 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     | '*' | '/' | '%' | '~' | '?' | '::' | ':'
     ):text
     createToken(text)
-  },
+  }
   
   
   rule number {
     | decimal
     | hexInteger
-  },
+  }
   
   rule decimal {
     matchedInput[
@@ -112,38 +112,38 @@ var CombeLexer = module.exports = TextGrammar.subclass({
       | '.' digit+ exponentPart?
     ]:text ~idChar
     createToken('number', parseFloat(text))
-  },
+  }
   
   rule integerPart {
     | '0'
     | char('1'..'9') digit*
-  },
+  }
   
   rule exponentPart {
     ('e'|'E') ('+'|'-'|nothing) digit+
-  },
+  }
   
   rule hexInteger {
     ('0x'|'0X') matchedInput[hexDigit+]:text ~idChar
     createToken('number', parseInt(text, 16))
-  },
+  }
   
   
   rule string {
     ( stringFragment['\''] | stringFragment['\"'] ):text
     createToken('string', text)
-  },
+  }
   
   rule stringFragment(delimiter) {
     delimiter (~delimiter stringChar)*:cs delimiter
     -> cs.join('')
-  },
+  }
   
   rule stringChar {
     | '\\' stringEscapeSequence
     | '\\' newline -> ''
     | ~newline char
-  },
+  }
   
   rule stringEscapeSequence {
     | '\'' -> '\''
@@ -158,53 +158,53 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     | '0' ~digit -> '\0'
     | 'x' matchedInput[hexDigit hexDigit]:hs -> String.fromCodepoint(hs)
     | 'u' matchedInput[hexDigit hexDigit hexDigit hexDigit]:hs -> String.fromCodepoint(hs)
-  },
+  }
   
   
   rule regex {
     'r/' matchedInput[~'*' regexChar*]:pattern '/' matchedInput[idChar*]:options
     createToken('regex', Regex.new(pattern, options))
-  },
+  }
   
   rule regexChar {
     | '\\' ~newline char
     | regexCharacterClass
     | ~( '/' | newline ) char
-  },
+  }
   
   rule regexCharacterClass {
     '[' regexCharacterClassChar ']'
-  },
+  }
   
   rule regexCharacterClassChar {
     | '\\' ~newline char
     | ~(']' | newline) char
-  },
+  }
   
   
   rule newlineToken {
     createToken('newline', self.lineColumn()[1] - 1)
-  },
+  }
   
   
-  rule initialIdChar { char('a'..'z', 'A'..'Z', '_', '$') },
-  rule idChar        { char('a'..'z', 'A'..'Z', '_', '$', '0'..'9') },
-  rule digit         { char('0'..'9') },
-  rule hexDigit      { char('0'..'9', 'a'..'f', 'A'..'F') },
+  rule initialIdChar { char('a'..'z', 'A'..'Z', '_', '$') }
+  rule idChar        { char('a'..'z', 'A'..'Z', '_', '$', '0'..'9') }
+  rule digit         { char('0'..'9') }
+  rule hexDigit      { char('0'..'9', 'a'..'f', 'A'..'F') }
   
   rule ws {
     ( spaces 
     | comment
     | newline !(self.emitNewline = true)
     )+
-  },
+  }
   
-  rule spaces  { char(' ') },
-  rule newline { '\r\n' | char('\n\r') },
+  rule spaces  { char(' ') }
+  rule newline { '\r\n' | char('\n\r') }
   
   rule comment {
     | '//' (~newline char)* (&newline | eof)
     | '/*' (~'*/' char)* '*/'
-  },
+  }
   
 })

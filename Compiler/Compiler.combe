@@ -61,11 +61,11 @@ var Compiler = module.exports = {
     
     var jsText = Array.deepJoinIOList(ast.code)
     fs.writeFileSync(outputFilename, jsText)
-  },
+  }
   
   log(message) {
     console.log(process.command + ': ' + message)
-  },
+  }
   
   writeIntermediate(options, name, object) {
     var outputFilename = options[name]
@@ -76,10 +76,10 @@ var Compiler = module.exports = {
       var output = inspect(object, false, null)
       fs.writeFileSync(outputFilename, output)
     }
-  },
+  }
   
   hashbangLine(source) {
     return source.match(r/^#![^\r\n]*(\r\n|\r|\n)/)
-  },
+  }
   
 }

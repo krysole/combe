@@ -28,14 +28,14 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     
     self.pushState('column', 0)
     self.pushState('enclosed', false)
-  },
+  }
   
-  rule start { script },
+  rule start { script }
   
   rule script {
     statement*:stmts eof
     -> Ast.Script(stmts)
-  },
+  }
   
   
   rule statement {
@@ -51,35 +51,35 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     
     | expressionStatement
     | emptyStatement
-  },
+  }
   
   rule varStatement {
     id('var') delimited1[variableDeclaration, ',']:decls statementTerminator
     -> Ast.VarStatement(decls)
-  },
+  }
   
   rule variableDeclaration {
     variableIdentifier:name ( '=' expression:expr )?
     -> Ast.VariableDeclaration(name, expr)
-  },
+  }
   
   rule ifStatement {
     id('if') lparen expression:condition rparen
     statementBody:consiquent
     ( id('else') statementBody:alternative )?
     -> Ast.If(condition, consiquent, alternative)
-  },
+  }
   
   rule whileStatement {
     id('while') lparen expression:condition rparen statementBody:b
     -> Ast.While(condition, b)
-  },
+  }
   
   rule doWhileStatement {
     id('do') statementBody:b
     id('while') lparen expression:condition rparen statementTerminator
     -> Ast.DoWhile(b, condition)
-  },
+  }
   
   rule forStatement {
     | id('for') lparen
@@ -92,12 +92,12 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
         expression?:condExpr ';'
         expression?:incExpr rparen statementBody:b
       -> Ast.ForDeclaring(decls, condExpr, incExpr, b)
-  },
+  }
   
   rule doStatement {
     id('do') statementBody:b
     -> Ast.Do(b)
-  },
+  }
   
   rule tryCatchStatement {
     id('try') statementBody:tryBody
@@ -105,16 +105,16 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     ( id('finally') statementBody:finallyBody )?
     !(if (catchBody == null) catchBinding = null)
     -> Ast.TryCatch(tryBody, catchBinding, catchBody, finallyBody)
-  },
+  }
   
   rule expressionStatement {
     expression:expr statementTerminator
     -> expr
-  },
+  }
   
   rule emptyStatement {
     ';' newlineTerminator? -> Ast.Literal(null)
-  },
+  }
   
   
   rule expression {
@@ -132,23 +132,23 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | continueExpression
     
     | operatorExpression
-  },
+  }
   
   rule ifExpression {
     id('if') lparen expression:condition rparen expressionBody:consiquent
     ( id('else') expressionBody:alternative )?
     -> Ast.If(condition, consiquent, alternative)
-  },
+  }
   
   rule whileExpression {
     id('while') lparen expression:condition rparen expressionBody?:b
     -> Ast.While(condition, b)
-  },
+  }
   
   rule doWhileExpression {
     id('do') expressionBody:b id('while') lparen expression:condition rparen
     -> Ast.DoWhile(b, condition)
-  },
+  }
   
   rule forExpression {
     | id('for') lparen
@@ -161,12 +161,12 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
         expression?:condExpr ';'
         expression?:incExpr rparen expressionBody?:b
       -> Ast.ForDeclaring(decls, condExpr, incExpr, b)
-  },
+  }
   
   rule doExpression {
     id('do') expressionBody:b
     -> Ast.Do(b)
-  },
+  }
   
   rule tryCatchExpression {
     id('try') expressionBody:tryBody
@@ -174,50 +174,50 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     ( id('finally') expressionBody:finallyBody )?
     !(if (catchBody == null) catchBinding = null)
     -> Ast.TryCatch(tryBody, catchBinding, catchBody, finallyBody)
-  },
+  }
   
   rule throwExpression {
     id('throw') expression:expr
     -> Ast.Throw(expr)
-  },
+  }
   
   rule returnExpression {
     id('return') expression?:expr
     -> Ast.Return(expr)
-  },
+  }
   
   rule breakExpression {
     id('break')
     -> Ast.Break()
-  },
+  }
   
   rule continueExpression {
     id('continue')
     -> Ast.Continue()
-  },
+  }
   
   
   rule statementBody {
     | block:b statementTerminator -> b
     | statement
-  },
+  }
   
   rule expressionBody {
     | block
     | expression
-  },
+  }
   
   rule block {
     | beginBlock statement*:stmts endBlock
       -> Ast.Block(stmts)
     | emptyBlock
       -> Ast.Block([])
-  },
+  }
   
   
   rule operatorExpression {
     assignmentExpression
-  },
+  }
   
   // Todo: Add support for assignment methods
   lvalueTypes: ['Variable', 'Subscript', 'Dot'],
@@ -231,44 +231,44 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
         -> Ast.OperatorAssignment(op, lhs, rhs)
       )
     | logicalOrExpression
-  },
+  }
   
   rule logicalOrExpression {
     leftAssociative[logicalXorExpression, '||']
-  },
+  }
   rule logicalXorExpression {
     leftAssociative[logicalAndExpression, '^^']
-  },
+  }
   rule logicalAndExpression {
     leftAssociative[equalityExpression, '&&']
-  },
+  }
   
   rule equalityExpression {
     leftAssociative[relationalExpression, ('=='|'!='|'==='|'!==')]
-  },
+  }
   rule relationalExpression {
     leftAssociative[bitwiseOrExpression, ('<'|'<='|'>='|'>')]
-  },
+  }
   
   rule bitwiseOrExpression {
     leftAssociative[bitwiseXorExpression, '|']
-  },
+  }
   rule bitwiseXorExpression {
     leftAssociative[bitwiseAndExpression, '^']
-  },
+  }
   rule bitwiseAndExpression {
     leftAssociative[shiftExpression, '&']
-  },
+  }
   
   rule shiftExpression {
     leftAssociative[additiveExpression, ('<<'|'>>'|'>>>')]
-  },
+  }
   rule additiveExpression {
     leftAssociative[multiplicativeExpression, ('+'|'-')]
-  },
+  }
   rule multiplicativeExpression {
     leftAssociative[rangeExpression, ('*'|'/'|'%')]
-  },
+  }
   
   rule rangeExpression {
     prefixExpression:expr
@@ -278,16 +278,16 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       -> Ast.ExclusiveRange(expr, rhs)
     | -> expr
     )
-  },
+  }
   rule rangeInfinity {
     '*' -> Ast.Literal(null)
-  },
+  }
   
   rule prefixExpression {
     | ('++'|'--'|'+'|'-'|'~'|'!'):op prefixExpression:expr
       -> Ast.PrefixOperator(op.text, expr)
     | postfixExpression
-  },
+  }
   
   rule postfixExpression {
     secondaryExpression:expr
@@ -295,7 +295,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       -> Ast.PostfixOperator(op.text, expr)
     | -> expr
     )
-  },
+  }
   
   
   rule leftAssociative(operand, operator) {
@@ -304,20 +304,20 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       !(expr = Ast.InfixOperator(op.text, expr, rhs))
     )*
     -> expr
-  },
+  }
   rule rightAssociative(operand, operator) {
     operand:expr
     ( operator:op rightAssociative(operand, operator):rhs
       -> Ast.InfixOperator(op.text, expr, rhs)
     | -> expr
     )
-  },
+  }
   
   rule secondaryExpression {
     primaryExpression:expr
     ( secondaryExpressionFragment(expr):expr )*
     -> expr
-  },
+  }
   rule secondaryExpressionFragment(subject) {
     | argumentList:args
       -> Ast.Call(subject, args)
@@ -338,32 +338,32 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       -> Ast.MethodCall(Ast.Dot(subject, 'prototype'), name, args)
     | ':' propertyName:name
       -> Ast.Dot(Ast.Dot(subject, 'prototype'), name)
-  },
+  }
   
   
   rule bracketedArgumentList {
     lbracket delimited[argument, ', ']:args rbracket -> args
-  },
+  }
   rule argumentList {
     lparen delimited[argument, ',']:args rparen -> args
-  },
+  }
   rule argument {
     | '*' expression:e -> Ast.SplatArgument(e)
     | expression
-  },
+  }
   
   rule parameterList {
     lparen delimited[parameter, ',']:args rparen -> args
-  },
+  }
   rule parameter {
     | '*' variableIdentifier:name -> Ast.SplatParameter(name)
     | variableIdentifier:name -> Ast.Parameter(name)
-  },
+  }
   
   rule functionBody {
     | '->' expression
     | block
-  },
+  }
   
   
   rule primaryExpression {
@@ -376,7 +376,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | objectLiteral
     | ruleLiteral
     | subexpression
-  },
+  }
   
   rule valueLiteral {
     ( id('null') -> null
@@ -388,21 +388,23 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | 'regex':r -> r.value
     ):value
     -> Ast.Literal(value)
-  },
+  }
   
   rule arrayLiteral {
     lbracket delimited[arrayElement, ',']:elems ','? rbracket
     -> Ast.Array(elems)
-  },
+  }
   rule arrayElement {
     | argument
     | &',' -> Ast.Literal(null) // Elision
-  },
+  }
   
   rule objectLiteral {
-    lbrace delimited[property, ',']:decls ','? rbrace
-    -> Ast.Object(decls)
-  },
+    | beginBlock delimited[property, propertyDelimiter]:decls propertyDelimiter? endBlock
+      -> Ast.Object(decls)
+    | emptyBlock
+      -> Ast.Object([])
+  }
   
   rule property {
     (
@@ -417,12 +419,12 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | id('describe') propertyName:name ':' expression:expr
       -> Ast.DescribeProperty(name, expr)
     )
-  },
+  }
   rule propertyValue {
     | ':' expression:expr
     | parameterList?:params functionBody:body
       -> Ast.Method(params, body)
-  },
+  }
   
   rule functionLiteral {
     | parameterList?:params '->' expression:e
@@ -431,25 +433,25 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       -> Ast.Function([p], e)
     | id('function') parameterList?:params functionBody:body
       -> Ast.Function(params, body)
-  },
+  }
   
   rule methodLiteral {
     id('method') parameterList?:params functionBody:body
     -> Ast.Method(params, body)
-  },
+  }
   
   rule ruleLiteral {
     id('rule') parameterList?:params ruleBody:body
     -> Ast.Rule(params, body)
-  },
+  }
   rule ruleBody {
     | lbrace pattern:p rbrace -> p
     | operatorPattern
-  },
+  }
   
   rule subexpression {
     lparen expressionSequence:expr rparen -> expr
-  },
+  }
   
   rule expressionSequence {
     delimited1[expression, ',']:exprs ','?
@@ -457,12 +459,12 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       -> exprs[0]
     | -> Ast.Sequence(exprs)
     )
-  },
+  }
   
   
   rule pattern {
     choicePattern
-  },
+  }
   
   rule choicePattern {
     '|'? returnPattern:p
@@ -470,7 +472,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       !(p = Ast.ChoicePattern([p, p2]))
     )*
     -> p
-  },
+  }
   
   rule returnPattern {
     | sequencePattern:p
@@ -480,7 +482,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       )
     | '->' actionBody:e
       -> Ast.ActionPattern(e)
-  },
+  }
   
   rule sequencePattern {
     operatorPattern+:ps
@@ -488,18 +490,18 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       -> Ast.SequencePattern(ps)
     | -> ps[0]
     )
-  },
+  }
   
   rule operatorPattern {
     prefixOperatorPattern
-  },
+  }
   
   rule prefixOperatorPattern {
     | '~' ~ws prefixOperatorPattern:p -> Ast.NotPattern(p)
     | '&' ~ws prefixOperatorPattern:p -> Ast.LookaheadPattern(p)
     | '#' ~ws prefixOperatorPattern:p -> Ast.HashOperatorPattern(p)
     | postfixOperatorPattern
-  },
+  }
   
   rule postfixOperatorPattern {
     callPattern:p
@@ -509,7 +511,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | ~ws ':' ~ws variableIdentifier:name !(p = Ast.BindPattern(p, name))
     )*
     -> p
-  },
+  }
   
   rule callPattern {
     primaryPattern:p
@@ -519,10 +521,10 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
       !(p = Ast.CallPattern(p, args))
     )*
     -> p
-  },
+  }
   rule patternArguments {
     lbracket delimited[pattern, ',']:args rbracket -> args
-  },
+  }
   
   rule primaryPattern {
     | predicatePattern
@@ -531,49 +533,49 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | stringPattern
     | variablePattern
     | lparen pattern:p rparen -> p
-  },
+  }
   
   rule predicatePattern {
     '?' ~ws actionBody:e -> Ast.PredicatePattern(e)
-  },
+  }
   
   rule actionPattern {
     '!' ~ws actionBody:e -> Ast.ActionPattern(e)
-  },
+  }
   
   rule immediateActionPattern {
     '%' ~ws actionBody:e -> Ast.ImmediateActionPattern(e)
-  },
+  }
   
   rule actionBody {
     | secondaryExpression
     | lparen expression:e rparen -> e
     | block
-  },
+  }
   
   rule stringPattern {
     'string':s -> Ast.StringPattern(s.value)
-  },
+  }
   
   rule variablePattern {
     variableIdentifier:name -> Ast.VariablePattern(name)
-  },
+  }
   
   
   rule id(expectedName) {
     'identifier':name ?(name.text == expectedName) -> name
-  },
+  }
   
   rule variableIdentifier {
     'identifier':name ?(!name.reserved) -> name.text
-  },
+  }
   
   rule propertyName {
     | lparen expression:expr rparen -> expr
     | 'identifier':t -> Ast.Literal(t.text)
     | 'string':t     -> Ast.Literal(t.value)
     | 'number':t     -> Ast.Literal(t.value)
-  },
+  }
   
   
   ws {
@@ -584,14 +586,14 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     else {
       self.fail()
     }
-  },
+  }
   
   newline {
     // ignoreToken causes next to ignore sometimes ignore newlines we want
     var token = self.at(self.position++)
     if (token.is('newline')) return token
     else throw Backtrack
-  },
+  }
   
   ignoreToken(token) {
     // Ignore line continuations
@@ -602,14 +604,14 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
         token.value > self.getState('column')
       )
     )
-  },
+  }
   
   rule blockIndentation {
     // workaround to ignoreToken eating token it as a continuation line
     newline:nl ?(nl.value > self.getState('column'))
     pushState('column', nl.value)
     pushState('enclosed', false)
-  },
+  }
   
   rule blockDedentation {
     ?(!self.getState('enclosed'))
@@ -618,11 +620,11 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     )
     popState('enclosed')
     popState('column')
-  },
+  }
   
   rule emptyBlock {
     lbrace newline? rbrace
-  },
+  }
   
   rule newlineTerminator {
     ?(!self.getState('enclosed'))
@@ -630,21 +632,23 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | &newline:nl ?(nl.value < self.getState('column'))
     | eof
     )
-  },
+  }
   
   
-  rule statementTerminator { ';' newlineTerminator? | newlineTerminator },
+  rule statementTerminator { ';' newlineTerminator? | newlineTerminator }
   
-  rule beginBlock { lbrace blockIndentation | lbrace },
-  rule endBlock   { blockDedentation rbrace | rbrace },
+  rule propertyDelimiter { ',' newlineTerminator? | newlineTerminator }
   
-  rule lparen { '(' pushState('enclosed', true) },
-  rule rparen { ?(self.getState('enclosed')) ')' popState('enclosed') },
+  rule beginBlock { lbrace blockIndentation | lbrace }
+  rule endBlock   { blockDedentation rbrace | rbrace }
   
-  rule lbracket { '[' pushState('enclosed', true) },
-  rule rbracket { ?(self.getState('enclosed')) ']' popState('enclosed') },
+  rule lparen { '(' pushState('enclosed', true) }
+  rule rparen { ?(self.getState('enclosed')) ')' popState('enclosed') }
   
-  rule lbrace { '{' pushState('enclosed', true) },
-  rule rbrace { ?(self.getState('enclosed')) '}' popState('enclosed') },
+  rule lbracket { '[' pushState('enclosed', true) }
+  rule rbracket { ?(self.getState('enclosed')) ']' popState('enclosed') }
+  
+  rule lbrace { '{' pushState('enclosed', true) }
+  rule rbrace { ?(self.getState('enclosed')) '}' popState('enclosed') }
   
 })

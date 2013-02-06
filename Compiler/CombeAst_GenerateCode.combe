@@ -48,7 +48,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         '}\n',
       '})();'
     ]
-  },
+  }
   
   VarStatement(ast) { // [ declarations ]
     var decls = ast.declarations.map(function (decl) {
@@ -58,7 +58,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     ast.code = [
       'var ', decls
     ]
-  },
+  }
   
   
   If(ast) { // [ condition, consiquent, alternative ]
@@ -70,7 +70,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
       '? /* then */ ', ast.consiquent.code, '\n',
       ': /* else */ ', alt, ')'
     ]
-  },
+  }
   
   While(ast) { // [ condition, body ]
     var body = self.unwrapBlockAsStatements(ast.body)
@@ -89,7 +89,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         '}\n',
       '})()'
     ]
-  },
+  }
   
   DoWhile(ast) { // [ body, condition ]
     var body = self.unwrapBlockAsStatements(ast.body)
@@ -108,7 +108,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         '} while (', ast.condition.code, ');\n',
       '})()'
     ]
-  },
+  }
   
   For(ast) { // [ initialize, condition, increment, body ]
     var init = if (ast.initialize != null) ast.initialize.code
@@ -136,7 +136,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         '}\n',
       '})()'
     ]
-  },
+  }
   
   ForDeclaring(ast) { // [ declarations, condition, increment, body ]
     var decls = ['var ', ast.declarations.map(function (decl) {
@@ -175,7 +175,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         '}\n',
       '})(', inits, ')'
     ]
-  },
+  }
   
   Do(ast) { // [ body ]
     var body = self.unwrapBlockAsStatements(ast.body)
@@ -194,7 +194,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         '}\n',
       '})()'
     ]
-  },
+  }
   
   TryCatch(ast) { // [ tryBody, catchVariable, catchBody, finallyBody ]
     var tryFragment = [
@@ -228,13 +228,13 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         finallyBody,
       '})()'
     ]
-  },
+  }
   
   Throw(ast) { // [ argument ]
     ast.code = [
       '(function () { throw ', ast.argument.code, '; })()'
     ]
-  },
+  }
   
   Return(ast) { // [ argument ]
     var valueCode = if (ast.argument != null) ast.argument.code
@@ -243,19 +243,19 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     ast.code = [
       '(function () { throw (__combe_return = { value: ', valueCode, ' }); })()'
     ]
-  },
+  }
   
   Break(ast) { // [ ]
     ast.code = [
       '(function () { throw __combe_break; })()'
     ]
-  },
+  }
   
   Continue(ast) { // [ ]
     ast.code = [
       '(function () { throw __combe_continue; })()'
     ]
-  },
+  }
   
   Sequence(ast) { // [ expressions ]
     var exprs = ast.expressions.map(function (expr) {
@@ -269,32 +269,32 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     ast.code = [
       '(', exprs, ')'
     ]
-  },
+  }
   
   
   Assignment(ast) { // [ lhs, rhs ]
     ast.code = [
       '(', ast.lhs.code, ' = ', ast.rhs.code, ')'
     ]
-  },
+  }
   
   OperatorAssignment(ast) { // [ name, lhs, rhs ]
     ast.code = [
       '(', ast.lhs.code, ' ', ast.name, ' ', ast.rhs.code, ')'
     ]
-  },
+  }
   
   PrefixOperator(ast) { // [ name, argument ]
     ast.code = [
       '(', ast.name, ast.argument.code, ')'
     ]
-  },
+  }
   
   PostfixOperator(ast) { // [ name, argument ]
     ast.code = [
       '(', ast.argument.code, ast.name, ')'
     ]
-  },
+  }
   
   InfixOperator(ast) { // [ name, lhs, rhs ]
     if (['==', '!='].include(ast.name)) {
@@ -310,20 +310,20 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         '(', ast.lhs.code, ' ', ast.name, ' ', ast.rhs.code, ')'
       ]
     }
-  },
+  }
   
   
   Call(ast) { // [ function, arguments ]
     ast.code = self.generateCall(ast.function.code, ast.arguments)
-  },
+  }
   
   Subscript(ast) { // [ subject, arguments ]
     ast.code = self.generateMethodCall(ast.subject.code, CombeAst.Literal('subscript'), ast.arguments)
-  },
+  }
   
   MethodCall(ast) { // [ subject, name, arguments ]
     ast.code = self.generateMethodCall(ast.subject.code, ast.name, ast.arguments)
-  },
+  }
   
   Dot(ast) { // [ subject, name ]
     if (ast.name.is('Literal') &&
@@ -334,7 +334,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     else {
       ast.code = [ast.subject.code, '[', ast.name.code, ']']
     }
-  },
+  }
   
   
   InclusiveRange(ast) { // [ lhs, rhs ]
@@ -344,7 +344,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         ast.rhs.code,
       ')'
     ]
-  },
+  }
   
   ExclusiveRange(ast) { // [ lhs, rhs ]
     ast.code = [
@@ -353,15 +353,15 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         ast.rhs.code,
       ')'
     ]
-  },
+  }
   
   This(ast) { // [ ]
     ast.code = '__combe_this'
-  },
+  }
   
   Variable(ast) { // [ name ]
     ast.code = ast.name
-  },
+  }
   
   Literal(ast) { // [ value ]
     if (ast.value === null) {
@@ -388,7 +388,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     else {
       throw Error.new('Unknown Ast (Literal) value type')
     }
-  },
+  }
   
   Array(ast) { // [ arguments ]
     if (ast.arguments == null) ast.arguments = []
@@ -405,7 +405,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     else {
       ast.code = ['[', ast.arguments.map((a) -> a.code).separatedBy(', '), ']']
     }
-  },
+  }
   
   Object(ast) { // [ properties ]
     var prologue = [
@@ -427,7 +427,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         epilogue,
       '})()'
     ]
-  },
+  }
   
   
   Function(ast) { // [ parameters, body ]
@@ -447,7 +447,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         '}\n',
       '})'
     ]
-  },
+  }
   
   Method(ast) { // [ parameters, body ]
     var p = self.generateParameters(ast.parameters)
@@ -467,7 +467,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         '}\n',
       '})'
     ]
-  },
+  }
   
   Rule(ast) { // [ parameters, body ]
     var p = self.generateParameters(ast.parameters)
@@ -509,7 +509,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         '})'
       ]
     }
-  },
+  }
   
   VariableDeclaration(ast) { // [ name, expression ]
     // Note: These should always be attached to a JS var statement...
@@ -519,7 +519,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     else {
       ast.code = ast.name
     }
-  },
+  }
   
   
   Block(ast) { // [ statements ]
@@ -532,20 +532,20 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         stmts, // no default result
       '})()'
     ]
-  },
+  }
   
   
   SplatArgument(ast) { // [ argument ]
     ast.code = ast.argument.code;
-  },
+  }
   
   Parameter(ast) { // [ name ]
     // Do nothing
-  },
+  }
   
   SplatParameter(ast) { // [ name ]
     // Do nothing
-  },
+  }
   
   
   ValueProperty(ast) { // [ name, value ]
@@ -556,7 +556,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         ast.value.code,
       ')'
     ]
-  },
+  }
   
   GetProperty(ast) { // [ name, value ]
     ast.code = [
@@ -566,7 +566,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         ast.value.code,
       ')'
     ]
-  },
+  }
   
   SetProperty(ast) { // [ name, value ]
     ast.code = [
@@ -576,7 +576,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         ast.value.code,
       ')'
     ]
-  },
+  }
   
   DescribeProperty(ast) { // [ name, value ]
     ast.code = [
@@ -586,7 +586,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         ast.value.code,
       ')'
     ]
-  },
+  }
   
   ChoicePattern(ast) { // [ patterns ]
     var ps = ast.patterns.map(function (p) {
@@ -598,7 +598,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         'return this.__combe_choice(', ps, ');\n',
       '})'
     ]
-  },
+  }
   
   SequencePattern(ast) { // [ patterns ]
     var ps = ast.patterns.slice(0, ast.patterns.length - 1).map(function (p) {
@@ -613,7 +613,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         ps,
       '})'
     ]
-  },
+  }
   
   NotPattern(ast) { // [ pattern ]
     ast.code = [
@@ -621,7 +621,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         'return this.__combe_not(', ast.pattern.code, ');\n',
       '})'
     ]
-  },
+  }
   
   LookaheadPattern(ast) { // [ pattern ]
     ast.code = [
@@ -629,7 +629,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         'return this.__combe_lookahead(', ast.pattern.code, ');\n',
       '})'
     ]
-  },
+  }
   
   HashOperatorPattern(ast) { // [ pattern ]
     ast.code = [
@@ -637,7 +637,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         'return this.handleHashPattern(', ast.pattern.code, ');\n',
       '})'
     ]
-  },
+  }
   
   RepeatPattern(ast) { // [ pattern ]
     ast.code = [
@@ -645,7 +645,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         'return this.__combe_repeat(', ast.pattern.code, ');\n',
       '})'
     ]
-  },
+  }
   
   NonZeroRepeatPattern(ast) { // [ pattern ]
     ast.code = [
@@ -653,7 +653,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         'return this.__combe_nonZeroRepeat(', ast.pattern.code, ');\n',
       '})'
     ]
-  },
+  }
   
   OptionalPattern(ast) { // [ pattern ]
     ast.code = [
@@ -661,7 +661,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         'return this.__combe_optional(', ast.pattern.code, ');\n',
       '})'
     ]
-  },
+  }
   
   BindPattern(ast) { // [ pattern, name ]
     ast.code = [
@@ -669,7 +669,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         'return (', ast.name, ' = ', ast.pattern.code, '.call(this));\n',
       '})'
     ]
-  },
+  }
   
   CallPattern(ast) { // [ pattern, arguments ]
     var argumentsVariable = self.generateArgumentsVariable(ast.arguments);
@@ -692,7 +692,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         '})'
       ]
     }
-  },
+  }
   
   PredicatePattern(ast) { // [ body ]
     var pattern = [
@@ -714,7 +714,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         'return this.__combe_predicate(', pattern, ');\n',
       '})'
     ]
-  },
+  }
   
   ActionPattern(ast) { // [ body ]
     ast.code = [
@@ -730,7 +730,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         '}\n',
       '})'
     ]
-  },
+  }
   
   ImmediateActionPattern(ast) { // [ body ]
     var pattern = [
@@ -750,7 +750,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     ast.code = [
       pattern, '.call(this)'
     ]
-  },
+  }
   
   StringPattern(ast) { // [ value ]
     ast.code = [
@@ -758,7 +758,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         'return this.handleStringPattern(', ast.value.quote(), ');\n',
       '})'
     ]
-  },
+  }
   
   VariablePattern(ast) { // [ name ]
     if (ast.containingScope.variables.include(ast.name)) {
@@ -767,7 +767,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     else {
       ast.code = [ 'this.', ast.name ]
     }
-  },
+  }
   
   
   unwrapBlockAsStatements(ast, ignoreDefAndVarTest) {
@@ -797,7 +797,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     else {
       return [ast.code, ';\n']
     }
-  },
+  }
   
   generateArgumentsVariable(args) {
     if (args == null || args.length == 0) {
@@ -830,7 +830,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     else {
       return null;
     }
-  },
+  }
   
   generateCall(functionCode, args) {
     if (args == null) args = []
@@ -850,7 +850,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         functionCode, '(', args.map((a) -> a.code).separatedBy(', '), ')'
       ]
     }
-  },
+  }
   
   generateMethodCall(subjectCode, name, args) {
     if (args == null) args = []
@@ -877,7 +877,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
         return [subjectCode, '[', name.code, '](', args, ')']
       }
     }
-  },
+  }
   
   generateParameters(params) {
     if (params == null || params.length == 0) return {
@@ -921,7 +921,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
       jsParams: jsParams,
       restParams: restParams
     }
-  },
+  }
     
   
   gensymIndex: 0,
@@ -930,6 +930,6 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     if (name == null) name = '__unnamed'
     
     return '__combe_gensym_' + name + self.gensymIndex++
-  },
+  }
   
 })
