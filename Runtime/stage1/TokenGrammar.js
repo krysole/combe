@@ -21,27 +21,25 @@
 
 global.TokenGrammar = Grammar.subclass({}, {
   
-  initialize: function (tokenSource, fileSource, sourcename) {
-    TokenGrammar.prototype.__proto__.initialize.call(this, tokenSource, sourcename);
-    this.fileSource = fileSource;
-  },
+  name: '(UnnamedTokenGrammar)',
   
-  get lexer() {
-    if (this._lexer_storage != null) return this._lexer_storage;
-    else throw ShouldOverrideError('TokenGrammar.lexer');
+  initialize: function (source, sourcename) {
+    TokenGrammar.prototype.__proto__.initialize.call(this, source);
+    if (this.lexer == null && this.LexerClass != null) {
+      this.lexer = this.LexerClass.new(source, sourcename);
+    }
   },
-  set lexer(value) { this._lexer_storage = value; },
   
   handleStringPattern: function (string) {
     return this.t(string);
   },
   
   at: function (position) {
-    return this.source.at(position);
+    return this.lexer.tokenAt(position);
   },
   
   isEof: function () {
-    return this.source.isEof(this.position);
+    return this.lexer.tokenAt(this.position).is('eof');
   },
   
   t: function (typename) {
@@ -55,7 +53,7 @@ global.TokenGrammar = Grammar.subclass({}, {
     
     if (position >= 0) {
       var token = this.at(position);
-      var lineColumn = this.fileSource.lineColumnString(token.position);
+      var lineColumn = this.source.lineColumnString(token.position);
     }
     else {
       var lineColumn = '-1:0';

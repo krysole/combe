@@ -13,14 +13,13 @@ return __combe_object;
 })(), (function () {
 var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "name", "CombeParser");
-__combe_defineValueProperty(__combe_object, "initialize", (function (fileSource, filename) {
+__combe_defineValueProperty(__combe_object, "initialize", (function (source, filename) {
 var __combe_this = this;
 var __combe_return = null;
 var self = this;
 try {
 return (function () {
-var tokenSource = TokenSource.new(CombeLexer.new(fileSource, filename));
-CombeParser.prototype.__proto__.initialize.call(self, tokenSource, fileSource, filename);
+CombeParser.prototype.__proto__.initialize.call(self, source, filename);
 self.pushState("column", 0);
 self.pushState("enclosed", false);
 })();
@@ -30,6 +29,7 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
+__combe_defineValueProperty(__combe_object, "LexerClass", CombeLexer);
 __combe_defineValueProperty(__combe_object, "start", (function () {
 return this.__combe_memoize("LM2vGcr3z7fSkXz+iLgXgg", (function () {
 var self = this;

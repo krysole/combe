@@ -21,6 +21,8 @@
 
 global.TextGrammar = Grammar.subclass({}, {
   
+  name: '(UnnamedTextGrammar)',
+  
   char: function () {
     var c = this.next();
     if (arguments.length === 0) {

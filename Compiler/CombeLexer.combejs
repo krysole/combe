@@ -5,37 +5,8 @@ if (!__combe_runtimeLoaded) throw new Error("Combe runtime not loaded");
 var __combe_this = null;
 var __combe_return = null;
 try {
-var CombeLexer = (module.exports = TextGrammar.subclass((function () {
+var CombeLexer = (module.exports = LexicalGrammar.subclass((function () {
 var __combe_object = {};
-__combe_defineValueProperty(__combe_object, "allTokens", (function (source, filename) {
-var __combe_this = this;
-var __combe_return = null;
-var self = this;
-try {
-return (function () {
-var lexer = self.new(source, filename);
-var tokens = [];
-(function () {
-while ((tokens.isEmpty() || (!tokens.last.is("eof")))) {
-try {
-(function () {
-tokens.push(lexer.nextToken());
-})()}
-catch (__combe_e) {
-if (__combe_e === __combe_break) break;
-if (__combe_e === __combe_continue) continue;
-throw __combe_e;
-}
-}
-})();
-(function () { throw (__combe_return = { value: tokens }); })();
-})();
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}));
 return __combe_object;
 })(), (function () {
 var __combe_object = {};
@@ -47,7 +18,6 @@ var self = this;
 try {
 return (function () {
 CombeLexer.prototype.__proto__.initialize.call(self, fileSource, filename);
-(self.tokenPosition = 0);
 (self.emitNewline = false);
 })();
 }
@@ -56,40 +26,10 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "createToken", (function (type, value) {
-var __combe_this = this;
-var __combe_return = null;
-var self = this;
-try {
-return (function () {
-var text = self.slice(self.tokenPosition, self.position);
-var token = Token.new(type, value, self.tokenPosition, text.length, text);
-self.newTokens.push(token);
-(self.tokenPosition = self.position);
-(function () { throw (__combe_return = { value: token }); })();
-})();
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}));
-__combe_defineValueProperty(__combe_object, "nextTokens", (function () {
-return this.__combe_memoize("UNlbZpdIbvp6dariwwKbzQ", (function () {
+__combe_defineValueProperty(__combe_object, "nextToken", (function () {
+return this.__combe_memoize("WflocViMUkL0y7+KT/ENPw", (function () {
 var self = this;
 return (function () {
-(function () {
-(function () {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return (self.newTokens = []);
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}).call(this);
 (function () {
 return this.__combe_optional(this.ws);
 }).call(this);
@@ -121,25 +61,13 @@ return this.__combe_choice(this.identifier, this.number);
 this.eof.call(this);
 return (function () {
 var __combe_this = this;
-return this.createToken.call(this, "eof");
+return this.emit.call(this, "eof");
 }).call(this);
 }));
 }), (function () {
 var __combe_this = this;
 return this.error.call(this, ("Lexer failed at position " + self.positionString()));
 }));
-}).call(this);
-}).call(this);
-return (function () {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return self.newTokens;
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
 }).call(this);
 }).call(this);
 }));
@@ -150,9 +78,10 @@ var __combe_return = null;
 var self = this;
 try {
 return (function () {
-(/* if */ ((self.emitNewline && (!self.isEof())) && __combe_infixOperators["!="](self.tokenPosition, 0))
+var indentColumn = (self.lineColumn().subscript(1) - 1);
+(/* if */ ((self.emitNewline && (!self.isEof())) && (__combe_infixOperators["!="](self.tokenPosition, 0) || (indentColumn > 0)))
 ? /* then */ (function () {
-self.createToken("newline", (self.lineColumn().subscript(1) - 1));
+self.emit("newline", (self.lineColumn().subscript(1) - 1));
 })()
 : /* else */ null);
 (self.emitNewline = false);
@@ -164,7 +93,7 @@ throw __combe_e;
 }
 }));
 __combe_defineValueProperty(__combe_object, "identifier", (function () {
-return this.__combe_memoize("GqzzPuFJNZOOJeswfkPZIw", (function () {
+return this.__combe_memoize("5lLPa4yS99DHuJJj7DjG/g", (function () {
 var self = this;
 var token;
 return (function () {
@@ -181,7 +110,7 @@ return this.__combe_repeat(this.idChar);
 (function () {
 return (token = (function () {
 var __combe_this = this;
-return this.createToken.call(this, "identifier");
+return this.emit.call(this, "identifier");
 }).call(this));
 }).call(this);
 return (function () {
@@ -212,7 +141,7 @@ throw __combe_e;
 }));
 __combe_defineValueProperty(__combe_object, "ReservedWords", ["var", "if", "else", "while", "do", "for", "return", "break", "continue", "try", "catch", "finally", "this", "null", "undefined", "true", "false"]);
 __combe_defineValueProperty(__combe_object, "operatorAssignment", (function () {
-return this.__combe_memoize("iHdiOX3SyIgzC18Ruu4Iug", (function () {
+return this.__combe_memoize("6B/LrN4Bz9iydj1YhBuNFg", (function () {
 var self = this;
 return (function () {
 (function () {
@@ -260,13 +189,13 @@ return this.handleStringPattern(">>=");
 }).call(this);
 return (function () {
 var __combe_this = this;
-return this.createToken.call(this, "operatorAssignment");
+return this.emit.call(this, "operatorAssignment");
 }).call(this);
 }).call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "punctuation", (function () {
-return this.__combe_memoize("4vcYaGSyTXy5DLH2Fq3BLg", (function () {
+return this.__combe_memoize("1OFbwUzFIGp6PA1olNXoIg", (function () {
 var self = this;
 var text;
 return (function () {
@@ -463,7 +392,7 @@ return this.handleStringPattern(":");
 }).call(this);
 return (function () {
 var __combe_this = this;
-return this.createToken.call(this, text);
+return this.emit.call(this, text);
 }).call(this);
 }).call(this);
 }));
@@ -477,7 +406,7 @@ return this.__combe_choice(this.decimal, this.hexInteger);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "decimal", (function () {
-return this.__combe_memoize("LA0fcCKUfLmNM/2OBdyLAw", (function () {
+return this.__combe_memoize("KEX3D4LwotazsLi1qQ1TCQ", (function () {
 var self = this;
 var text;
 return (function () {
@@ -519,7 +448,7 @@ return this.__combe_not(this.idChar);
 }).call(this);
 return (function () {
 var __combe_this = this;
-return this.createToken.call(this, "number", parseFloat(text));
+return this.emit.call(this, "number", parseFloat(text));
 }).call(this);
 }).call(this);
 }));
@@ -569,7 +498,7 @@ return this.__combe_nonZeroRepeat(this.digit);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "hexInteger", (function () {
-return this.__combe_memoize("KGIwFBMQVCJRAyfRo2K0bw", (function () {
+return this.__combe_memoize("eri49xD/dORmVyrHWByEag", (function () {
 var self = this;
 var text;
 return (function () {
@@ -593,13 +522,13 @@ return this.__combe_not(this.idChar);
 }).call(this);
 return (function () {
 var __combe_this = this;
-return this.createToken.call(this, "number", parseInt(text, 16));
+return this.emit.call(this, "number", parseInt(text, 16));
 }).call(this);
 }).call(this);
 }));
 }));
 __combe_defineValueProperty(__combe_object, "string", (function () {
-return this.__combe_memoize("HXM+CFJn/MufE48dU2Sx/w", (function () {
+return this.__combe_memoize("63pwOWFh3HheMFJ9hNt6/w", (function () {
 var self = this;
 var text;
 return (function () {
@@ -620,7 +549,7 @@ return this.handleStringPattern("\"");
 }).call(this);
 return (function () {
 var __combe_this = this;
-return this.createToken.call(this, "string", text);
+return this.emit.call(this, "string", text);
 }).call(this);
 }).call(this);
 }));
@@ -933,7 +862,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "regex", (function () {
-return this.__combe_memoize("1E4HhspNBmTOuLJKocIG2w", (function () {
+return this.__combe_memoize("vWYRSy9lxcVIvoI9kEkq3g", (function () {
 var self = this;
 var pattern, options;
 return (function () {
@@ -968,7 +897,7 @@ return this.__combe_repeat(this.idChar);
 }).call(this);
 return (function () {
 var __combe_this = this;
-return this.createToken.call(this, "regex", Regex.new(pattern, options));
+return this.emit.call(this, "regex", Regex.new(pattern, options));
 }).call(this);
 }).call(this);
 }));

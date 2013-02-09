@@ -16,46 +16,17 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-var CombeLexer = module.exports = TextGrammar.subclass({
-  
-  allTokens(source, filename) {
-    var lexer = self.new(source, filename)
-    var tokens = []
-    
-    while (tokens.isEmpty() || !tokens.last.is('eof')) {
-      tokens.push(lexer.nextToken())
-    }
-    
-    return tokens
-  }
-  
-}, {
+var CombeLexer = module.exports = LexicalGrammar.subclass({}, {
   
   name: 'CombeLexer'
   
   initialize(fileSource, filename) {
     CombeLexer.prototype.__proto__.initialize.call(self, fileSource, filename)
     
-    self.tokenPosition = 0
     self.emitNewline = false
   }
   
-  createToken(type, value) {
-    var text = self.slice(self.tokenPosition, self.position)
-    var token = Token.new(
-      type,
-      value,
-      self.tokenPosition,
-      text.length,
-      text
-    )
-    self.newTokens.push(token)
-    self.tokenPosition = self.position
-    return token
-  }
-  
-  rule nextTokens {
-    !(self.newTokens = [])
+  rule nextToken {
     ws? newlineToken
     
     !(self.tokenPosition = self.position)
@@ -65,18 +36,17 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     | punctuation
     | string
     | regex
-    | eof createToken('eof')
+    | eof emit('eof')
     | error('Lexer failed at position ' + self.positionString())
     )
-    
-    -> self.newTokens
   }
   
   newlineToken {
+    var indentColumn = self.lineColumn()[1] - 1;
     if (self.emitNewline && 
         !self.isEof() &&
-        self.tokenPosition != 0) {
-      self.createToken('newline', self.lineColumn()[1] - 1)
+        (self.tokenPosition != 0 || indentColumn > 0)) {
+      self.emit('newline', self.lineColumn()[1] - 1)
     }
     self.emitNewline = false
   }
@@ -84,7 +54,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   
   rule identifier {
     ~'r/' initialIdChar idChar*
-    createToken('identifier'):token
+    emit('identifier'):token
     !(token.reserved = self.ReservedWords.include(token.text))
     -> token
   }
@@ -103,7 +73,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     ( '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^='
     | '<<=' | '>>>=' | '>>='
     )
-    createToken('operatorAssignment')
+    emit('operatorAssignment')
   }
   
   
@@ -117,7 +87,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
     | '++' | '--' | '+' | '-'
     | '*' | '/' | '%' | '~' | '?' | '::' | ':'
     ):text
-    createToken(text)
+    emit(text)
   }
   
   
@@ -131,7 +101,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
       | integerPart ('.' digit*)? exponentPart?
       | '.' digit+ exponentPart?
     ]:text ~idChar
-    createToken('number', parseFloat(text))
+    emit('number', parseFloat(text))
   }
   
   rule integerPart {
@@ -145,13 +115,13 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   
   rule hexInteger {
     ('0x'|'0X') matchedInput[hexDigit+]:text ~idChar
-    createToken('number', parseInt(text, 16))
+    emit('number', parseInt(text, 16))
   }
   
   
   rule string {
     ( stringFragment['\''] | stringFragment['\"'] ):text
-    createToken('string', text)
+    emit('string', text)
   }
   
   rule stringFragment(delimiter) {
@@ -183,7 +153,7 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   
   rule regex {
     'r/' matchedInput[~'*' regexChar*]:pattern '/' matchedInput[idChar*]:options
-    createToken('regex', Regex.new(pattern, options))
+    emit('regex', Regex.new(pattern, options))
   }
   
   rule regexChar {
