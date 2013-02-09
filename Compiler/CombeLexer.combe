@@ -31,34 +31,54 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   
 }, {
   
+  name: 'CombeLexer'
+  
+  initialize(fileSource, filename) {
+    CombeLexer.prototype.__proto__.initialize.call(self, fileSource, filename)
+    
+    self.tokenPosition = 0
+    self.emitNewline = false
+  }
+  
   createToken(type, value) {
     var text = self.slice(self.tokenPosition, self.position)
-    return (self.lastToken = Token.new(
+    var token = Token.new(
       type,
       value,
       self.tokenPosition,
       text.length,
       text
-    ))
+    )
+    self.newTokens.push(token)
+    self.tokenPosition = self.position
+    return token
   }
   
-  rule nextToken {
-    !(self.furthestPosition = self.position, self.emitNewline = false, self.tokenPosition = self.position)
-    ws?
+  rule nextTokens {
+    !(self.newTokens = [])
+    ws? newlineToken
     
-    ( ?(self.emitNewline) ~eof ?(self.tokenPosition != 0) newlineToken 
-    
-    | !(self.tokenPosition = self.position)
-      ( identifier
-      | number
-      | operatorAssignment
-      | punctuation
-      | string
-      | regex
-      | eof createToken('eof')
-      | error('Lexer failed at position ' + self.positionString())
-      )
+    !(self.tokenPosition = self.position)
+    ( identifier
+    | number
+    | operatorAssignment
+    | punctuation
+    | string
+    | regex
+    | eof createToken('eof')
+    | error('Lexer failed at position ' + self.positionString())
     )
+    
+    -> self.newTokens
+  }
+  
+  newlineToken {
+    if (self.emitNewline && 
+        !self.isEof() &&
+        self.tokenPosition != 0) {
+      self.createToken('newline', self.lineColumn()[1] - 1)
+    }
+    self.emitNewline = false
   }
   
   
@@ -179,11 +199,6 @@ var CombeLexer = module.exports = TextGrammar.subclass({
   rule regexCharacterClassChar {
     | '\\' ~newline char
     | ~(']' | newline) char
-  }
-  
-  
-  rule newlineToken {
-    createToken('newline', self.lineColumn()[1] - 1)
   }
   
   

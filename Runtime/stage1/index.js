@@ -26,5 +26,6 @@ require('./Token');
 require('./Grammar');
 require('./TextGrammar');
 require('./TokenGrammar');
+require('./TokenSource');
 
 global.__combe_runtimeStage0Loaded = true;

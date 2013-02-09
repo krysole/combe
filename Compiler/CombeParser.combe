@@ -21,10 +21,11 @@ var CombeLexer = require('./CombeLexer')
 
 var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
-  initialize(source, filename) {
-    CombeParser.prototype.__proto__.initialize.call(self, source, filename)
-    
-    self.lexer = CombeLexer.new(source, filename)
+  name: 'CombeParser'
+  
+  initialize(fileSource, filename) {
+    var tokenSource = TokenSource.new(CombeLexer.new(fileSource, filename))
+    CombeParser.prototype.__proto__.initialize.call(self, tokenSource, fileSource, filename)
     
     self.pushState('column', 0)
     self.pushState('enclosed', false)
