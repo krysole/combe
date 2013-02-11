@@ -24,7 +24,7 @@ global.TokenGrammar = Grammar.subclass({}, {
   name: '(UnnamedTokenGrammar)',
   
   initialize: function (source, sourcename) {
-    TokenGrammar.prototype.__proto__.initialize.call(this, source);
+    TokenGrammar.prototype.__proto__.initialize.call(this, source, sourcename);
     if (this.lexer == null && this.LexerClass != null) {
       this.lexer = this.LexerClass.new(source, sourcename);
     }

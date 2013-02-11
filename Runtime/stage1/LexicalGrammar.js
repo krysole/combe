@@ -41,6 +41,7 @@ global.LexicalGrammar = TextGrammar.subclass({
     while (tokenIndex != null && tokenIndex >= this.tokens.length &&
            !this.isEof()) {
       this.emittedTokens = [];
+      this.resetTokenState();
       var result = this.nextToken();
       if (this.emittedTokens.length > 0) {
         this.tokens.pushAll(this.emittedTokens);
@@ -65,9 +66,13 @@ global.LexicalGrammar = TextGrammar.subclass({
     );
   },
   
+  resetTokenState: function () {
+    this.tokenPosition = this.position;
+  },
+  
   emitToken: function (token) {
     this.emittedTokens.push(token);
-    this.tokenPosition = this.position;
+    this.resetTokenState();
     return token;
   },
   
