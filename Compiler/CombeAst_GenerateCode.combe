@@ -390,6 +390,16 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     }
   }
   
+  InterpolatedString(ast) { // [ expressions ]
+    ast.code = [
+      '(function () {\n',
+        'var __combe_string = "";\n',
+        ast.expressions.map((e) -> ['__combe_string += ', e.code, ';\n']),
+        'return __combe_string;\n',
+      '})()'
+    ]
+  }
+  
   Array(ast) { // [ arguments ]
     if (ast.arguments == null) ast.arguments = []
     
@@ -752,10 +762,10 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
     ]
   }
   
-  StringPattern(ast) { // [ value ]
+  StringPattern(ast) { // [ argument ]
     ast.code = [
       '(function () {\n',
-        'return this.handleStringPattern(', ast.value.quote(), ');\n',
+        'return this.handleStringPattern(', ast.argument.code, ');\n',
       '})'
     ]
   }

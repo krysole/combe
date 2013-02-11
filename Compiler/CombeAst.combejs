@@ -37,6 +37,7 @@ __combe_defineValueProperty(__combe_object, "ExclusiveRange", ["lhs", "rhs"]);
 __combe_defineValueProperty(__combe_object, "This", []);
 __combe_defineValueProperty(__combe_object, "Variable", ["name"]);
 __combe_defineValueProperty(__combe_object, "Literal", ["value"]);
+__combe_defineValueProperty(__combe_object, "InterpolatedString", ["expressions"]);
 __combe_defineValueProperty(__combe_object, "Array", ["arguments"]);
 __combe_defineValueProperty(__combe_object, "Object", ["properties"]);
 __combe_defineValueProperty(__combe_object, "Function", ["parameters", "body"]);
@@ -64,7 +65,7 @@ __combe_defineValueProperty(__combe_object, "CallPattern", ["pattern", "argument
 __combe_defineValueProperty(__combe_object, "PredicatePattern", ["body"]);
 __combe_defineValueProperty(__combe_object, "ActionPattern", ["body"]);
 __combe_defineValueProperty(__combe_object, "ImmediateActionPattern", ["body"]);
-__combe_defineValueProperty(__combe_object, "StringPattern", ["value"]);
+__combe_defineValueProperty(__combe_object, "StringPattern", ["argument"]);
 __combe_defineValueProperty(__combe_object, "VariablePattern", ["name"]);
 return __combe_object;
 })());

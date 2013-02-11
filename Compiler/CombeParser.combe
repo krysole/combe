@@ -371,8 +371,14 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   rule primaryExpression {
     | functionLiteral
     
-    | valueLiteral
+    | id('null') -> Ast.Literal(null)
+    | id('undefined') -> Ast.Literal(undefined)
     | id('this') -> Ast.This()
+    | booleanLiteral
+    | numberLiteral
+    | regexLiteral
+    | stringLiteral
+    
     | variableIdentifier:name -> Ast.Variable(name)
     | arrayLiteral
     | objectLiteral
@@ -380,17 +386,29 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | subexpression
   }
   
-  rule valueLiteral {
-    ( id('null') -> null
-    | id('undefined') -> undefined
-    | id('true') -> true
-    | id('false') -> false
-    | 'number':n -> n.value
-    | 'string':s -> s.value
-    | 'regex':r -> r.value
-    ):value
-    -> Ast.Literal(value)
+  rule booleanLiteral {
+    | id('true') -> Ast.Literal(true)
+    | id('false') -> Ast.Literal(false)
   }
+  
+  rule numberLiteral {
+    'number':n -> Ast.Literal(n.value)
+  }
+  
+  rule regexLiteral {
+    'regex':r -> Ast.Literal(r.value)
+  }
+  
+  rule stringLiteral {
+    | interpolatedStringLiteral
+    | simpleStringLiteral
+  }
+  rule interpolatedStringLiteral {
+    'beginString' (simpleStringLiteral | interpolatedExpression)+:es 'endString'
+    -> Ast.InterpolatedString(es)
+  }
+  rule simpleStringLiteral { 'string':s -> Ast.Literal(s.value) }
+  rule interpolatedExpression { 'expression':e -> e.value }
   
   rule arrayLiteral {
     lbracket delimited[arrayElement, ',']:elems ','? rbracket
@@ -556,7 +574,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   }
   
   rule stringPattern {
-    'string':s -> Ast.StringPattern(s.value)
+    stringLiteral:s -> Ast.StringPattern(s)
   }
   
   rule variablePattern {
@@ -575,8 +593,8 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   rule propertyName {
     | lparen expression:expr rparen -> expr
     | 'identifier':t -> Ast.Literal(t.text)
-    | 'string':t     -> Ast.Literal(t.value)
-    | 'number':t     -> Ast.Literal(t.value)
+    | stringLiteral
+    | numberLiteral
   }
   
   

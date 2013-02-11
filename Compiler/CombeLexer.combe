@@ -16,6 +16,8 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
+var lazy_CombeParser = lazyRequire('./CombeParser')
+
 var CombeLexer = module.exports = LexicalGrammar.subclass({}, {
   
   name: 'CombeLexer'
@@ -120,20 +122,46 @@ var CombeLexer = module.exports = LexicalGrammar.subclass({}, {
   
   
   rule string {
-    ( stringFragment['\''] | stringFragment['\"'] ):text
-    emit('string', text)
+    singleLineString
+  }
+  
+  rule singleLineString {
+    | singleLineStringBody['\'']
+    | singleLineStringBody['\"']
+  }
+  rule singleLineStringBody(delimiter) {
+    delimiter (stringFragment(delimiter) | stringInterpolationFragment(delimiter))*:fragments delimiter
+    !{
+      if (fragments.length == 0) {
+        self.emit('string', '')
+      }
+      else if (fragments.length == 1 && String.isClassOf(fragments[0])) {
+        self.emit('string', fragments[0])
+      }
+      else {
+        self.emit('beginString')
+        fragments.each(function (f) {
+          if (String.isClassOf(f)) {
+            self.emit('string', f)
+          }
+          else {
+            self.emit('expression', f)
+          }
+        })
+        self.emit('endString')
+      }
+    }
+  },
+  
+  rule unescapedStringFragment(delimiter) {
+    (~delimiter ~newline char)+:cs -> cs.join('')
   }
   
   rule stringFragment(delimiter) {
-    delimiter (~delimiter stringChar)*:cs delimiter
-    -> cs.join('')
+    (~delimiter ~newline stringChar)+:cs -> cs.join('')
   }
   
-  rule stringChar {
-    | '\\' stringEscapeSequence
-    | '\\' newline -> ''
-    | ~newline char
-  }
+  rule stringChar { '\\' stringEscapeSequence | ~'\\' char }
   
   rule stringEscapeSequence {
     | '\'' -> '\''
@@ -148,6 +176,15 @@ var CombeLexer = module.exports = LexicalGrammar.subclass({}, {
     | '0' ~digit -> '\0'
     | 'x' matchedInput[hexDigit hexDigit]:hs -> String.fromCodepoint(hs)
     | 'u' matchedInput[hexDigit hexDigit hexDigit hexDigit]:hs -> String.fromCodepoint(hs)
+  }
+  
+  rule stringInterpolationFragment {
+    '\\(' ')' -> require('./CombeAst').Literal(null)
+    // Todo: finish implementing the following
+    // '\\(' embedParse(lazy_CombeParser(), 'expression', self.stringInterpolationRegion) ')'
+  }
+  rule stringInterpolationFragmentRegion {
+    (~newline char)+
   }
   
   
