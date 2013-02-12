@@ -89,4 +89,10 @@ global.LexicalGrammar = TextGrammar.subclass({
     return this.tokens[tokenIndex];
   },
   
+  sliceTokens: function (startTokenIndex, endTokenIndex) {
+    if (startTokenIndex != null) this.readTokens(startTokenIndex);
+    if (endTokenIndex != null) this.readTokens(endTokenIndex);
+    return this.tokens.slice(startTokenIndex, endTokenIndex);
+  },
+  
 });

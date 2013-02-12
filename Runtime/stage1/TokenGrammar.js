@@ -62,8 +62,8 @@ global.TokenGrammar = Grammar.subclass({}, {
     return this.sourcename + ':' + lineColumn;
   },
   
-  slice: function () {
-    throw UnimplementedError.new('TokenGrammar.slice()');
+  slice: function (start, end) {
+    return this.lexer.sliceTokens(start, end);
   },
   
 });
