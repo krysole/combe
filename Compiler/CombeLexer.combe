@@ -16,14 +16,12 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-var lazy_CombeParser = lazyRequire('./CombeParser')
-
 var CombeLexer = module.exports = LexicalGrammar.subclass({}, {
   
   name: 'CombeLexer'
   
-  initialize(fileSource, filename) {
-    CombeLexer.prototype.__proto__.initialize.call(self, fileSource, filename)
+  initialize(source, sourcename, position, limitPosition) {
+    CombeLexer.prototype.__proto__.initialize.call(self, source, sourcename, position, limitPosition)
     
     self.emitNewline = false
   }
@@ -179,11 +177,12 @@ var CombeLexer = module.exports = LexicalGrammar.subclass({}, {
   }
   
   rule stringInterpolationFragment {
-    '\\(' ')' -> require('./CombeAst').Literal(null)
-    // Todo: finish implementing the following
-    // '\\(' embedParse(lazy_CombeParser(), 'expression', self.stringInterpolationRegion) ')'
+    '\\('
+    embeddedParse(require('./CombeParser'), 'expression', self.stringInterpolationLimit):e
+    ~newline ws? ')'
+    -> e
   }
-  rule stringInterpolationFragmentRegion {
+  rule stringInterpolationLimit {
     (~newline char)+
   }
   

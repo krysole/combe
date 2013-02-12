@@ -13,13 +13,13 @@ return __combe_object;
 })(), (function () {
 var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "name", "CombeParser");
-__combe_defineValueProperty(__combe_object, "initialize", (function (source, filename) {
+__combe_defineValueProperty(__combe_object, "initialize", (function (source, filename, position, limitPosition) {
 var __combe_this = this;
 var __combe_return = null;
 var self = this;
 try {
 return (function () {
-CombeParser.prototype.__proto__.initialize.call(self, source, filename);
+CombeParser.prototype.__proto__.initialize.call(self, source, filename, position, limitPosition);
 self.pushState("column", 0);
 self.pushState("enclosed", false);
 })();

@@ -5,20 +5,19 @@ if (!__combe_runtimeLoaded) throw new Error("Combe runtime not loaded");
 var __combe_this = null;
 var __combe_return = null;
 try {
-var lazy_CombeParser = lazyRequire("./CombeParser");
 var CombeLexer = (module.exports = LexicalGrammar.subclass((function () {
 var __combe_object = {};
 return __combe_object;
 })(), (function () {
 var __combe_object = {};
 __combe_defineValueProperty(__combe_object, "name", "CombeLexer");
-__combe_defineValueProperty(__combe_object, "initialize", (function (fileSource, filename) {
+__combe_defineValueProperty(__combe_object, "initialize", (function (source, sourcename, position, limitPosition) {
 var __combe_this = this;
 var __combe_return = null;
 var self = this;
 try {
 return (function () {
-CombeLexer.prototype.__proto__.initialize.call(self, fileSource, filename);
+CombeLexer.prototype.__proto__.initialize.call(self, source, sourcename, position, limitPosition);
 (self.emitNewline = false);
 })();
 }
@@ -935,12 +934,25 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "stringInterpolationFragment", (function () {
-return this.__combe_memoize("wc4sIrgtgb5F2lHk2ogiLA", (function () {
+return this.__combe_memoize("RQn1zMOtIKsSzYxBft/mEw", (function () {
 var self = this;
+var e;
 return (function () {
 (function () {
 (function () {
 return this.handleStringPattern("\\(");
+}).call(this);
+(function () {
+return (e = (function () {
+var __combe_this = this;
+return this.embeddedParse.call(this, require("./CombeParser"), "expression", self.stringInterpolationLimit);
+}).call(this));
+}).call(this);
+(function () {
+return this.__combe_not(this.newline);
+}).call(this);
+(function () {
+return this.__combe_optional(this.ws);
 }).call(this);
 return (function () {
 return this.handleStringPattern(")");
@@ -950,7 +962,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return require("./CombeAst").Literal(null);
+return e;
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -960,7 +972,7 @@ throw __combe_e;
 }).call(this);
 }));
 }));
-__combe_defineValueProperty(__combe_object, "stringInterpolationFragmentRegion", (function () {
+__combe_defineValueProperty(__combe_object, "stringInterpolationLimit", (function () {
 return this.__combe_memoize("D2briWOMd64I9HpIJ5dBDQ", (function () {
 var self = this;
 return (function () {

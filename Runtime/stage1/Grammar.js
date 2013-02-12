@@ -35,19 +35,44 @@ global.Grammar = Object.subclass({
     return parser.matchAll.apply(parser, matchargs);
   },
   
+  embeddedMatch: function (source, sourcename, position, limitPosition) {
+    var matchargs = Array.slice(arguments, 4);
+    
+    var parser = this.new(source, sourcename, position, limitPosition);
+    var value = parser.match.apply(parser, matchargs);
+    return {
+      position: parser.position,
+      value: value
+    };
+  },
+  
+  embeddedMatchAll: function (source, sourcename, position, limitPosition) {
+    var matchargs = Array.slice(arguments, 4);
+    
+    var parser = this.new(source, sourcename, position, limitPosition);
+    var value = parser.matchAll.apply(parser, matchargs);
+    return {
+      position: parser.position,
+      value: value
+    };
+  },
+  
 }, {
   
   start: function () {
     throw ShouldOverideError.new('Grammar.start()');
   },
   
-  initialize: function (source, sourcename) {
+  initialize: function (source, sourcename, position, limitPosition) {
     if (source == null) source = [];
+    if (position == null) position = 0;
+    
     this.source = source;
     this.sourcename = sourcename;
-    this._position_storage = 0;
-    this.furthestPosition = 0;
+    this._position_storage = position;
+    this.furthestPosition = position;
     this.state = {};
+    this.limitPosition = limitPosition;
   },
   
   get filename() { return this.sourcename; },
@@ -148,7 +173,8 @@ global.Grammar = Object.subclass({
   },
   
   isEof: function () {
-    return (this.position >= this.source.length);
+    return (this.position >= this.source.length ||
+            this.position >= this.limitPosition);
   },
   eof: function () {
     if (this.isEof()) return null;
@@ -243,6 +269,24 @@ global.Grammar = Object.subclass({
   getState: function (name, positionFromTop) {
     if (positionFromTop == null) positionFromTop = 0;
     return this.state[name][this.state[name].length - positionFromTop - 1];
+  },
+  
+  embeddedParse: function (parserClass, ruleName, limitParser) {
+    var initialPosition = this.position;
+    var initialState = this.state;
+    limitParser.call(this);
+    var limitPosition = this.position;
+    this.position = initialPosition;
+    this.state = initialState;
+    
+    return this.embeddedParseAt(parserClass, ruleName, this.position, limitPosition);
+  },
+  
+  embeddedParseAt: function (parserClass, ruleName, position, limitPosition) {
+    var result = parserClass.embeddedMatch(this.source, this.sourcename, position, limitPosition, ruleName);
+    assert(result.position <= limitPosition);
+    this.position = result.position;
+    return result.value;
   },
   
 });

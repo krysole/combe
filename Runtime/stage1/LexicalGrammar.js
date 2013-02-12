@@ -31,8 +31,8 @@ global.LexicalGrammar = TextGrammar.subclass({
   
   name: '(UnnamedLexicalGrammar)',
   
-  initialize: function (source, filename) {
-    LexicalGrammar.prototype.__proto__.initialize.call(this, source, filename);
+  initialize: function (source, sourcename, position, limitPosition) {
+    LexicalGrammar.prototype.__proto__.initialize.call(this, source, sourcename, position, limitPosition);
     this.tokenPosition = 0;
     this.tokens = [];
   },

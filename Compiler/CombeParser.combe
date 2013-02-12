@@ -23,8 +23,8 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   name: 'CombeParser'
   
-  initialize(source, filename) {
-    CombeParser.prototype.__proto__.initialize.call(self, source, filename)
+  initialize(source, filename, position, limitPosition) {
+    CombeParser.prototype.__proto__.initialize.call(self, source, filename, position, limitPosition)
     
     self.pushState('column', 0)
     self.pushState('enclosed', false)

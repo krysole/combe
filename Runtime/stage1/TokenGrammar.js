@@ -19,14 +19,40 @@
 
 // Todo: This can and probably should be rewritten in Combe notation.
 
-global.TokenGrammar = Grammar.subclass({}, {
+global.TokenGrammar = Grammar.subclass({
+  
+  embeddedMatch: function (source, sourcename, position, limitPosition) {
+    var matchargs = Array.slice(arguments, 4);
+    
+    var parser = this.new(source, sourcename, position, limitPosition);
+    var value = parser.match.apply(parser, matchargs);
+    var finalToken = parser.last();
+    return {
+      position: finalToken.position + finalToken.length,
+      value: value
+    };
+  },
+  
+  embeddedMatchAll: function (source, sourcename, position, limitPosition) {
+    var matchargs = Array.slice(arguments, 4);
+    
+    var parser = this.new(source, sourcename, position, limitPosition);
+    var value = parser.matchAll.apply(parser, matchargs);
+    var finalToken = parser.last();
+    return {
+      position: finalToken.position + finalToken.length,
+      value: value
+    };
+  },
+  
+}, {
   
   name: '(UnnamedTokenGrammar)',
   
-  initialize: function (source, sourcename) {
+  initialize: function (source, sourcename, position, limitPosition) {
     TokenGrammar.prototype.__proto__.initialize.call(this, source, sourcename);
     if (this.lexer == null && this.LexerClass != null) {
-      this.lexer = this.LexerClass.new(source, sourcename);
+      this.lexer = this.LexerClass.new(source, sourcename, position, limitPosition);
     }
   },
   
