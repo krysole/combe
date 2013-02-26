@@ -592,32 +592,33 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   
   ws {
-    if (self.last().is('newline') ||
-        self.last().end !== self.peek().start) {
+    var lastToken = self.last();
+    var nextToken = self.peek();
+    if (lastToken.is('newline') ||
+        nextToken.is('newline') ||
+        lastToken.end !== nextToken.start) {
       return null
     }
     else {
-      self.fail()
+      throw Backtrack
     }
   }
   
   newline {
-    // ignoreToken causes next to ignore sometimes ignore newlines we want
-    var token = self.at(self.position++)
+    var token = self.next();
     if (token.is('newline')) return token
     else throw Backtrack
   }
   
-  ignoreToken(token) {
-    // Ignore line continuations
-    return (
-      token.is('newline') &&
-      (
-        self.getState('enclosed') ||
-        token.value > self.getState('column')
-      )
-    )
-  }
+  t(typename) {
+    var token = self.next()
+    while (token.is('newline') && 
+           (self.getState('enclosed') || token.value > self.getState('column'))) {
+      token = self.next()
+    }
+    if (token.is(typename)) return token
+    else throw Backtrack
+  },
   
   rule blockIndentation {
     // workaround to ignoreToken eating token it as a continuation line

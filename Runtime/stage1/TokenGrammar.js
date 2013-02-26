@@ -43,9 +43,9 @@ global.TokenGrammar = Grammar.subclass({}, {
   },
   
   t: function (typename) {
-    return this.nextIf(function (token) {
-      return (token.is(typename));
-    });
+    var token = this.next();
+    if (token.is(typename)) return token;
+    else throw Backtrack;
   },
   
   positionString: function (position) {

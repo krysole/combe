@@ -163,21 +163,11 @@ global.Grammar = Object.subclass({
     }
   },
   
-  ignoreToken: null,
-  
-  __combe_ignoreToken: function () {
-    if (this.ignoreToken != null) {
-      while (this.ignoreToken(this.at(this.position))) this.position++;
-    }
-  },
-  
   peek: function () {
-    this.__combe_ignoreToken();
     return this.at(this.position);
   },
   
   next: function () {
-    this.__combe_ignoreToken();
     return this.at(this.position++);
   },
   
@@ -186,15 +176,9 @@ global.Grammar = Object.subclass({
   },
   
   nextIf: function (predicate) {
-    this.__combe_ignoreToken();
-    var o = this.at(this.position);
-    if (predicate.call(this, o)) {
-      this.position++;
-      return o;
-    }
-    else {
-      throw Backtrack;
-    }
+    var o = this.next();
+    if (predicate.call(this, o)) return o;
+    else throw Backtrack;
   },
   
   matchedInput: function (parser) {

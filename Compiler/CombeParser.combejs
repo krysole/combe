@@ -3506,12 +3506,14 @@ var __combe_return = null;
 var self = this;
 try {
 return (function () {
-(/* if */ (self.last().is("newline") || (self.last().end !== self.peek().start))
+var lastToken = self.last();
+var nextToken = self.peek();
+(/* if */ ((lastToken.is("newline") || nextToken.is("newline")) || (lastToken.end !== nextToken.start))
 ? /* then */ (function () {
 (function () { throw (__combe_return = { value: null }); })();
 })()
 : /* else */ (function () {
-self.fail();
+(function () { throw Backtrack; })();
 })());
 })();
 }
@@ -3526,7 +3528,7 @@ var __combe_return = null;
 var self = this;
 try {
 return (function () {
-var token = self.at((self.position++));
+var token = self.next();
 (/* if */ token.is("newline")
 ? /* then */ (function () { throw (__combe_return = { value: token }); })()
 : /* else */ (function () { throw Backtrack; })());
@@ -3537,13 +3539,29 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "ignoreToken", (function (token) {
+__combe_defineValueProperty(__combe_object, "t", (function (typename) {
 var __combe_this = this;
 var __combe_return = null;
 var self = this;
 try {
 return (function () {
-(function () { throw (__combe_return = { value: (token.is("newline") && (self.getState("enclosed") || (token.value > self.getState("column")))) }); })();
+var token = self.next();
+(function () {
+while ((token.is("newline") && (self.getState("enclosed") || (token.value > self.getState("column"))))) {
+try {
+(function () {
+(token = self.next());
+})()}
+catch (__combe_e) {
+if (__combe_e === __combe_break) break;
+if (__combe_e === __combe_continue) continue;
+throw __combe_e;
+}
+}
+})();
+(/* if */ token.is(typename)
+? /* then */ (function () { throw (__combe_return = { value: token }); })()
+: /* else */ (function () { throw Backtrack; })());
 })();
 }
 catch (__combe_e) {
