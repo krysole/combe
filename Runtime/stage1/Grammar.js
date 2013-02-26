@@ -186,7 +186,7 @@ global.Grammar = Object.subclass({
       return this.source[position];
     }
     else {
-      throw Backtrack
+      throw Backtrack;
     }
   },
   
