@@ -48,18 +48,14 @@ global.TokenGrammar = Grammar.subclass({}, {
     else throw Backtrack;
   },
   
-  positionString: function (position) {
+  lineColumn: function (position) {
     if (position == null) position = this.position;
     
-    if (position >= 0) {
-      var token = this.at(position);
-      var lineColumn = this.source.lineColumnString(token.position);
-    }
-    else {
-      var lineColumn = '-1:0';
-    }
-    
-    return this.sourcename + ':' + lineColumn;
+    return this.source.lineColumn(this.at(position));
+  },
+  
+  positionString: function (position) {
+    return this.sourcename + ':' + this.lineColumn(position).join(':');
   },
   
   slice: function (start, end) {

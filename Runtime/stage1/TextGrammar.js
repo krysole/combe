@@ -70,12 +70,7 @@ global.TextGrammar = Grammar.subclass({}, {
   lineColumn: function (position) {
     if (position == null) position = this.position;
     
-    if (position >= 0) {
-      return this.source.lineColumn(position);
-    }
-    else {
-      return lineColumn = [-1, 0];
-    }
+    return this.source.lineColumn(position);
   },
   
   positionString: function (position) {
