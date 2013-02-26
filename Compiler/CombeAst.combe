@@ -52,7 +52,6 @@ var CombeAst = module.exports = Ast.subclass({
     This:                   []
     Variable:               ['name']
     Literal:                ['value']
-    InterpolatedString:     ['expressions']
     Array:                  ['arguments']
     Object:                 ['properties']
     

@@ -562,30 +562,6 @@ if (__combe_e === __combe_return) return __combe_return.value;
 throw __combe_e;
 }
 }));
-__combe_defineValueProperty(__combe_object, "InterpolatedString", (function (ast) {
-var __combe_this = this;
-var __combe_return = null;
-var self = this;
-try {
-return (function () {
-(ast.code = ["(function () {\n", "var __combe_string = \"\";\n", ast.expressions.map((function (e) {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return ["__combe_string += ", e.code, ";\n"];
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-})), "return __combe_string;\n", "})()"]);
-})();
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}));
 __combe_defineValueProperty(__combe_object, "Array", (function (ast) {
 var __combe_this = this;
 var __combe_return = null;

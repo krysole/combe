@@ -20,8 +20,8 @@ var CombeLexer = module.exports = LexicalGrammar.subclass({}, {
   
   name: 'CombeLexer'
   
-  initialize(source, sourcename, position, limitPosition) {
-    CombeLexer.prototype.__proto__.initialize.call(self, source, sourcename, position, limitPosition)
+  initialize(source, sourcename) {
+    CombeLexer.prototype.__proto__.initialize.call(self, source, sourcename)
     
     self.emitNewline = false
   }
@@ -120,45 +120,15 @@ var CombeLexer = module.exports = LexicalGrammar.subclass({}, {
   
   
   rule string {
-    singleLineString
+    | singleLineString['\'']
+    | singleLineString['\"']
   }
   
-  rule singleLineString {
-    | singleLineStringBody['\'']
-    | singleLineStringBody['\"']
+  rule singleLineString(delimiter) {
+    delimiter (~delimiter ~newline stringChar)*:cs delimiter
+    emit('string', cs.join(''))
   }
-  rule singleLineStringBody(delimiter) {
-    delimiter (stringFragment(delimiter) | stringInterpolationFragment(delimiter))*:fragments delimiter
-    !{
-      if (fragments.length == 0) {
-        self.emit('string', '')
-      }
-      else if (fragments.length == 1 && String.isClassOf(fragments[0])) {
-        self.emit('string', fragments[0])
-      }
-      else {
-        self.emit('beginString')
-        fragments.each(function (f) {
-          if (String.isClassOf(f)) {
-            self.emit('string', f)
-          }
-          else {
-            self.emit('expression', f)
-          }
-        })
-        self.emit('endString')
-      }
-    }
-  },
-  
-  rule unescapedStringFragment(delimiter) {
-    (~delimiter ~newline char)+:cs -> cs.join('')
-  }
-  
-  rule stringFragment(delimiter) {
-    (~delimiter ~newline stringChar)+:cs -> cs.join('')
-  }
-  
+    
   rule stringChar { '\\' stringEscapeSequence | ~'\\' char }
   
   rule stringEscapeSequence {
@@ -174,16 +144,6 @@ var CombeLexer = module.exports = LexicalGrammar.subclass({}, {
     | '0' ~digit -> '\0'
     | 'x' matchedInput[hexDigit hexDigit]:hs -> String.fromCodepoint(hs)
     | 'u' matchedInput[hexDigit hexDigit hexDigit hexDigit]:hs -> String.fromCodepoint(hs)
-  }
-  
-  rule stringInterpolationFragment {
-    '\\('
-    embeddedParse(require('./CombeParser'), 'expression', self.stringInterpolationLimit):e
-    ~newline ws? ')'
-    -> e
-  }
-  rule stringInterpolationLimit {
-    (~newline char)+
   }
   
   

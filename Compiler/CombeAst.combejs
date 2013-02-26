@@ -37,7 +37,6 @@ __combe_defineValueProperty(__combe_object, "ExclusiveRange", ["lhs", "rhs"]);
 __combe_defineValueProperty(__combe_object, "This", []);
 __combe_defineValueProperty(__combe_object, "Variable", ["name"]);
 __combe_defineValueProperty(__combe_object, "Literal", ["value"]);
-__combe_defineValueProperty(__combe_object, "InterpolatedString", ["expressions"]);
 __combe_defineValueProperty(__combe_object, "Array", ["arguments"]);
 __combe_defineValueProperty(__combe_object, "Object", ["properties"]);
 __combe_defineValueProperty(__combe_object, "Function", ["parameters", "body"]);

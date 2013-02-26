@@ -23,8 +23,8 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   name: 'CombeParser'
   
-  initialize(source, filename, position, limitPosition) {
-    CombeParser.prototype.__proto__.initialize.call(self, source, filename, position, limitPosition)
+  initialize(source, filename) {
+    CombeParser.prototype.__proto__.initialize.call(self, source, filename)
     
     self.pushState('column', 0)
     self.pushState('enclosed', false)
@@ -400,15 +400,8 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   }
   
   rule stringLiteral {
-    | interpolatedStringLiteral
-    | simpleStringLiteral
+    'string':s -> Ast.Literal(s.value)
   }
-  rule interpolatedStringLiteral {
-    'beginString' (simpleStringLiteral | interpolatedExpression)+:es 'endString'
-    -> Ast.InterpolatedString(es)
-  }
-  rule simpleStringLiteral { 'string':s -> Ast.Literal(s.value) }
-  rule interpolatedExpression { 'expression':e -> e.value }
   
   rule arrayLiteral {
     lbracket delimited[arrayElement, ',']:elems ','? rbracket
