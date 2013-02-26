@@ -83,14 +83,6 @@ Array.extend({
   
 }, {
   
-  at: function (index) {
-    if (index < 0) {
-      index = this.length - index;
-      if (index < 0) return null;
-    }
-    return this[index];
-  },
-  
   get first() { return this[0]; },
   set first(value) { this[0] = value; },
   
