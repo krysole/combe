@@ -1,5 +1,5 @@
 {
-  "name": "combe-newcombe",
+  "name": "combe",
   "description": "Improved JavaScript with Pattern Matching",
   "version": "0.5.0",
   "homepage": "http://github.com/krysole/combe",
@@ -17,8 +17,8 @@
     }
   ],
   "bin": {
-    "newcombec": "./bin/newcombec",
-    "newcombe": "./bin/newcombe"
+    "combe": "./bin/combe"
+    "combec": "./bin/combec",
   },
   "repository": {
     "type": "git",

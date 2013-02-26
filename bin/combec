@@ -18,20 +18,27 @@
 //
 "use strict";
 
+require('../Runtime');
+
+var nopt = require('nopt');
 var path = require('path');
 
-require('combe-newcombe/Runtime');
+var Compiler = require('../Compiler');
 
 setTimeout(function () {
-  if (process.argv.length < 2 + 1) { // argv: node newcombe ...
-    console.error('Usage: newcombe filename');
-    return;
+  var knownOptions = {
+    "output": [String],
+  };
+  var optionShorthands = {
+    "o": ["--output"]
+  };
+  var options = nopt(knownOptions, optionShorthands, process.argv, 2);
+  if (options.argv.remain === 1) {
+    console.error('Usage: combec [-o output] source');
+    process.exit(1);
   }
   
-  var sourceFilename = path.resolve(process.argv[2]);
-  var ext = path.extname(sourceFilename);
-  if (ext === '.combe') {
-    sourceFilename += 'js'; // only load a .combejs file
-  }
-  require(sourceFilename);
+  var source = options.argv.remain[0];
+  
+  Compiler.compile(source, options.output, options);
 }, 0);

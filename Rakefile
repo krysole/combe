@@ -17,7 +17,7 @@
 #
 
 rule ".combejs" => [".combe"] do |t|
-  sh "newcombec -o #{t.name} #{t.source}"
+  sh "./bin/combec -o #{t.name} #{t.source}"
 end
 
 task :clean => [:cleanCompilerCopy]
