@@ -33,7 +33,7 @@ Error.extend({
   },
   
   new: function () {
-    var e = Object.create(this.prototype);
+    var e = this.allocate();
     Error.captureStackTrace(e, Error.classPrototype.new);
     e.initialize.apply(e, arguments);
     return e;
