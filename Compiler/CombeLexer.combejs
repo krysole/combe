@@ -27,24 +27,14 @@ throw __combe_e;
 }
 }));
 __combe_defineValueProperty(__combe_object, "nextToken", (function () {
-return this.__combe_memoize("WflocViMUkL0y7+KT/ENPw", (function () {
+return this.__combe_memoize("x9IP19C23vRpdnNFueAWrQ", (function () {
 var self = this;
 return (function () {
 (function () {
 return this.__combe_optional(this.ws);
 }).call(this);
 this.newlineToken.call(this);
-(function () {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return (self.tokenPosition = self.position);
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}).call(this);
+this.resetToken.call(this);
 return (function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {

@@ -22,9 +22,7 @@
 global.LexicalGrammar = TextGrammar.subclass({
   
   allTokens: function (source, filename) {
-    var lexer = this.new(source, filename);
-    lexer.readTokens();
-    return lexer.tokens;
+    return this.new(source, filename).allTokens();
   },
   
 }, {
@@ -37,22 +35,33 @@ global.LexicalGrammar = TextGrammar.subclass({
     this.tokens = [];
   },
   
-  readTokens: function (tokenIndex) {
-    while (tokenIndex != null && tokenIndex >= this.tokens.length &&
-           !this.isEof()) {
-      this.emittedTokens = [];
-      this.resetTokenState();
-      var result = this.nextToken();
-      if (this.emittedTokens.length > 0) {
-        this.tokens.pushAll(this.emittedTokens);
-      }
-      else if (result != null && Token.isClassOf(result)) {
-        this.tokens.push(result);
-      }
-      else {
-        throw Error.new("nextToken did not emit token, (returned '" + result + "')");
-      }
+  allTokens: function () {
+    while (!this.isEof()) {
+      this.readTokens();
     }
+    return this.tokens;
+  },
+  
+  tokenAt: function (tokenIndex) {
+    while (tokenIndex >= this.tokens.length) {
+      if (this.isEof()) {
+        this.error('Cannot read tokens beyond eof');
+      }
+      this.readTokens();
+    }
+    return this.tokens[tokenIndex];
+  },
+  
+  readTokens: function () {
+    this.resetEmitted();
+    this.nextToken();
+    if (this.tokens.length <= this.emittedTokensIndex) {
+      this.error('nextToken did not emit token');
+    }
+  },
+  
+  nextToken: function () {
+    throw ShouldOverrideError.new();
   },
   
   newToken: function (type, value) {
@@ -66,33 +75,23 @@ global.LexicalGrammar = TextGrammar.subclass({
     );
   },
   
-  resetTokenState: function () {
+  resetToken: function () {
     this.tokenPosition = this.position;
   },
   
+  resetEmitted: function () {
+    this.emittedTokensIndex = this.tokens.length;
+    this.resetToken();
+  },
+  
   emitToken: function (token) {
-    this.emittedTokens.push(token);
-    this.resetTokenState();
+    this.tokens.push(token);
+    this.resetToken();
     return token;
   },
   
   emit: function (type, value) {
     return this.emitToken(this.newToken(type, value));
-  },
-  
-  tokenAt: function (tokenIndex) {
-    assert(tokenIndex >= 0);
-    this.readTokens(tokenIndex);
-    if (tokenIndex > this.tokens.length) {
-      this.error("tokenIndex beyond eof");
-    }
-    return this.tokens[tokenIndex];
-  },
-  
-  sliceTokens: function (startTokenIndex, endTokenIndex) {
-    if (startTokenIndex != null) this.readTokens(startTokenIndex);
-    if (endTokenIndex != null) this.readTokens(endTokenIndex);
-    return this.tokens.slice(startTokenIndex, endTokenIndex);
   },
   
 });

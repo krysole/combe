@@ -29,7 +29,7 @@ var CombeLexer = module.exports = LexicalGrammar.subclass({}, {
   rule nextToken {
     ws? newlineToken
     
-    !(self.tokenPosition = self.position)
+    resetToken
     ( identifier
     | number
     | operatorAssignment
