@@ -70,7 +70,6 @@ global.LexicalGrammar = TextGrammar.subclass({
       type, 
       value, 
       this.tokenPosition,
-      text.length,
       text
     );
   },

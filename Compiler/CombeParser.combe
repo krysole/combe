@@ -600,7 +600,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   ws {
     if (self.last().is('newline') ||
-        self.last().position + self.last().length !== self.peek().position) {
+        self.last().end !== self.peek().start) {
       return null
     }
     else {

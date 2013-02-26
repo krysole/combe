@@ -3572,7 +3572,7 @@ var __combe_return = null;
 var self = this;
 try {
 return (function () {
-(/* if */ (self.last().is("newline") || ((self.last().position + self.last().length) !== self.peek().position))
+(/* if */ (self.last().is("newline") || (self.last().end !== self.peek().start))
 ? /* then */ (function () {
 (function () { throw (__combe_return = { value: null }); })();
 })()

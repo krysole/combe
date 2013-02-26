@@ -18,13 +18,16 @@
 
 global.Token = Object.subclass({}, {
   
-  initialize: function (type, value, position, length, text) {
+  initialize: function (type, value, position, text) {
     this.type = type;
     this.value = value;
     this.position = position;
-    this.length = length;
     this.text = text;
   },
+  
+  get length() { return this.text.length; },
+  get start() { return this.position; },
+  get end() { return this.position + this.length; },
   
   toString: function () {
     return '[[Token ' + this.type + ' ' + this.value + ' ' + this.text.quote() + ']]';
