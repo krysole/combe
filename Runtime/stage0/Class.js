@@ -52,6 +52,9 @@ global.Class = {
       _class.prototype = Object.create(superclass.prototype);
       _class.prototype.class = _class;
       
+      _class.classPrototype._constructor = function () {};
+      _class.classPrototype._constructor.prototype = _class.prototype;
+      
       Object.extend(_class.classPrototype, classPrototypeExtensions);
       Object.extend(_class.prototype, prototypeExtensions);
       
@@ -95,8 +98,19 @@ global.Class = {
       return Class.new(this, classPrototypeExtensions, prototypeExtensions);
     },
     
+    resetConstructor: function (constructor) {
+      if (constructor != null) {
+        constructor.prototype = this.prototype;
+        this._constructor = constructor;
+      }
+      else {
+        this._constructor = function () {};
+        this._constructor.prototype = this.prototype;
+      }
+    },
+    
     allocate: function () {
-      return Object.create(this.prototype);
+      return new this._constructor();
     },
     
     new: function () {
@@ -171,6 +185,7 @@ Function.new = function () {
     return Function();
   }
 };
+Object.new = Object;
 Array.classPrototype.new = Array;
 Buffer.classPrototype.new = Buffer;
 Error.classPrototype.new = undefined; // Defined in Error.js

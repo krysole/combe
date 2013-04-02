@@ -17,6 +17,10 @@
 //
 'use strict';
 
+Object.allocate = function (prototype) {
+  return { __proto__: prototype };
+};
+
 Object.getPrototypeOf = function (object) {
   return object.__proto__;
 };
