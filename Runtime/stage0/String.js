@@ -106,6 +106,22 @@ String.extend({
     return this.quote();
   },
   
+  toInt: function (radix) {
+    if (radix == null) radix = 10;
+    return parseInt(this, radix);
+  },
+  toInteger: function (radix) {
+    if (radix == null) radix = 10;
+    return parseInt(this, radix);
+  },
+  
+  toFloat: function () {
+    return parseFloat(this);
+  },
+  toNumber: function () {
+    return parseFloat(this);
+  },
+  
   isJavaScriptKeyword: function () {
     return String.JavaScriptKeywords.include(this);
   },
