@@ -331,15 +331,10 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     | '.' propertyName:name
       -> Ast.Dot(subject, name)
       
-    | '::' propertyName:name argumentList:args
-      -> Ast.MethodCall(Ast.Dot(subject, '__proto__'), name, args)
-    | '::' propertyName:name
-      -> Ast.Dot(Ast.Dot(subject, '__proto__'), name)
-      
     | ':' propertyName:name argumentList:args
-      -> Ast.MethodCall(Ast.Dot(subject, 'prototype'), name, args)
+      -> Ast.MethodCall(Ast.Dot(subject, Ast.Literal('prototype')), name, args)
     | ':' propertyName:name
-      -> Ast.Dot(Ast.Dot(subject, 'prototype'), name)
+      -> Ast.Dot(Ast.Dot(subject, Ast.Literal('prototype')), name)
   }
   
   
@@ -489,11 +484,11 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   
   rule returnPattern {
     | sequencePattern:p
-      ( '->' actionBody:e
+      ( '->' (secondaryExpression | actionBody):e
         -> Ast.SequencePattern([p, Ast.ActionPattern(e)])
       | -> p
       )
-    | '->' actionBody:e
+    | '->' (secondaryExpression | actionBody):e
       -> Ast.ActionPattern(e)
   }
   
@@ -561,8 +556,7 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
   }
   
   rule actionBody {
-    | secondaryExpression
-    | lparen expression:e rparen -> e
+    | primaryExpression
     | block
   }
   

@@ -1604,8 +1604,6 @@ return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
 return this.__combe_choice((function () {
-return this.__combe_choice((function () {
-return this.__combe_choice((function () {
 (function () {
 return (args = this.argumentList.call(this));
 }).call(this);
@@ -1684,51 +1682,6 @@ throw __combe_e;
 }), (function () {
 (function () {
 (function () {
-return this.handleStringPattern("::");
-}).call(this);
-(function () {
-return (name = this.propertyName.call(this));
-}).call(this);
-return (function () {
-return (args = this.argumentList.call(this));
-}).call(this);
-}).call(this);
-return (function () {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return Ast.MethodCall(Ast.Dot(subject, "__proto__"), name, args);
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}).call(this);
-}));
-}), (function () {
-(function () {
-(function () {
-return this.handleStringPattern("::");
-}).call(this);
-return (function () {
-return (name = this.propertyName.call(this));
-}).call(this);
-}).call(this);
-return (function () {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return Ast.Dot(Ast.Dot(subject, "__proto__"), name);
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}).call(this);
-}));
-}), (function () {
-(function () {
-(function () {
 return this.handleStringPattern(":");
 }).call(this);
 (function () {
@@ -1742,7 +1695,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return Ast.MethodCall(Ast.Dot(subject, "prototype"), name, args);
+return Ast.MethodCall(Ast.Dot(subject, Ast.Literal("prototype")), name, args);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -1763,7 +1716,7 @@ return (function () {
 var __combe_this = this;
 var __combe_return = null;
 try {
-return Ast.Dot(Ast.Dot(subject, "prototype"), name);
+return Ast.Dot(Ast.Dot(subject, Ast.Literal("prototype")), name);
 }
 catch (__combe_e) {
 if (__combe_e === __combe_return) return __combe_return.value;
@@ -2764,7 +2717,7 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "returnPattern", (function () {
-return this.__combe_memoize("3mjS9R7K2QbksAJM2FaHLg", (function () {
+return this.__combe_memoize("b7ebiUnihQOws65C+8If8g", (function () {
 var self = this;
 var p, e;
 return (function () {
@@ -2779,7 +2732,9 @@ return this.__combe_choice((function () {
 return this.handleStringPattern("->");
 }).call(this);
 return (function () {
-return (e = this.actionBody.call(this));
+return (e = (function () {
+return this.__combe_choice(this.secondaryExpression, this.actionBody);
+}).call(this));
 }).call(this);
 }).call(this);
 return (function () {
@@ -2811,7 +2766,9 @@ throw __combe_e;
 return this.handleStringPattern("->");
 }).call(this);
 return (function () {
-return (e = this.actionBody.call(this));
+return (e = (function () {
+return this.__combe_choice(this.secondaryExpression, this.actionBody);
+}).call(this));
 }).call(this);
 }).call(this);
 return (function () {
@@ -3302,32 +3259,10 @@ throw __combe_e;
 }));
 }));
 __combe_defineValueProperty(__combe_object, "actionBody", (function () {
-return this.__combe_memoize("pm/uPGMGGqr8H+muiOuY4g", (function () {
+return this.__combe_memoize("qGJV8siWeLnH5I2MEMEddg", (function () {
 var self = this;
-var e;
 return (function () {
-return this.__combe_choice((function () {
-return this.__combe_choice(this.secondaryExpression, (function () {
-(function () {
-this.lparen.call(this);
-(function () {
-return (e = this.expression.call(this));
-}).call(this);
-return this.rparen.call(this);
-}).call(this);
-return (function () {
-var __combe_this = this;
-var __combe_return = null;
-try {
-return e;
-}
-catch (__combe_e) {
-if (__combe_e === __combe_return) return __combe_return.value;
-throw __combe_e;
-}
-}).call(this);
-}));
-}), this.block);
+return this.__combe_choice(this.primaryExpression, this.block);
 }).call(this);
 }));
 }));
