@@ -96,6 +96,10 @@ Array.extend({
     return (this.length === 0);
   },
   
+  isNotEmpty: function () {
+    return (this.length !== 0);
+  },
+  
   include: function (what) {
     for (var i = 0; i < this.length; i++) {
       if (this[i] === what) return true;

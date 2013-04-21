@@ -126,6 +126,14 @@ String.extend({
     return parseFloat(this);
   },
   
+  isEmpty: function () {
+    return (this.length === 0);
+  },
+  
+  isNotEmpty: function () {
+    return (this.length !== 0);
+  },
+  
   isJavaScriptKeyword: function () {
     return String.JavaScriptKeywords.include(this);
   },
