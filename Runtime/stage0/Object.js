@@ -41,16 +41,50 @@ Object.isPrototypeOf = function (prototype, what) {
   return false;
 };
 
+Object.isOwnProperty = function (object, name) {
+  return Object.prototype.isOwnProperty.call(object, name);
+};
+
 Object.removeOwnProperty = function (object, name) {
   if (!delete object[name]) {
     throw Error.new('Could not remove own property ' + name + ' on object ' + object);
   }
 };
 
+Object.getEnumerablePropertyNames = function (object) {
+  var names = [];
+  for (var name in object) {
+    names.push(name);
+  }
+  return names;
+};
+
+Object.getPropertyNames = function (object) {
+  var names = [];
+  for (; object != null; object = object.__proto__) {
+    var ownPropertyNames = Object.getOwnPropertyNames(object);
+    for (var i = 0; i < ownPropertyNames.length; i++) {
+      names.pushIfAbsent(ownPropertyNames[i]);
+    }
+  }
+  return names;
+};
+
 Object.clone = function (original, extensions) {
-  var o = Object.create(Object.getPrototypeOf(original));
+  var o = Object.allocate(Object.getPrototypeOf(original));
   Object.copyOwnProperties(o, original);
   Object.extend(o, extensions);
+  return o;
+};
+
+Object.copy = function (original) {
+  // Creates a copy assuming that only enumerable own properties should be copied
+  var o = Object.allocate(Object.getPrototypeOf(original));
+  for (var name in original) {
+    if (Object.isOwnProperty(original, name)) {
+      o[name] = original[name];
+    }
+  }
   return o;
 };
 
