@@ -96,6 +96,10 @@ Number.extend({
   },
   
 }, {
+
+  equalityOperatorClass: newPrimitiveEqualityOperatorClass(),
+  
+  magnitudeOperatorClass: newPrimitiveMagnitudeOperatorClass(),
   
 });
 

@@ -22,6 +22,10 @@
 Boolean.prototype.toSourceString = Boolean.prototype.toString;
 Boolean.prototype.toCombeSourceString = Boolean.prototype.toString;
 
+Boolean.prototype.equalityOperatorClass = newPrimitiveEqualityOperatorClass();
+
+Boolean.prototype.magnitudeOperatorClass = newPrimitiveMagnitudeOperatorClass();
+
 Math.randomInteger = function (start, end) {
   var range = end - start;
   var n = Math.floor(Math.random() * (range + 1));

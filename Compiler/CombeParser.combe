@@ -249,7 +249,9 @@ var CombeParser = module.exports = TokenGrammar.subclass({}, {
     leftAssociative[relationalExpression, ('=='|'!='|'==='|'!==')]
   }
   rule relationalExpression {
-    leftAssociative[bitwiseOrExpression, ('<'|'<='|'>='|'>')]
+    | bitwiseOrExpression:lhs '<=>' bitwiseOrExpression:rhs
+      -> Ast.InfixOperator('<=>', lhs, rhs)
+    | leftAssociative[bitwiseOrExpression, ('<'|'<='|'>='|'>')]
   }
   
   rule bitwiseOrExpression {

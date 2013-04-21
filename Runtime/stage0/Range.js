@@ -73,12 +73,22 @@ global.Range = Object.subclass({
   
   include: function (what) {
     return (
-      (this.start == null || what >= this.start) &&
+      (this.start == null || __combe_infixOperators['>='](what, this.start)) &&
       (this.end == null ||
        this.inclusive
-         ? what <= this.end
-         : what < this.end)
+         ? __combe_infixOperators['<='](what, this.end)
+         : __combe_infixOperators['<'](what, this.end))
     );
   },
+  
+  equalityOperatorClass: newEqualityOperatorClass({
+    '==': function (lhs, rhs) {
+      return (
+        __combe_infixOperators['=='](lhs.inclusive, rhs.inclusive) &&
+        __combe_infixOperators['=='](lhs.start, rhs.start) &&
+        __combe_infixOperators['=='](lhs.end, rhs.end)
+      );
+    }
+  }),
   
 });

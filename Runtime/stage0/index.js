@@ -34,6 +34,8 @@ require('./Class');
 
 require('./Error');
 
+require('./__combe');
+
 require('./Array');
 require('./String');
 require('./Range');
@@ -41,6 +43,5 @@ require('./Regex');
 require('./Buffer');
 require('./Number');
 require('./miscelaneous');
-require('./__combe');
 
 global.__combe_runtimeStage0Loaded = true;

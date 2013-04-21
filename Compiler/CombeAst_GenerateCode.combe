@@ -297,7 +297,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
   }
   
   InfixOperator(ast) { // [ name, lhs, rhs ]
-    if (['==', '!='].include(ast.name)) {
+    if (['==', '!=', '<', '<=', '>', '>=', '<=>'].include(ast.name)) {
       ast.code = [
         '__combe_infixOperators[', ast.name.quote(), '](',
           ast.lhs.code, ', ',

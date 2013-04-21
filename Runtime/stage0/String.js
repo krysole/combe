@@ -241,6 +241,10 @@ String.extend({
     return result;
   },
   
+  equalityOperatorClass: newPrimitiveEqualityOperatorClass(),
+  
+  magnitudeOperatorClass: newPrimitiveMagnitudeOperatorClass(),
+  
 });
 
 String.JavaScriptReservedWords = String.JavaScriptKeywords.concat(String.JavaScriptFutureReservedWords);

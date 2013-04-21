@@ -354,6 +354,45 @@ Array.extend({
     });
   },
   
+  equalityOperatorClass: newEqualityOperatorClass({
+    '==': function (lhs, rhs) {
+      if (lhs.length != rhs.length) return false;
+      for (var i = 0; i < lhs.length; i++) {
+        if (!__combe_infixOperators['=='](lhs[i], rhs[i])) {
+          return false;
+        }
+      }
+      return true;
+    },
+    '!=': function (lhs, rhs) {
+      if (lhs.length != rhs.length) return true;
+      for (var i = 0; i < lhs.length; i++) {
+        if (!__combe_infixOperators['=='](lhs[i], rhs[i])) {
+          return true;
+        }
+      }
+      return false;
+    },
+  }),
+  
+  magnitudeOperatorClass: newMagnitudeOperatorClass({
+    '<=>': function (lhs, rhs) {
+      // Lexicographic magnitude ordering.
+      for (var i = 0; i < lhs.length; i++) {
+        if (i > rhs.length) {
+          return 1;
+        }
+        var mag = __combe_infixOperators['<=>'](lhs[i], rhs[i]);
+        if (mag > 0) return 1;
+        if (mag < 0) return -1;
+      }
+      if (rhs.length > lhs.length) {
+        return -1;
+      }
+      return 0;
+    },
+  }),
+  
 });
 
 // Synonyms

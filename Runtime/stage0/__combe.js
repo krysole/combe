@@ -20,21 +20,185 @@
 global.__combe_break = Object.unique('__combe_break');
 global.__combe_continue = Object.unique('__combe_continue');
 
+global.MagnitudeMismatchError = Error.subclass('MagnitudeMismatchError');
+
 global.__combe_infixOperators = {
   
   '==': function (lhs, rhs) {
-    if (lhs === undefined) lhs = null;
-    if (rhs === undefined) rhs = null;
-    return (lhs === rhs);
+    if (lhs == null) return rhs == null;
+    if (rhs == null) return false;
+    if (lhs === rhs) return true;
+    if (lhs.equalityOperatorClass != null &&
+        lhs.equalityOperatorClass === rhs.equalityOperatorClass) {
+      return lhs.equalityOperatorClass['=='](lhs, rhs);
+    }
+    else {
+      return false;
+    }
   },
   
   '!=': function (lhs, rhs) {
-    if (lhs === undefined) lhs = null;
-    if (rhs === undefined) rhs = null;
-    return (lhs !== rhs);
+    if (lhs == null) return rhs != null;
+    if (rhs == null) return true;
+    if (lhs === rhs) return false;
+    if (lhs.equalityOperatorClass != null &&
+        lhs.equalityOperatorClass === rhs.equalityOperatorClass) {
+      return lhs.equalityOperatorClass['!='](lhs, rhs)
+    }
+    else {
+      return true;
+    }
+  },
+  
+  '>': function (lhs, rhs) {
+    if (lhs != null && rhs != null &&
+        lhs.magnitudeOperatorClass != null &&
+        lhs.magnitudeOperatorClass === rhs.magnitudeOperatorClass) {
+      return lhs.magnitudeOperatorClass['>'](lhs, rhs);
+    }
+    else {
+      throw MagnitudeMismatchError.new(lhs + ' > ' + rhs);
+    }
+  },
+  
+  '>=': function (lhs, rhs) {
+    if (lhs != null && rhs != null &&
+        lhs.magnitudeOperatorClass != null &&
+        lhs.magnitudeOperatorClass === rhs.magnitudeOperatorClass) {
+      return lhs.magnitudeOperatorClass['>='](lhs, rhs);
+    }
+    else {
+      throw MagnitudeMismatchError.new(lhs + ' >= ' + rhs);
+    }
+  },
+  
+  '<': function (lhs, rhs) {
+    if (lhs != null && rhs != null &&
+        lhs.magnitudeOperatorClass != null &&
+        lhs.magnitudeOperatorClass === rhs.magnitudeOperatorClass) {
+      return lhs.magnitudeOperatorClass['<'](lhs, rhs);
+    }
+    else {
+      throw MagnitudeMismatchError.new(lhs + ' < ' + rhs);
+    }
+  },
+  
+  '<=': function (lhs, rhs) {
+    if (lhs != null && rhs != null &&
+        lhs.magnitudeOperatorClass != null &&
+        lhs.magnitudeOperatorClass === rhs.magnitudeOperatorClass) {
+      return lhs.magnitudeOperatorClass['<='](lhs, rhs);
+    }
+    else {
+      throw MagnitudeMismatchError.new(lhs + ' <= ' + rhs);
+    }
+  },
+  
+  '<=>': function (lhs, rhs) {
+    if (lhs != null && rhs != null &&
+        lhs.magnitudeOperatorClass != null &&
+        lhs.magnitudeOperatorClass === rhs.magnitudeOperatorClass) {
+      return lhs.magnitudeOperatorClass['<=>'](lhs, rhs);
+    }
+    else {
+      throw MagnitudeMismatchError.new(lhs + ' <=> ' + rhs);
+    }
   },
   
 };
+
+var __combe_MagnitudeBasedEqualityOperatorClass = {
+  '==': function (lhs, rhs) {
+    assert(lhs.magnitudeOperatorClass === rhs.magnitudeOperatorClass);
+    return (lhs.magnitudeOperatorClass['<=>'](lhs, rhs) === 0);
+  },
+  '!=': function (lhs, rhs) {
+    assert(lhs.magnitudeOperatorClass === rhs.magnitudeOperatorClass);
+    return (lhs.magnitudeOperatorClass['<=>'](lhs, rhs) !== 0);
+  },
+};
+
+global.newMagnitudeBasedEqualityOperatorClass = function (objectExtensions) {
+  return Object.derive(__combe_MagnitudeBasedEqualityOperatorClass, objectExtensions);
+};
+
+var __combe_BaseEqualityOperatorClass = {
+  '==': function (lhs, rhs) {
+    assert(this['!='] !== __combe_BaseEqualityOperatorClass['!=']);
+    return !this['!='](lhs, rhs);
+  },
+  '!=': function (lhs, rhs) {
+    assert(this['=='] !== __combe_BaseEqualityOperatorClass['==']);
+    return !this['=='](lhs, rhs);
+  },
+};
+
+global.newEqualityOperatorClass = function (objectExtensions) {
+  return Object.derive(__combe_BaseEqualityOperatorClass, objectExtensions);
+};
+
+var __combe_PrimitiveEqualityOperatorClass = {
+  '==': function (lhs, rhs) {
+    return lhs === rhs;
+  },
+  '!=': function (lhs, rhs) {
+    return lhs !== rhs;
+  },
+};
+
+global.newPrimitiveEqualityOperatorClass = function () {
+  return Object.derive(__combe_PrimitiveEqualityOperatorClass);
+};
+
+var __combe_BaseMagnitudeOperatorClass = {
+  '>': function (lhs, rhs) {
+    return (this['<=>'](lhs, rhs) > 0);
+  },
+  '>=': function (lhs, rhs) {
+    return (this['<=>'](lhs, rhs) >= 0);
+  },
+  '<': function (lhs, rhs) {
+    return (this['<=>'](lhs, rhs) < 0);
+  },
+  '<=': function (lhs, rhs) {
+    return (this['<=>'](lhs, rhs) <= 0);
+  },
+  '<=>': function (lhs, rhs) {
+    throw ShouldOverrideError.new('MagnitudeOperatorClass::<=>');
+  },
+};
+
+global.newMagnitudeOperatorClass = function (objectExtensions) {
+  return Object.derive(__combe_BaseMagnitudeOperatorClass, objectExtensions);
+};
+
+var __combe_PrimitiveMagnitudeOperatorClass = {
+  '>': function (lhs, rhs) {
+    return lhs > rhs;
+  },
+  '>=': function (lhs, rhs) {
+    return lhs >= rhs;
+  },
+  '<': function (lhs, rhs) {
+    return lhs < rhs;
+  },
+  '<=': function (lhs, rhs) {
+    return lhs <= rhs;
+  },
+  '<=>': function (lhs, rhs) {
+    if (lhs > rhs) return 1;
+    if (lhs < rhs) return -1;
+    return 0;
+  },
+};
+
+global.newPrimitiveMagnitudeOperatorClass = function () {
+  return Object.derive(__combe_PrimitiveMagnitudeOperatorClass);
+};
+
+Object.prototype.equalityOperatorClass = newPrimitiveEqualityOperatorClass();
+  
+Object.prototype.magnitudeOperatorClass = null;
 
 global.__combe_defineValueProperty = function (subject, name, value) {
   var descriptor = { value: value, writable: true, enumerable: true, configurable: true };
