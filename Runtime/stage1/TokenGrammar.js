@@ -51,7 +51,7 @@ global.TokenGrammar = Grammar.subclass({}, {
   lineColumn: function (position) {
     if (position == null) position = this.position;
     
-    return this.source.lineColumn(this.at(position));
+    return this.source.lineColumn(this.at(position).start);
   },
   
   positionString: function (position) {
