@@ -53,6 +53,24 @@ global.Range = Object.subclass({
     }
   },
   
+  toSourceString: function () {
+    if (this.inclusive) {
+      return 'Range.inclusive(', this.start.toSourceString(), ', ', this.end.toSourceString(), ')';
+    }
+    else {
+      return 'Range.exclusive(', this.start.toSourceString(), ', ', this.end.toSourceString(), ')';
+    }
+  },
+  
+  toCombeSourceString: function () {
+    if (this.inclusive) {
+      return '(' + this.start.toCombeSourceString() + '..' + this.end.toCombeSourceString + ')';
+    }
+    else {
+      return '(' + this.start.toCombeSourceString() + '...' + this.end.toCombeSOurceString + ')';
+    }
+  },
+  
   include: function (what) {
     return (
       (this.start == null || what >= this.start) &&

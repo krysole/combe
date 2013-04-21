@@ -320,10 +320,26 @@ Array.extend({
     }
   },
   
+  toString: function () {
+    return [
+      '[',
+        this.map(String.toString).separatedBy(', '),
+      ']'
+    ].deepJoin();
+  },
+  
   toSourceString: function () {
     return [
       '[',
-      this.map(String.toSourceString),
+        this.map(String.toSourceString).separatedBy(', '),
+      ']'
+    ].deepJoin();
+  },
+  
+  toCombeSourceString: function () {
+    return [
+      '[',
+        this.map(String.toCombeSourceString).separatedBy(', '),
       ']'
     ].deepJoin();
   },

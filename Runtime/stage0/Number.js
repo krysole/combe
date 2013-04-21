@@ -97,8 +97,7 @@ Number.extend({
   
 }, {
   
-  toSourceString: function () {
-    return this.toString();
-  },
-  
 });
+
+Number.prototype.toSourceString = Number.prototype.toString;
+Number.prototype.toCombeSourceString = Number.prototype.toString;

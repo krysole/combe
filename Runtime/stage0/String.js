@@ -89,20 +89,24 @@ String.extend({
   },
   
   toSourceString: function (what) {
-    if (what === null) {
-      return 'null';
-    }
-    else if (what === undefined) {
-      return 'undefined';
-    }
-    else {
-      return what.toSourceString();
-    }
+    if (what === null) return 'null';
+    else if (what === undefined) return 'undefined';
+    else return what.toSourceString();
+  },
+  
+  toCombeSourceString: function (what) {
+    if (what === null) return 'null';
+    else if (what === undefined) return 'undefined';
+    else return what.toCombeSourceString();
   },
   
 }, {
   
   toSourceString: function () {
+    return this.quote();
+  },
+  
+  toCombeSourceString: function () {
     return this.quote();
   },
   

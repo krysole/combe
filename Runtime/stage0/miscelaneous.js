@@ -19,17 +19,15 @@
 
 // Stuff that doesn't have it's own file.
 
-Boolean.prototype.toSourceString = function () {
-  if (this) return 'true';
-  else return 'false';
-},
+Boolean.prototype.toSourceString = Boolean.prototype.toString;
+Boolean.prototype.toCombeSourceString = Boolean.prototype.toString;
 
 Math.randomInteger = function (start, end) {
   var range = end - start;
   var n = Math.floor(Math.random() * (range + 1));
   n %= range; // Prevent the unlikely floating point round to range-end possibility.
   return n + start;
-}
+};
 
 Math.generateSalt = function (length) {
   if (length == null) length = 8;

@@ -23,8 +23,10 @@ Regex.extend({
   
 }, {
   
-  toSourceString: function () {
+  toCombeSourceString: function () {
     return 'r' + this.toString();
   },
   
 });
+
+Regex.prototype.toSourceString = Regex.prototype.toString;

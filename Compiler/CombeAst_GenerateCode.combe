@@ -364,30 +364,7 @@ var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
   }
   
   Literal(ast) { // [ value ]
-    if (ast.value === null) {
-      ast.code = 'null'
-    }
-    else if (ast.value === undefined) {
-      ast.code = 'undefined'
-    }
-    else if (ast.value == true) {
-      ast.code = 'true'
-    }
-    else if (ast.value == false) {
-      ast.code = 'false'
-    }
-    else if (String.isClassOf(ast.value)) {
-      ast.code = ast.value.quote()
-    }
-    else if (Number.isClassOf(ast.value)) {
-      ast.code = ast.value.toString()
-    }
-    else if (Regex.isClassOf(ast.value)) {
-      ast.code = ast.value.toString()
-    }
-    else {
-      throw Error.new('Unknown Ast (Literal) value type')
-    }
+    ast.code = String.toSourceString(ast.value)
   }
   
   Array(ast) { // [ arguments ]

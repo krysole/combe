@@ -524,37 +524,7 @@ var __combe_return = null;
 var self = this;
 try {
 return (function () {
-(/* if */ (ast.value === null)
-? /* then */ (function () {
-(ast.code = "null");
-})()
-: /* else */ (/* if */ (ast.value === undefined)
-? /* then */ (function () {
-(ast.code = "undefined");
-})()
-: /* else */ (/* if */ __combe_infixOperators["=="](ast.value, true)
-? /* then */ (function () {
-(ast.code = "true");
-})()
-: /* else */ (/* if */ __combe_infixOperators["=="](ast.value, false)
-? /* then */ (function () {
-(ast.code = "false");
-})()
-: /* else */ (/* if */ String.isClassOf(ast.value)
-? /* then */ (function () {
-(ast.code = ast.value.quote());
-})()
-: /* else */ (/* if */ Number.isClassOf(ast.value)
-? /* then */ (function () {
-(ast.code = ast.value.toString());
-})()
-: /* else */ (/* if */ Regex.isClassOf(ast.value)
-? /* then */ (function () {
-(ast.code = ast.value.toString());
-})()
-: /* else */ (function () {
-(function () { throw Error.new("Unknown Ast (Literal) value type"); })();
-})())))))));
+(ast.code = String.toSourceString(ast.value));
 })();
 }
 catch (__combe_e) {

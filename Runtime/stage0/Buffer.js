@@ -150,4 +150,6 @@ Buffer.extend({
   
   clear: function () { this.fill(0); },
   
+  // Todo: Consider adding a toSourceString and toCombeSourceString to Buffer
+  
 });
