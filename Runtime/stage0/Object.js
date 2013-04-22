@@ -171,3 +171,9 @@ Object.prototype.tap = function (f) {
 Object.prototype.at = function (key) {
   return this[key];
 };
+
+Object.prototype.this = function () {
+  return this;
+};
+
+Object.prototype.self = Object.prototype.this;
