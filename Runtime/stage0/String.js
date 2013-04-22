@@ -241,6 +241,92 @@ String.extend({
     return result;
   },
   
+  escapeIdentifier: function () {
+    var result = '$e$';
+    var requiredEscaping = false;
+    for (var i = 0; i < this.length; i++) {
+      var c = this.at(i);
+      if (i === 0 && c.match(/a-zA-Z_/) != null ||
+          c.match(/[a-zA-Z_0-9]/) != null) {
+        result += i;
+      }
+      else if (i === 0 && c.match(/0-9/)) {
+        result += c;
+        requiredEscaping = true;
+      }
+      else if (c === '$')  { result += '$$'; requiredEscaping = true; }
+      else if (c === '\b') { result += '$b'; requiredEscaping = true; }
+      else if (c === '\f') { result += '$f'; requiredEscaping = true; }
+      else if (c === '\n') { result += '$n'; requiredEscaping = true; }
+      else if (c === '\r') { result += '$r'; requiredEscaping = true; }
+      else if (c === '\t') { result += '$t'; requiredEscaping = true; }
+      else if (c === '\v') { result += '$v'; requiredEscaping = true; }
+      else {
+        var cp = this.codepointAt(i);
+        i += String.fromCodepoint(cp).length - 1;
+        var hs = cp.toString(16);
+        if (hs.length <= 2) {
+          result += '$x' + '00'.slice(hs.length) + hs;
+        }
+        else if (hs.length <= 4) {
+          result += '$u' + '0000'.slice(hs.length) + hs;
+        }
+        else if (hs.length <= 6) {
+          result += '$U' + '000000'.slice(hs.length) + hs;
+        }
+        else assert(false);
+        requiredEscaping = true;
+      }
+    }
+    if (requiredEscaping) return result;
+    else if (this.isJavaScriptCompatabilityReservedWord()) return '$e$' + this;
+    else return this;
+  },
+  
+  unescapeIdentifier: function () {
+    if (this.match(/^\$e\$/)) {
+      var result = '';
+      for (var i = 2; i < this.length; i++) {
+        var c = this.at(i);
+        if (c === '$') {
+          c = this.at(++i);
+          if      (c === '$') result += '$';
+          else if (c === 'b') result += '\b';
+          else if (c === 'f') result += '\f';
+          else if (c === 'n') result += '\n';
+          else if (c === 'r') result += '\r';
+          else if (c === 't') result += '\t';
+          else if (c === 'v') result += '\v';
+          else if (c === 'x') {
+            var hs = this.slice(i, i + 2);
+            i += 2;
+            result += String.fromCodepoint(parseInt(hs, 16));
+          }
+          else if (c === 'u') {
+            var hs = this.slice(i, i + 4);
+            i += 4;
+            result += String.fromCodepoint(parseInt(hs, 16));
+          }
+          else if (c === 'U') {
+            var hs = this.slice(i, i + 6);
+            i += 6;
+            result += String.fromCodepoint(parseInt(hs, 16));
+          }
+          else {
+            throw Error('Unexpected escaped identifier escape sequence');
+          }
+        }
+        else {
+          result += c;
+        }
+      }
+      return result;
+    }
+    else {
+      return this;
+    }
+  },
+  
   equalityOperatorClass: newPrimitiveEqualityOperatorClass(),
   
   magnitudeOperatorClass: newPrimitiveMagnitudeOperatorClass(),
