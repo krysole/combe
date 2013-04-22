@@ -17,8 +17,8 @@
     }
   ],
   "bin": {
-    "combe": "./bin/combe"
-    "combec": "./bin/combec",
+    "combe": "./bin/combe",
+    "combec": "./bin/combec"
   },
   "repository": {
     "type": "git",

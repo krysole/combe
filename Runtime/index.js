@@ -17,6 +17,8 @@
 //
 'use strict';
 
+global.CombeVersion = require('../package.json').version;
+
 require('./stage0');
 require('./stage1');
 
