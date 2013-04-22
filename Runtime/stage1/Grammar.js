@@ -146,6 +146,10 @@ global.Grammar = Object.subclass('Grammar', {
     return null;
   },
   
+  anything: function () {
+    return this.next();
+  },
+  
   isEof: function () {
     return (this.position >= this.source.length);
   },
