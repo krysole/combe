@@ -18,7 +18,7 @@
 
 var AstVisitor = require('./AstVisitor')
 
-var AnalyseScoping = module.exports = AstVisitor.subclass({}, {
+var CombeAst_AnalyseScoping = module.exports = AstVisitor.subclass('CombeAst_AnalyseScoping', {}, {
   
   initialize() {
     self.scopes = []

@@ -17,7 +17,7 @@
 //
 'use strict';
 
-global.Range = Object.subclass({
+global.Range = Object.subclass('Range', {
   
   inclusive: function (lhs, rhs) {
     return this.new(lhs, rhs, true);

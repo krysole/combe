@@ -20,8 +20,7 @@
 Error.extend({
   
   subclass: function (name, classPrototypeExtensions, prototypeExtensions) {
-    var _class = Class.new(this, classPrototypeExtensions, prototypeExtensions);
-    _class.classPrototype.name = name;
+    var _class = Class.new(name, this, classPrototypeExtensions, prototypeExtensions);
     _class.prototype.name = name;
     return _class;
   },

@@ -16,7 +16,7 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-global.Ast = Object.subclass({
+global.Ast = Object.subclass('Ast', {
   
   initialize: function () {
     Object.classPrototype.initialize.call(this);

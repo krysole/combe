@@ -19,7 +19,7 @@
 
 // Todo: This can and probably should be rewritten in Combe notation.
 
-global.Grammar = Object.subclass({
+global.Grammar = Object.subclass('Grammar', {
   
   match: function (source, sourcename) {
     var matchargs = Array.slice(arguments, 2);

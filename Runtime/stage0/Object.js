@@ -177,3 +177,13 @@ Object.prototype.this = function () {
 };
 
 Object.prototype.self = Object.prototype.this;
+
+// Todo: Add a debugging representation to replace such uses of toString.
+Object.prototype.toString = function () {
+  if (this.class != null) {
+    return '<' + this.class.name + '>';
+  }
+  else {
+    return '<Object>';
+  }
+};

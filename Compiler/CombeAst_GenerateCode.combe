@@ -22,7 +22,7 @@ var AstVisitor = require('./AstVisitor')
 
 var CombeAst = require('./CombeAst')
 
-var CombeAstToJS = module.exports = AstVisitor.subclass({}, {
+var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_GenerateCode', {}, {
   
   recurseOverUnspecifiedTypes: false,
   

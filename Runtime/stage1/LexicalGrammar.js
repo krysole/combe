@@ -19,7 +19,7 @@
 
 // Todo: This can and probably should be rewritten in Combe notation.
 
-global.LexicalGrammar = TextGrammar.subclass({
+global.LexicalGrammar = TextGrammar.subclass('LexicalGrammar', {
   
   allTokens: function (source, filename) {
     return this.new(source, filename).allTokens();

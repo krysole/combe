@@ -19,7 +19,7 @@
 
 // Todo: This can and probably should be rewritten in Combe notation.
 
-global.TokenGrammar = Grammar.subclass({}, {
+global.TokenGrammar = Grammar.subclass('TokenGrammar', {}, {
   
   name: '(UnnamedTokenGrammar)',
   

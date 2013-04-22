@@ -16,7 +16,7 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-var CombeAst = module.exports = Ast.subclass({
+var CombeAst = module.exports = Ast.subclass('CombeAst', {
   
   types: {
     Script:                 ['statements']

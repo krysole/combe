@@ -19,7 +19,7 @@
 var Ast = require('./CombeAst')
 var CombeLexer = require('./CombeLexer')
 
-var CombeParser = module.exports = TokenGrammar.subclass({}, {
+var CombeParser = module.exports = TokenGrammar.subclass('CombeParser', {}, {
   
   name: 'CombeParser'
   

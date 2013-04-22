@@ -16,7 +16,7 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-var AstVisitor = module.exports = Object.subclass({
+var AstVisitor = module.exports = Object.subclass('AstVisitor', {
   
   visit(ast) {
     self.new().visit(ast)

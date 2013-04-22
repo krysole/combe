@@ -16,7 +16,7 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-global.Token = Object.subclass({}, {
+global.Token = Object.subclass('Token', {}, {
   
   initialize: function (type, value, position, text) {
     this.type = type;

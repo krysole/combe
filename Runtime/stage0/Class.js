@@ -33,7 +33,7 @@ global.Class = {
       throw Error.new('Cannot allocate uninitialized classes, use Class.new() instead');
     },
     
-    new: function (superclass, classPrototypeExtensions, prototypeExtensions) {
+    new: function (name, superclass, classPrototypeExtensions, prototypeExtensions) {
       if (superclass == null) superclass = Object;
       
       // Extending most builtins is currently prohibited.
@@ -48,6 +48,7 @@ global.Class = {
       _class.classPrototype = _class.__proto__;
       _class.classPrototype.classInstance = _class;
       _class.classPrototype.superclass = superclass;
+      _class.classPrototype.name = (name != null ? name : 'Unnamed');
       _class.constructorClassPrototype = undefined;
       _class.prototype = Object.create(superclass.prototype);
       _class.prototype.class = _class;
@@ -94,8 +95,8 @@ global.Class = {
   
   prototype: {
     
-    subclass: function (classPrototypeExtensions, prototypeExtensions) {
-      return Class.new(this, classPrototypeExtensions, prototypeExtensions);
+    subclass: function (name, classPrototypeExtensions, prototypeExtensions) {
+      return Class.new(name, this, classPrototypeExtensions, prototypeExtensions);
     },
     
     resetConstructor: function (constructor) {
@@ -138,6 +139,10 @@ global.Class = {
     extend: function (classPrototypeExtensions, prototypeExtensions) {
       Object.extend(this.classPrototype, classPrototypeExtensions);
       Object.extend(this.prototype, prototypeExtensions);
+    },
+    
+    toString: function () {
+      return '<' + this.class.name + ' ' + this.name + '>';
     },
     
   },

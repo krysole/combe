@@ -16,7 +16,7 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-var CombeLexer = module.exports = LexicalGrammar.subclass({}, {
+var CombeLexer = module.exports = LexicalGrammar.subclass('CombeLexer', {}, {
   
   name: 'CombeLexer'
   
