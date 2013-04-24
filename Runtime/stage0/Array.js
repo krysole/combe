@@ -324,6 +324,20 @@ Array.extend({
     }
   },
   
+  union: function (rhs) {
+    var result = this.copy();
+    for (var i = 0; i < rhs.length; i++) {
+      result.pushIfAbsent(rhs[i]);
+    }
+    return result;
+  },
+  
+  // Todo: Provide the other set operators in their left associative method forms
+  
+  copy: function () {
+    return [].pushAll(this);
+  },
+  
   toString: function () {
     return [
       '[',

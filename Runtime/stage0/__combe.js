@@ -17,6 +17,9 @@
 //
 'use strict';
 
+// Todo: The use of capitalizations using the __combe_ prefix is somewhat
+// haphazard. I should look into codifying a convention at some point.
+
 global.__combe_break = Object.unique('__combe_break');
 global.__combe_continue = Object.unique('__combe_continue');
 
