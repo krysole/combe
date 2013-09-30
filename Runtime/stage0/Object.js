@@ -146,6 +146,15 @@ Object.synchronizeOwnProperties = function (dest, source) {
   else if (!Object.isExtensible(source)) Object.preventExtensions(dest);
 };
 
+Object.override = function (object, name) {
+  Object.defineProperty(object, name, {
+    value: undefined,
+    writable: true,
+    enumerable: true,
+    configurable: true
+  });
+};
+
 Object.unique = function (name) {
   return {
     name: name,

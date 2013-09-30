@@ -25,6 +25,10 @@ global.__combe_continue = Object.unique('__combe_continue');
 
 global.MagnitudeMismatchError = Error.subclass('MagnitudeMismatchError');
 
+// Note on infix operators: because each equality/magnitude operator class 
+// is partitioned (symetric, reflexive and transitive type relation), 
+// we can assume that numbers only compare with other numbers.
+
 global.__combe_infixOperators = {
   
   '==': function (lhs, rhs) {

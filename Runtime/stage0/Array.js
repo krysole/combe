@@ -102,9 +102,17 @@ Array.extend({
   
   include: function (what) {
     for (var i = 0; i < this.length; i++) {
-      if (this[i] === what) return true;
+      if (__combe_infixOperators['=='](this[i], what)) return true;
     }
     return false;
+  },
+  
+  indexOf: function (what, fromIndex) {
+    if (fromIndex == null) fromIndex = 0;
+    for (var i = fromIndex; i < this.length; i++) {
+      if (__combe_infixOperators['=='](this[i], what)) return i;
+    }
+    return -1;
   },
   
   count: function (predicate) {

@@ -34,7 +34,7 @@ global.Token = Object.subclass('Token', {}, {
   },
   
   is: function (typename) {
-    return this.type === typename;
+    return __combe_infixOperators['=='](this.type, typename);
   },
   
 });

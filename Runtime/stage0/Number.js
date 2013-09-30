@@ -24,7 +24,7 @@ Number.extend({
   },
   
   isInteger: function (value) {
-    return (typeof value === 'number' && value % 1 == 0);
+    return (typeof value === 'number' && value % 1 === 0);
   },
   
   isByte: function (value) { return isUInt8(value); },

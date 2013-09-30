@@ -43,6 +43,7 @@ global.Ast = Object.subclass('Ast', {
   
   initialize: function (type, childrenNames, childrenAttributes) {
     this.type = type;
+    this.attributes = {};
     this.childrenNames = childrenNames;
     for (var i = 0; i < childrenNames.length; i++) {
       this[childrenNames[i]] = childrenAttributes[i];
@@ -100,7 +101,7 @@ global.Ast = Object.subclass('Ast', {
   },
   
   is: function (type) {
-    return (this.type === type);
+    return (__combe_infixOperators['=='](this.type, type));
   },
   
   isAny: function (array) {
