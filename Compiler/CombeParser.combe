@@ -439,8 +439,8 @@ var CombeParser = module.exports = TokenGrammar.subclass('CombeParser', {}, {
   rule functionLiteral {
     | parameterList?:params '->' expression:e
       -> Ast.Function(params, e)
-    | variableIdentifier:p '->' expression:e
-      -> Ast.Function([p], e)
+    | variableIdentifier:name '->' expression:e
+      -> Ast.Function([Ast.Parameter(name)], e)
     | id('function') parameterList?:params functionBody:body
       -> Ast.Function(params, body)
   }
