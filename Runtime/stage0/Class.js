@@ -171,7 +171,7 @@ Object.prototype.class = Object;
 // Specialize Standard JS Constructors
 Class.makeConstructorClass(Function);
 Class.makeConstructorClass(Array);
-Class.makeConstructorClass(Buffer);
+// Class.makeConstructorClass(Buffer);
 Class.makeConstructorClass(Error);
 Class.makeConstructorClass(Number);
 Class.makeConstructorClass(RegExp);
@@ -192,7 +192,7 @@ Function.new = function () {
 };
 Object.new = Object;
 Array.classPrototype.new = Array;
-Buffer.classPrototype.new = Buffer;
+// Buffer.classPrototype.new = Buffer; // Cannot class convert Buffer safely
 Error.classPrototype.new = undefined; // Defined in Error.js
 Number.classPrototype.new = undefined;
 RegExp.classPrototype.new = RegExp;

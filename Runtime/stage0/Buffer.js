@@ -17,7 +17,16 @@
 //
 'use strict';
 
-Buffer.extend({
+// Buffer.extend({...}, {...})
+Object.extend(Buffer, {
+  
+  // .new and .isClassOf are approximated since Buffer cannot be class converted safely.
+  new: function (_1, _2) {
+    return new Buffer(_1, _2)
+  },
+  isClassOf: function (what) {
+    return (what instanceof Buffer);
+  },
   
   cleared: function (length) {
     return this.filled(0, length);
@@ -140,7 +149,9 @@ Buffer.extend({
     return Buffer.cleared(pad);
   },
   
-}, {
+});
+
+Object.extend(Buffer.prototype, {
   
   // Big-endian/Network-endian by default
   writeInt16: function (n, offset, noAssert) { this.writeInt16BE(n, offset, noAssert); },

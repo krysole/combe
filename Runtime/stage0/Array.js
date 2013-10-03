@@ -264,7 +264,7 @@ Array.extend({
   },
   
   deepJoinIOList: function () {
-    var buffer = Buffer.new(this.iolistSize());
+    var buffer = new Buffer(this.iolistSize());
     this.deepJoinIOListInto(buffer, 0);
     return buffer;
   },

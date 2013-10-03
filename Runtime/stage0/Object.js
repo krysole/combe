@@ -92,7 +92,7 @@ Object.extend = function (object, extensions) {
   if (extensions == null) {
     // Do nothing
   }
-  else if (Function.isClassOf(object)) {
+  else if (Function.isClassOf(extensions)) {
     extensions(object);
   }
   else {
