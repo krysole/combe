@@ -288,7 +288,7 @@ Array.extend({
         position += stringLength;
       }
       else {
-        throw IOListError.new("Element must be array, string, buffer or null (given '" + what + "')");
+        throw IOListError.new("Element must be array, string, buffer or null (given '" + elem + "')");
       }
     }
     return position;
@@ -312,7 +312,7 @@ Array.extend({
         size += Buffer.byteLength(elem);
       }
       else {
-        throw IOListError.new("Element must be array, string, buffer or null (given '" + what + "')");
+        throw IOListError.new("Element must be array, string, buffer or null (given '" + elem + "')");
       }
     }
     return size;
