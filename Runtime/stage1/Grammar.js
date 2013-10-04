@@ -172,7 +172,10 @@ global.Grammar = Object.subclass('Grammar', {
   },
   
   next: function () {
-    return this.at(this.position++);
+    var value = this.at(this.position);
+    this.position = this.position + 1;
+    return value;
+    // return this.at(this.position++);
   },
   
   last: function () {
