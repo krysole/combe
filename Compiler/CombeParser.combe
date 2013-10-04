@@ -230,7 +230,7 @@ var CombeParser = module.exports = TokenGrammar.subclass('CombeParser', {}, {
       ( '=' expression:rhs
         -> Ast.Assignment(lhs, rhs)
       | 'operatorAssignment':op expression:rhs
-        -> Ast.OperatorAssignment(op, lhs, rhs)
+        -> Ast.OperatorAssignment(op.text, lhs, rhs)
       )
     | logicalOrExpression
   }
