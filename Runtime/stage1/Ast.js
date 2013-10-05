@@ -43,7 +43,6 @@ global.Ast = Object.subclass('Ast', {
   
   initialize: function (type, childrenNames, childrenAttributes) {
     this.type = type;
-    this.attributes = {};
     this.childrenNames = childrenNames;
     for (var i = 0; i < childrenNames.length; i++) {
       this[childrenNames[i]] = childrenAttributes[i];
