@@ -168,8 +168,12 @@ Object.prototype.initialize = function () {
   // Do nothing
 };
 
-Object.prototype.subscript = function (i) {
-  return this[i];
+Object.prototype.subscript = function (k) {
+  return this[k];
+};
+
+Object.prototype.setSubscript = function (k, v) {
+  return this[k] = v;
 };
 
 Object.prototype.tap = function (f) {
