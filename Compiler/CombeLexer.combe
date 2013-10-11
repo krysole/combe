@@ -121,15 +121,38 @@ var CombeLexer = module.exports = LexicalGrammar.subclass('CombeLexer', {}, {
   
   
   rule string {
-    | singleLineString['\'']
-    | singleLineString['\"']
+    | multilineString["'''", "'''"]
+    | multilineString['"""', '"""']
+    | singleLineString[(~"'''" ~'"""') "'", "'"]
+    | singleLineString[(~"'''" ~'"""') '"', '"']
   }
   
-  rule singleLineString(delimiter) {
-    delimiter (~delimiter ~newline stringChar)*:cs delimiter
+  rule singleLineString(open, close) {
+    open (~close ~newline stringChar)*:cs close
     emit('string', cs.join(''))
   }
-    
+  
+  rule multilineString(open, close) {
+    open newline
+    multilineStringLine(close)*:lines
+    ' '* close
+    emit('string', self.removeMultilineStringLeadingWhitespace(lines).join(''))
+  }
+  
+  rule multilineStringLine(close) {
+    ~(' '* close) (~newline stringChar)*:cs newline -> (cs.join('') + '\n')
+  }
+  
+  removeMultilineStringLeadingWhitespace(lines) {
+    var indent = Infinity
+    lines.each(function (line) {
+      if (!line.match(r/^ *$/)) {
+        indent = Math.min(indent, line.match(r/^ */)[0].length)
+      }
+    })
+    return lines.map(line -> line.substring(indent))
+  }
+  
   rule stringChar { '\\' stringEscapeSequence | ~'\\' char }
   
   rule stringEscapeSequence {
