@@ -574,7 +574,7 @@ var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_Gener
   
   SetProperty(ast) { // [ name, value ]
     ast.code = [
-      '__combe.defineSetProperty(',
+      '__combe_defineSetProperty(',
         '__combe_object, ',
         ast.name.code, ', ',
         ast.value.code,
@@ -584,7 +584,7 @@ var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_Gener
   
   DescribeProperty(ast) { // [ name, value ]
     ast.code = [
-      '__combe.defineDescribedProperty(', 
+      '__combe_defineDescribedProperty(', 
         '__combe_object, ',
         ast.name.code, ', ',
         ast.value.code,
