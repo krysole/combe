@@ -367,6 +367,7 @@ var CombeParser = module.exports = TokenGrammar.subclass('CombeParser', {}, {
   
   rule primaryExpression {
     | functionLiteral
+    | methodLiteral
     
     | id('null') -> Ast.Literal(null)
     | id('undefined') -> Ast.Literal(undefined)
