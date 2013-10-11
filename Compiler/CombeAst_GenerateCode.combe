@@ -273,15 +273,42 @@ var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_Gener
   
   
   Assignment(ast) { // [ lhs, rhs ]
-    ast.code = [
-      '(', ast.lhs.code, ' = ', ast.rhs.code, ')'
-    ]
+    if (ast.lhs.is('Subscript')) {
+      ast.code = self.generateMethodCall(ast.lhs.subject.code, CombeAst.Literal('setSubscript'), ast.lhs.arguments.concat(ast.rhs))
+    }
+    else { // Dot or Variable
+      ast.code = [
+        '(', ast.lhs.code, ' = ', ast.rhs.code, ')'
+      ]
+    }
   }
   
   OperatorAssignment(ast) { // [ name, lhs, rhs ]
-    ast.code = [
-      '(', ast.lhs.code, ' ', ast.name, ' ', ast.rhs.code, ')'
-    ]
+    if (ast.lhs.is('Subscript')) {
+      var argumentsVariable = self.generateArgumentsVariable(ast.lhs.arguments)
+      if (argumentsVariable == null) {
+        // We know that our arguments are a simple list
+        argumentsVariable = [
+          'var __combe_arguments = [', ast.lhs.arguments.map(a -> a.code).separatedBy(', '), '];\n'
+        ]
+      }
+      var opname = ast.name.slice(0, ast.name.length - 1)
+      ast.code = [
+        '(function () {\n',
+          'var __combe_subject = ', ast.lhs.subject.code, ';\n',
+          argumentsVariable,
+          'var __combe_value = __combe_subject.subscript.apply(__combe_subject, __combe_arguments) ', opname, ' ', ast.rhs, ';\n',
+          '__combe_arguments.push(__combe_value);\n',
+          '__combe_subject.setSubscript.apply(__combe_subject, __combe_arguments);\n',
+          'return __combe_value;\n',
+        '})()'
+      ]
+    }
+    else {
+      ast.code = [
+        '(', ast.lhs.code, ' ', ast.name, ' ', ast.rhs.code, ')'
+      ]
+    }
   }
   
   PrefixOperator(ast) { // [ name, argument ]
