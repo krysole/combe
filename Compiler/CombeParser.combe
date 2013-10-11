@@ -85,14 +85,14 @@ var CombeParser = module.exports = TokenGrammar.subclass('CombeParser', {}, {
   
   rule forStatement {
     | id('for') lparen
-        expression?:initExpr ';'
-        expression?:condExpr ';'
-        expression?:incExpr rparen statementBody:b
+        expressionSequence?:initExpr ';'
+        expressionSequence?:condExpr ';'
+        expressionSequence?:incExpr rparen statementBody:b
       -> Ast.For(initExpr, condExpr, incExpr, b)
     | id('for') lparen
         id('var') delimited1[variableDeclaration, ',']:decls ';'
-        expression?:condExpr ';'
-        expression?:incExpr rparen statementBody:b
+        expressionSequence?:condExpr ';'
+        expressionSequence?:incExpr rparen statementBody:b
       -> Ast.ForDeclaring(decls, condExpr, incExpr, b)
   }
   
@@ -154,14 +154,14 @@ var CombeParser = module.exports = TokenGrammar.subclass('CombeParser', {}, {
   
   rule forExpression {
     | id('for') lparen
-        expression?:initExpr ';'
-        expression?:condExpr ';'
-        expression?:incExpr rparen expressionBody?:b
+        expressionSequence?:initExpr ';'
+        expressionSequence?:condExpr ';'
+        expressionSequence?:incExpr rparen expressionBody?:b
       -> Ast.For(initExpr, condExpr, incExpr, b)
     | id('for') lparen
         id('var') delimited1[variableDeclaration, ',']:decls ';'
-        expression?:condExpr ';'
-        expression?:incExpr rparen expressionBody?:b
+        expressionSequence?:condExpr ';'
+        expressionSequence?:incExpr rparen expressionBody?:b
       -> Ast.ForDeclaring(decls, condExpr, incExpr, b)
   }
   
