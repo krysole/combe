@@ -902,7 +902,7 @@ var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_Gener
       else if (params.last.is('SplatParameter')) {
         jsParams = params.dropLast(1).map((p) -> p.name).separatedBy(', ')
         restParams = [
-          'var ', params.last.name, ' = Array.slice(arguments, ', params.length, ');\n'
+          'var ', params.last.name, ' = Array.slice(arguments, ', params.length.toString(), ');\n'
         ]
       }
       else {
@@ -910,10 +910,10 @@ var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_Gener
         jsParams = params.take(splatIndex).map((p) -> p.name).separatedBy(', ')
         var remParams = params.drop(splatIndex + 1)
         restParams = [
-          'var ', params[splatIndex].name, ' = Array.slice(arguments, ', splatIndex, 'arguments.length - ', remParams.length, ');\n'
+          'var ', params[splatIndex].name, ' = Array.slice(arguments, ', splatIndex.toString(), 'arguments.length - ', remParams.length.toString(), ');\n'
         ]
         remParams.each(function (p, i) {
-          restParams.push('var ', p.name, ' = arguments[', splatIndex + 1 + i, '];\n')
+          restParams.push('var ', p.name, ' = arguments[', (splatIndex + 1 + i).toString(), '];\n')
         })
       }
     }
