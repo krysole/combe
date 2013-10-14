@@ -811,24 +811,22 @@ var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_Gener
       return ['var __combe_arguments = ', args[0].code, ';\n']
     }
     else if (args.any((a) -> a.is('SplatArgument'))) {
-      var splatIndex = args.indexOfPredicate((a) -> a.is('SplatArgument'));
+      var initialArgumentsLimit = args.indexOfPredicate((a) -> a.is('SplatArgument'));
+      var initialArgumentsCode = args.slice(0, initialArgumentsLimit).map((a) -> a.code)
       
       var code = [
-        'var __combe_arguments = [', args.slice(0, splatIndex).map((a) -> a.code).separatedBy(', '), '];\n'
+        'var __combe_arguments = [', initialArgumentsCode.separatedBy(', '), '];\n'
       ]
       
-      while (splatIndex != null) {
-        code.push(
-          '__combe_arguments.pushAll(', args[splatIndex].code, ');\n'
-        )
-        args = args.slice(splatIndex + 1)
-        splatIndex = args.indexOfPredicate((a) -> a.is('SplatArgument'));
-        if (splatIndex > 0 || (splatIndex == null && args.length > 0)) {
-          code.push(
-            '__combe_arguments.push(', args.slice(0, splatIndex).map((a) -> a.code).separatedBy(', '), ');\n'
-          )
+      for (var i = initialArgumentsLimit; i < args.length; i++) {
+        if (args[i].is('SplatArgument')) {
+          code.push('__combe_arguments.pushAll(', args[i].code, ');\n')
+        }
+        else {
+          code.push('__combe_arguments.push(', arg[i].code, ');\n')
         }
       }
+      
       return code;
     }
     else {
