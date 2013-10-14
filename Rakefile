@@ -23,13 +23,13 @@ end
 task :clean => [:cleanCompilerCopy]
 
 task :cleanCompilerCopy do
-  sh "rm -rf CompilerCopy"
+  sh "rm -rf lib/CompilerCopy"
 end
 
 task :bootstrap => [:compilerCopy] do |t, args|
-  sourceFilenames = FileList["Compiler/**/*.combe"]
+  sourceFilenames = FileList["lib/Compiler/**/*.combe"]
   targetCompiledFilenames = sourceFilenames.ext(".combejs")
-  sourceCompiledFilenames = targetCompiledFilenames.sub(/^Compiler/, "CompilerCopy")
+  sourceCompiledFilenames = targetCompiledFilenames.sub(/Compiler/, "CompilerCopy")
   (0...sourceCompiledFilenames.length).each do |i|
     sh "cp #{sourceCompiledFilenames[i]} #{targetCompiledFilenames[i]}"
   end
@@ -73,15 +73,15 @@ task :cleanDirectory, :dirname do |t, args|
 end
 
 task :copyCompilerCopy do
-  sourceFilenames = FileList["Compiler/**/*.combe"]
-  sh "rm -rf CompilerCopy"
+  sourceFilenames = FileList["lib/Compiler/**/*.combe"]
+  sh "rm -rf lib/CompilerCopy"
   sourceFilenames.each do |name|
-    dirname = File.dirname(name).sub(/^Compiler/, "CompilerCopy")
+    dirname = File.dirname(name).sub(/Compiler/, "CompilerCopy")
     sh "mkdir -p #{dirname}"
     sh "cp #{name} #{dirname}/#{File.basename(name)}"
   end
 end
 
 task :compilerCopy => [:copyCompilerCopy] do
-  Rake::Task[:compileDirectory].invoke("CompilerCopy")
+  Rake::Task[:compileDirectory].invoke("lib/CompilerCopy")
 end

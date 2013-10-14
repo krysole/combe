@@ -20,7 +20,7 @@
 
 var path = require('path');
 
-require('../Runtime');
+require('../lib/Runtime');
 
 setTimeout(function () {
   if (process.argv.length < 2 + 1) { // argv: node newcombe ...
