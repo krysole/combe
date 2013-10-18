@@ -391,7 +391,7 @@ var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_Gener
   }
   
   Literal(ast) { // [ value ]
-    ast.code = String.toSourceString(ast.value)
+    ast.code = String.sourceStringFrom(ast.value)
   }
   
   Array(ast) { // [ arguments ]
