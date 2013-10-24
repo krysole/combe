@@ -900,7 +900,7 @@ var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_Gener
       else if (params.last.is('SplatParameter')) {
         jsParams = params.dropLast(1).map((p) -> p.name).separatedBy(', ')
         restParams = [
-          'var ', params.last.name, ' = Array.slice(arguments, ', params.length.toString(), ');\n'
+          'var ', params.last.name, ' = Array.slice(arguments, ', (params.length - 1).toString(), ');\n'
         ]
       }
       else {
