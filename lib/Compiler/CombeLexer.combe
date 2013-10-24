@@ -99,7 +99,7 @@ var CombeLexer = module.exports = LexicalGrammar.subclass('CombeLexer', {}, {
   
   rule decimal {
     matchedInput[
-      | integerPart ('.' digit*)? exponentPart?
+      | integerPart ('.' ~'.' digit*)? exponentPart?
       | '.' digit+ exponentPart?
     ]:text ~idChar
     emit('number', parseFloat(text))
