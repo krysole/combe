@@ -457,7 +457,7 @@ var CombeParser = module.exports = TokenGrammar.subclass('CombeParser', {}, {
   }
   rule ruleBody {
     | lbrace pattern:p rbrace -> p
-    | operatorPattern
+    | '->' pattern:p -> p
   }
   
   rule subexpression {
