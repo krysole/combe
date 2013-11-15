@@ -18,8 +18,6 @@
 
 var crypto = require('crypto')
 
-var AstVisitor = require('./AstVisitor')
-
 var CombeAst = require('./CombeAst')
 
 var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_GenerateCode', {}, {

@@ -16,8 +16,6 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-var AstVisitor = require('./AstVisitor')
-
 var CombeAst_AnalyseScoping = module.exports = AstVisitor.subclass('CombeAst_AnalyseScoping', {}, {
   
   order: null
