@@ -62,8 +62,7 @@ var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_Gener
   
   
   If(ast) { // [ condition, consiquent, alternative ]
-    var alt = if (ast.alternative != null) ast.alternative.code
-              else 'null'
+    var alt = (ast.alternative != null) ? ast.alternative.code : 'null'
     
     ast.code = [
       '(/* if */ ', ast.condition.code, '\n',
@@ -111,14 +110,9 @@ var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_Gener
   }
   
   For(ast) { // [ initialize, condition, increment, body ]
-    var init = if (ast.initialize != null) ast.initialize.code
-               else null
-    
-    var cond = if (ast.condition != null) ast.condition.code
-               else null
-    
-    var inc = if (ast.increment != null) ast.increment.code
-              else null
+    var init = (ast.initialize != null) ? ast.initialize.code : null
+    var cond = (ast.condition != null) ? ast.condition.code : null
+    var inc = (ast.increment != null) ? ast.increment.code : null
     
     var body = self.unwrapBlockAsStatements(ast.body)
     
@@ -153,11 +147,8 @@ var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_Gener
     names.separatedBy(', ')
     inits.separatedBy(', ')
     
-    var cond = if (ast.condition != null) ast.condition.code
-               else null
-    
-    var inc = if (ast.increment != null) ast.increment.code
-              else null
+    var cond = (ast.condition != null) ? ast.condition.code : null
+    var inc = (ast.increment != null) ? ast.increment.code : null
     
     var body = self.unwrapBlockAsStatements(ast.body, true)
     
@@ -237,8 +228,7 @@ var CombeAst_GenerateCode = module.exports = AstVisitor.subclass('CombeAst_Gener
   }
   
   Return(ast) { // [ argument ]
-    var valueCode = if (ast.argument != null) ast.argument.code
-                    else 'undefined'
+    var valueCode = (ast.argument != null) ? ast.argument.code : 'undefined'
     
     ast.code = [
       '(function () { throw (__combe_return = { value: ', valueCode, ' }); })()'

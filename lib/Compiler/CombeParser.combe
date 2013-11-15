@@ -232,7 +232,16 @@ var CombeParser = module.exports = TokenGrammar.subclass('CombeParser', {}, {
       | 'operatorAssignment':op expression:rhs
         -> Ast.OperatorAssignment(op.text, lhs, rhs)
       )
-    | logicalOrExpression
+    | conditionalOperatorExpression
+  }
+  
+  rule conditionalOperatorExpression {
+    logicalOrExpression:condition
+    ( '?' logicalOrExpression:consiquent
+      ':' logicalOrExpression:alternative
+      -> Ast.If(condition, consiquent, alternative)
+    | -> condition
+    )
   }
   
   rule logicalOrExpression {
@@ -332,11 +341,6 @@ var CombeParser = module.exports = TokenGrammar.subclass('CombeParser', {}, {
       -> Ast.MethodCall(subject, name, args)
     | '.' propertyName:name
       -> Ast.Dot(subject, name)
-      
-    | ':' propertyName:name argumentList:args
-      -> Ast.MethodCall(Ast.Dot(subject, Ast.Literal('prototype')), name, args)
-    | ':' propertyName:name
-      -> Ast.Dot(Ast.Dot(subject, Ast.Literal('prototype')), name)
   }
   
   
