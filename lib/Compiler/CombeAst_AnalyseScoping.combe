@@ -20,17 +20,15 @@ var AstVisitor = require('./AstVisitor')
 
 var CombeAst_AnalyseScoping = module.exports = AstVisitor.subclass('CombeAst_AnalyseScoping', {}, {
   
-  initialize() {
-    self.scopes = []
-  }
+  order: null
+  recurseOverUnspecified: true
   
-  defaultVisitOrder: 'NoOrder',
+  handleScript(ast) -> self.visitCreatingScope(ast)
+  handleBlock(ast) -> self.visitCreatingScope(ast)
+  handleRule(ast) -> self.visitCreatingScope(ast, true)
   
-  Script(ast) -> self.visitCreatingScope(ast),
-  Block(ast) -> self.visitCreatingScope(ast),
-  Rule(ast) -> self.visitCreatingScope(ast, true),
   visitCreatingScope(ast, hasSelf) {
-    self.scopes.push(ast)
+    self.push('scope', ast)
     ast.variables = []
     ast.declareVariables = []
     
@@ -39,45 +37,46 @@ var CombeAst_AnalyseScoping = module.exports = AstVisitor.subclass('CombeAst_Ana
     }
     
     if (ast.parameters != null) {
-      ast.variables.pushAll(ast.parameters.map((p) -> p.name))
+      ast.variables.pushAll(ast.parameters.map(p -> p.name))
     }
     
     self.visitChildren(ast)
     
     ast.variables.pushAll(ast.declareVariables)
     
-    self.scopes.pop()
+    self.pop('scope')
   }
   
-  VariableDeclaration(ast) {
-    assert(self.scopes.top.type === 'Block' ||
-           self.scopes.top.type === 'Script')
+  handleVariableDeclaration(ast) {
+    assert(self.get('scope').type === 'Block' ||
+           self.get('scope').type === 'Script')
            
     return self.visitDeclaringVariable(ast)
   }
-  BindPattern(ast) {
-    assert(self.scopes.top.type === 'Rule')
+  handleBindPattern(ast) {
+    assert(self.get('scope').type === 'Rule')
            
     return self.visitDeclaringVariable(ast)
   }
+  
   visitDeclaringVariable(ast) {
-    if (!self.scopes.last.variables.include(ast.name)) {
-      self.scopes.last.declareVariables.pushIfAbsent(ast.name)
+    if (!self.get('scope').variables.include(ast.name)) {
+      self.get('scope').declareVariables.pushIfAbsent(ast.name)
     }
     
     self.visitChildren(ast)
   }
   
-  Variable(ast) {
+  handleVariable(ast) {
     // Note: If I add a strict module system I could do checking here, although
     // that would require the ability to also 'declare' globals that you wish
     // to have access to.
   }
   
-  VariablePattern(ast) {
-    assert(self.scopes.top.type === 'Rule')
+  handleVariablePattern(ast) {
+    assert(self.get('scope').type === 'Rule')
     
-    ast.containingScope = self.scopes.top
+    ast.containingScope = self.get('scope')
   }
   
 })

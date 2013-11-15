@@ -1,7 +1,7 @@
 //
 // Combe - Improved JavaScript with Pattern Matching
 //
-// Copyright 2012 Lorenz Pretterhofer <krysole@alexicalmistake.com>
+// Copyright 2013 Lorenz Pretterhofer <krysole@alexicalmistake.com>
 //
 // Permission to use, copy, modify, and distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,66 +18,100 @@
 
 var AstVisitor = module.exports = Object.subclass('AstVisitor', {
   
-  visit(ast) {
-    self.new().visit(ast)
+  visit(*args) {
+    return self.new(*args).visitRoot()
   }
   
 }, {
   
-  defaultVisitOrder: 'PreOrder'
+  order: null // 'pre', 'post' or {'in', 'none', 'no', null}
+  recurseOverUnspecified: false
   
-  handleUnspecifiedType: null
-  recurseOverUnspecifiedTypes: true
-  
-  visit(ast) {
-    assert(self.defaultVisitOrder != null)
-    var orderingMethod = self.('visitWithOrder_' + self.defaultVisitOrder)
-    if (orderingMethod != null) {
-      var method = self.(ast.type)
-      if (method != null) {
-        return orderingMethod.call(self, ast, method)
-      }
-      else if (self.handleUnknownType != null) {
-        if (self.recurseOverUnspecifiedTypes) {
-          return orderingMethod.call(self, ast, self.handleUnspecifiedType)
-        }
-        else {
-          return self.visitWithOrder_NoOrder(ast, self.handleUnspecifiedType)
-        }
-      }
-      else if (self.recurseOverUnspecifiedTypes) {
-        self.visitChildren(ast)
-        return null
-      }
-      else {
-        throw Error.new("Unhandled Ast Node Type '" + ast.type + "'")
-      }
+  visitUnspecified(node) {
+    if (self.recurseOverUnspecified) {
+      self.visitChildren(node)
     }
     else {
-      throw Error.new("Invalid visit order '" + self.defaultVisitOrder + "'")
+      throw Error.new('AstVisitor cannot handle unspecified ast node type: ' + node.type)
     }
   }
   
-  visitWithOrder_NoOrder(ast, method) {
-    return method.call(self, ast)
+  
+  initialize(rootNode) {
+    self.rootNode = rootNode
+    self.path = []
+    self.dynamicVariables = []
   }
   
-  visitWithOrder_PreOrder(ast, method) {
-    self.visitChildren(ast)
-    return method.call(self, ast)
+  visitRoot(*rest) {
+    self.rootNode.fix() // Ensure parent links, etc., are correct.
+    return self.visit(self.rootNode, *rest)
   }
   
-  visitWithOrder_PostOrder(ast, method) {
-    var result = method.call(self, ast)
-    self.visitChildren(ast)
+  
+  push(name, value) {
+    if (self.dynamicVariables.(name) == null) {
+      self.dynamicVariables.(name) = []
+    }
+    return self.dynamicVariables.(name).push(value)
   }
   
-  visitChildren(ast) {
-    return self.visitAll(ast.children)
+  pop(name) {
+    return self.dynamicVariables.(name).pop(name)
   }
   
-  visitAll(array) {
-    return array.map((a) -> self.visit(a))
+  set(name, value) {
+    return self.dynamicVariables.(name).top = value
+  }
+  
+  get(name) {
+    return self.dynamicVariables.(name).top
+  }
+  
+  
+  pushNode(node) {
+    return self.path.push(node)
+  }
+  
+  popNode {
+    return self.path.pop()
+  }
+  
+  
+  visitChildren(node, *rest) {
+    return self.visitAll(node.children, *rest)
+  }
+  
+  visitAll(nodes, *rest) {
+    return nodes.map(node -> self.visit(node, *rest))
+  }
+  
+  visit(node) {
+    var result
+    self.pushNode(node)
+    if (self.order == null || ['in', 'none', 'no'].include(self.order)) {
+      result = self.handle(node)
+    }
+    else if (self.order == 'pre') {
+      result = self.handle(node)
+      node.children.each(childNode -> self.visit(childNode))
+    }
+    else if (self.order == 'post') {
+      node.children.each(childNode -> self.visit(childNode))
+      result = self.handle(node)
+    }
+    else assert(false)
+    self.popNode()
+    return result
+  }
+  
+  handle(node) {
+    if (self.('handle' + node.type) != null) {
+      return self.('handle' + node.type)(node)
+    }
+    else {
+      return self.visitUnspecified(node)
+    }
   }
   
 })
