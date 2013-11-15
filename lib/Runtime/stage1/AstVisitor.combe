@@ -16,7 +16,7 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-var AstVisitor = module.exports = Object.subclass('AstVisitor', {
+global.AstVisitor = module.exports = Object.subclass('AstVisitor', {
   
   visit(*args) {
     return self.new(*args).visitRoot()
