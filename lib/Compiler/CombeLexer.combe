@@ -166,8 +166,8 @@ var CombeLexer = module.exports = LexicalGrammar.subclass('CombeLexer', {}, {
     | 't'  -> '\t'
     | 'v'  -> '\v'
     | '0' ~digit -> '\0'
-    | 'x' matchedInput[hexDigit hexDigit]:hs -> String.fromCodepoint(hs)
-    | 'u' matchedInput[hexDigit hexDigit hexDigit hexDigit]:hs -> String.fromCodepoint(hs)
+    | 'x' matchedInput[hexDigit hexDigit]:hs -> String.fromCodepoint(hs.toInt(16))
+    | 'u' matchedInput[hexDigit hexDigit hexDigit hexDigit]:hs -> String.fromCodepoint(hs.toInt(16))
   }
   
   

@@ -24,27 +24,35 @@ global.AstVisitor = module.exports = Object.subclass('AstVisitor', {
   
 }, {
   
-  order: null // 'pre', 'post' or {'in', 'none', 'no', null}
-  recurseOverUnspecified: false
+  trace: false
   
-  visitUnspecified(node) {
-    if (self.recurseOverUnspecified) {
-      self.visitChildren(node)
-    }
-    else {
-      throw Error.new('AstVisitor cannot handle unspecified ast node type: ' + node.type)
-    }
-  }
+  order: null // 'pre', 'post' or {'in', 'none', 'no', null}
+  
+  visitUnspecified(node) -> throw Error.new('AstVisitor cannot handle unspecified ast node type: ' + node.type)
   
   
   initialize(rootNode) {
     self.rootNode = rootNode
     self.path = []
-    self.dynamicVariables = []
+    self.dynamicVariables = {}
+    self.gensymid = 0
+    
+    if (self.trace) {
+      self.push('traceIndentation', 0)
+    }
+  }
+  
+  gensym(basename) {
+    return basename + self.gensymid++
   }
   
   visitRoot(*rest) {
     self.rootNode.fix() // Ensure parent links, etc., are correct.
+    
+    if (self.trace) {
+      console.log('Tracing AstVisitor ' + self.class.name)
+    }
+    
     return self.visit(self.rootNode, *rest)
   }
   
@@ -89,25 +97,36 @@ global.AstVisitor = module.exports = Object.subclass('AstVisitor', {
   visit(node) {
     var result
     self.pushNode(node)
+    
+    if (self.trace) {
+      console.log('  '.repeat(self.get('traceIndentation')) + node.type)
+      self.push('traceIndentation', self.get('traceIndentation') + 1)
+    }
+    
     if (self.order == null || ['in', 'none', 'no'].include(self.order)) {
       result = self.handle(node)
     }
     else if (self.order == 'pre') {
       result = self.handle(node)
-      node.children.each(childNode -> self.visit(childNode))
+      self.visitChildren(node)
     }
     else if (self.order == 'post') {
-      node.children.each(childNode -> self.visit(childNode))
+      self.visitChildren(node)
       result = self.handle(node)
     }
     else assert(false)
+    
+    if (self.trace) {
+      self.pop('traceIndentation')
+    }
+    
     self.popNode()
     return result
   }
   
   handle(node) {
-    if (self.('handle' + node.type) != null) {
-      return self.('handle' + node.type)(node)
+    if (self.('visit' + node.type) != null) {
+      return self.('visit' + node.type)(node)
     }
     else {
       return self.visitUnspecified(node)
