@@ -19,11 +19,11 @@
 var CombeAst_AnalyseScoping = module.exports = AstVisitor.subclass('CombeAst_AnalyseScoping', {}, {
   
   order: null
-  recurseOverUnspecified: true
+  visitUnspecified(ast) -> self.visitChildren(ast)
   
-  handleScript(ast) -> self.visitCreatingScope(ast)
-  handleBlock(ast) -> self.visitCreatingScope(ast)
-  handleRule(ast) -> self.visitCreatingScope(ast, true)
+  visitScript(ast) -> self.visitCreatingScope(ast)
+  visitBlock(ast) -> self.visitCreatingScope(ast)
+  visitRule(ast) -> self.visitCreatingScope(ast, true)
   
   visitCreatingScope(ast, hasSelf) {
     self.push('scope', ast)
@@ -45,13 +45,13 @@ var CombeAst_AnalyseScoping = module.exports = AstVisitor.subclass('CombeAst_Ana
     self.pop('scope')
   }
   
-  handleVariableDeclaration(ast) {
+  visitVariableDeclaration(ast) {
     assert(self.get('scope').type === 'Block' ||
            self.get('scope').type === 'Script')
            
     return self.visitDeclaringVariable(ast)
   }
-  handleBindPattern(ast) {
+  visitBindPattern(ast) {
     assert(self.get('scope').type === 'Rule')
            
     return self.visitDeclaringVariable(ast)
@@ -65,13 +65,13 @@ var CombeAst_AnalyseScoping = module.exports = AstVisitor.subclass('CombeAst_Ana
     self.visitChildren(ast)
   }
   
-  handleVariable(ast) {
+  visitVariable(ast) {
     // Note: If I add a strict module system I could do checking here, although
     // that would require the ability to also 'declare' globals that you wish
     // to have access to.
   }
   
-  handleVariablePattern(ast) {
+  visitVariablePattern(ast) {
     assert(self.get('scope').type === 'Rule')
     
     ast.containingScope = self.get('scope')
