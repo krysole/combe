@@ -1,7 +1,7 @@
 {
   "name": "combe",
-  "description": "Improved JavaScript with Pattern Matching",
-  "version": "0.7.0",
+  "description": "A Parsing Extension for JavaScript",
+  "version": "0.8.0dev",
   "homepage": "http://github.com/krysole/combe",
   "maintainers": [
     {
@@ -17,7 +17,6 @@
     }
   ],
   "bin": {
-    "combe": "./bin/combe",
     "combec": "./bin/combec"
   },
   "repository": {
