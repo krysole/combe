@@ -18,3 +18,7 @@
 
 # Compiler directory copy
 *CompilerCopy
+
+# Hidden Files
+.*
+~*
