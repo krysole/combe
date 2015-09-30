@@ -1,0 +1,271 @@
+//
+// Combe - A Parsing Extension for JavaScript
+//
+// Copyright 2015 Lorenz Pretterhofer <krysole@alexicalmistake.com>
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+//
+"use strict";
+
+var TokenGrammar = require("../TokenGrammar.js");
+
+
+
+var CombeParser = function (sourcename) {
+  TokenGrammar.call(this, sourcename);
+};
+CombeParser.prototype = Object.create(TokenGrammar.prototype);
+CombeParser.prototype.constructor = CombeParser;
+CombeParser.name = "CombeParser";
+module.exports = CombeParser;
+
+
+
+CombeParser.prototype.start = rule { scanFile }
+
+
+
+CombeParser.prototype.scanFile = rule {
+  scan
+}
+
+
+CombeParser.prototype.scan = rule (filter) {
+  push("start", true)
+  push("enclosedBy", null)
+  fragments[
+    ( ?(this.get("enclosedBy") == null) ~~ifNotNull(filter)
+    | ?(this.get("enclosedBy") != null)
+    )
+    ( suppressors | triggers | fragment ) set("start", false)
+  ]:fs
+  pop("enclosedBy")
+  pop("start")
+  !["Composite", fs]
+}
+
+CombeParser.prototype.fragments = rule (pattern) {
+  push("fragments", [])
+  %pattern
+  pop("fragments"):fs
+  !fs
+};
+
+
+
+CombeParser.prototype.triggers = rule {
+| trigger("rule")
+};
+
+CombeParser.prototype.trigger = function (name) {
+  ~~%this[name + "Trigger"]
+  ( fragments[ %this[name + "Syntax"]:f ] !f
+  | error("Triggered syntax invalid (" + name + ").")
+  )
+}
+
+
+
+CombeParser.prototype.ruleTrigger = rule {
+| id("rule")
+| inferredName ws? id("rule")
+};
+
+CombeParser.prototype.ruleSyntax = rule {
+  fragments[inferredName:iname]?:inf id("rule") ws? id?:name ws? parameterList?:pf ws?
+  pn('{') ws? pattern:b ws? pn('}')
+  !["Composite", [inf, ["Rule", this.get("indent"), name, iname, pf, b]]]
+};
+
+CombeParser.prototype.parameterList = rule {
+  pn("(") scan:f pn(")") !f
+};
+
+
+
+CombeParser.prototype.pattern = rule {
+  choicePattern
+};
+
+CombeParser.prototype.choicePattern = rule {
+  ws?
+  pn("|")? ws? choiceBranch:i ws?
+  ( pn('|') ws? choiceBranch:b ws? !b )*:r
+  !["Choice", [i].concat(r)]
+};
+
+CombeParser.prototype.sequencePattern = rule {
+  delimited1[bindPattern, ( ws | ws? pn(',') ws? )]:ps
+  !( ps.length > 1 ? ["SequencePattern", ps] : ps[0] )
+};
+
+CombeParser.prototype.bindPattern = rule {
+| operatorPattern:p pn(":") id:name !["BindPattern", p, name]
+|                   pn(":") id:name !["BindPattern", ["NextPattern"], name]
+|                   pn(":")         !["NextPattern"]
+| operatorPattern
+};
+
+CombeParser.prototype.operatorPattern = rule {
+| pn("&")         hashPattern:p         !["LookaheadPattern",    p]
+| pn("~") pn("~") hashPattern:p         !["DoubleNegatePattern", p]
+| pn("~")         hashPattern:p         !["NegatePattern",       p]
+|                 hashPattern:p pn("?") !["OptionalPattern",     p]
+|                 hashPattern:p pn("*") !["RepeatPattern",       p]
+|                 hashPattern:p pn("+") !["Repeat1Pattern",      p]
+|                 hashPattern
+};
+
+CombeParser.prototype.hashPattern = rule {
+| pn("#") callPattern:p !["HashPattern", p]
+| callPattern
+};
+
+CombeParser.prototype.callPattern = rule {
+  primaryPattern:p 
+  ( pn("(") ws? pn(")")                     !["CallPattern", p, []]:p
+  | pn("(") ~( ws? pn(")") ) scan:f pn(")") !["JSCallPattern", p, f]:p
+  | pn("[") ws? delimited[bindPattern, ws? pn(',') ws?]:ps ws? pn(']')
+                                            !["CallPattern", p, ps]:p
+  )*
+  !p
+};
+
+CombeParser.prototype.primaryPattern = rule {
+| predicatePattern
+| actionPattern
+| immediatePattern
+| propertyPattern
+| objectPattern
+| stringPattern
+| numberPattern
+| nestedInputPattern
+| subpattern
+};
+
+CombeParser.prototype.predicatePattern = rule {
+  pn("?") semanticBody:b !["PredicatePattern", b]
+};
+
+CombeParser.prototype.actionPattern = rule {
+  pn("!") semanticBody:b !["ActionPattern", b]
+};
+
+CombeParser.prototype.immediatePattern = rule {
+  pn("%") semanticBody:b !["ImmediatePattern", b]
+};
+
+CombeParser.prototype.propertyPattern = rule {
+  id:name !["PropertyPattern", name]
+};
+
+CombeParser.prototype.objectPattern = rule {
+  pn("@") semantic:b !["ObjectPattern", b]
+};
+
+CombeParser.prototype.stringPattern = rule {
+  string:text !["StringPattern", text]
+};
+
+CombeParser.prototype.numberPattern = rule {
+  number:text !["NumberPattern", text]
+};
+
+CombeParser.prototype.nestedInputPattern = rule {
+  pn("[") ws? pattern:p ws? pn("]") !["NestedPattern", p]
+};
+
+CombeParser.prototype.subpattern = rule {
+  pn("(") ws? pattern:p ws? pn(")") !p
+};
+
+CombeParser.prototype.emptyPattern = rule {
+  !["EmptyPattern"]
+};
+
+
+
+CombeParser.prototype.semanticBody = rule {
+| pn("(") ~( ws? pn(")") ) scan:f pn(")") !["ExpressionSemanticBody", f]
+| pn("{") scan:f pn("}")                  !["FunctionSemanticBody", f]
+| scan[semanticBodyFilter]:f              !["ExpressionSemanticBody", f]
+};
+CombeParser.prototype.semanticBodyFilter = rule {
+| token("Literal", null)
+| token("IdentifierName", null)
+| pn("@")
+| pn(".") | pn("(") | pn("[")
+};
+
+
+
+CombeParser.prototype.suppressors = rule {
+| suppressDotIdentifierName
+};
+
+CombeParser.prototype.suppressDotIdentifierName = rule {
+  pn(".") ws? id ~( ws? pn("=") )
+};
+
+
+
+CombeParser.prototype.inferredName = rule {
+| dotAssign
+| propdeclAssign
+| subscriptAssign
+| variableAssign
+};
+
+CombeParser.prototype.dotAssign = rule {
+  pn(".") ws? id:name ws? pn("=") !name
+};
+
+CombeParser.prototype.propdeclAssign = rule {
+  ( id | string ):name ws? pn(":") !name
+};
+
+CombeParser.prototype.subscriptAssign = rule {
+  pn("[") ws? string:name ws? pn("]") ws? pn("=") !name
+};
+
+CombeParser.prototype.variableAssign = rule {
+  id:name ws? pn("=") !name
+};
+
+
+
+CombeParser.prototype.token = rule (type, subtype) {
+  :token
+  ?(type == null || token[0] === type)
+  ?(subtype == null || token[1] === subtype)
+  apush("fragments", ["Fragment", token[2]])
+  !token
+}
+
+CombeParser.prototype.id = rule (expected) {
+  token("IdentifierName", null):token
+  ?(expected == null || token[2] === expected)
+  !token[2]
+};
+
+CombeParser.prototype.pn = rule (expected) {
+  token("Punctuator", null):token !token[2]
+};
+
+CombeParser.prototype.string = rule {
+  token("Literal", "String"):token !token[3]
+};
+
+CombeParser.prototype.ws = rule {
+  token("Whitespace", null):token !token[2]
+};

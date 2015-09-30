@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 //
-// Combe - Improved JavaScript with Pattern Matching
+// Combe - A Parsing Extension for JavaScript
 //
-// Copyright 2012 Lorenz Pretterhofer <krysole@alexicalmistake.com>
+// Copyright 2015 Lorenz Pretterhofer <krysole@alexicalmistake.com>
 //
 // Permission to use, copy, modify, and distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,27 +18,127 @@
 //
 "use strict";
 
-require('../lib/Runtime');
+require("../lib/Runtime");
 
-var nopt = require('nopt');
-var path = require('path');
+var nopt = require("nopt");
+var path = require("path");
+var fs = require("fs");
 
-var Compiler = require('../lib/Compiler');
+var Compiler = require("../lib/Compiler");
 
-setTimeout(function () {
-  var knownOptions = {
-    "output": [String],
-  };
-  var optionShorthands = {
-    "o": ["--output"]
-  };
-  var options = nopt(knownOptions, optionShorthands, process.argv, 2);
-  if (options.argv.remain === 1) {
-    console.error('Usage: combec [-o output] source');
+
+
+var Usage = "Usage: combec [-o targetpath] sourcepath";
+  // "Options: --some-option: does some stuff\n" +
+  // "         --another-option: does some other stuff";
+
+var Options = {
+  "output": path,
+  
+  "parse": Boolean,
+  "analyse": Boolean,
+  "compile": Boolean,
+};
+var OptionShorthands = {
+  "o": ["--output"],
+};
+var ExpectedRemainingArgumentsCount = 1;
+
+
+
+var main = function () {
+  var options = nopt(Options, OptionShorthands, process.argv, 2);
+  var remaining = options.argv.remain;
+  
+  checkExclusiveOptions(options, ["parse", "analyse", "compile"], "compile");
+  
+  if (remaining.length < ExpectedRemainingArgumentsCount) {
+    console.error("Too few arguments.");
+    console.error(Usage);
+    process.exit(1);
+  }
+  if (remaining.length > ExpectedRemainingArgumentsCount) {
+    console.error("Too many arguments.");
+    console.error(Usage);
     process.exit(1);
   }
   
-  var source = options.argv.remain[0];
   
-  Compiler.compile(source, options.output, options);
+  
+  var sourcepath = remaining[0];
+  
+  if (!fs.existsSync(sourcepath)) {
+    console.error("sourcepath (" + sourcepath + ") does not exist.");
+    process.exit(1);
+  }
+  
+  if (options["parse"]) {
+    var source = fs.readFileSync(sourcepath, "utf8");
+    var ast = Compiler.parse(source, sourcepath);
+    var output = Compiler.astToString(ast);
+    
+    if (options["output"] != null) {
+      fs.writeFileSync(options["output"], output);
+    }
+    else {
+      console.log(output);
+    }
+  }
+  else if (options["analyse"]) {
+    var source = fs.readFileSync(sourcepath, "uft8");
+    var ast = Compiler.parse(source, sourcepath);
+    var analysedAst = Compiler.analyse(ast);
+    var output = Compiler.astToString(ast);
+    
+    if (options["output"] != null) {
+      fs.writeFileSync(options["output"], output);
+    }
+    else {
+      console.log(output);
+    }
+  }
+  else if (options["compile"]) {
+    var source = fs.readFileSync(sourcepath, "utf8");
+    var output = Compiler.compile(source, sourcepath);
+    
+    if (options["output"] != null) {
+      fs.writeFileSync(options["output"], output);
+    }
+    else {
+      console.log(output);
+    }
+  }
+  else assert(false);
+};
+
+
+
+var checkExclusiveOptions = function (options, exclusiveOptionNames, _default) {
+  var found = exclusiveOptionNames.filter(function (name) {
+    return (options[name] !== undefined);
+  });
+  
+  if (found.length > 1) {
+    if (_default != null) {
+      console.error("Expected at most one of the options: " + exclusiveOptionNames.join(" ") + "; found: " + found.join(" ") + ".");
+      process.exit(1);
+    }
+    else {
+      console.error("Expected one of the options: " + exclusiveOptionNames.join(" ") + "; found: " + found.join(" ") + ".");
+      process.exit(1);
+    }
+  }
+  else if (found.length === 0) {
+    if (_default != null) {
+      options[_default] = true;
+    }
+    else {
+      console.error("Expected one of the options: " + exclusiveOptionNames.join(" ") + ".");
+      process.exit(1);
+    }
+  }
+};
+
+setTimeout(function () {
+  return main();
 }, 0);

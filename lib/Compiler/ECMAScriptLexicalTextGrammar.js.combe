@@ -1,0 +1,330 @@
+//
+// Combe - A Parsing Extension for JavaScript
+//
+// Copyright 2015 Lorenz Pretterhofer <krysole@alexicalmistake.com>
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+//
+"use strict";
+
+var TextGrammar = require("../TextGrammar.js");
+
+
+
+//
+// Token rules are based on ECMAScript 6.0 (section 11)
+//
+// Deviations to the spec are as follows:
+//
+//  - Regexes 'steal' all valid parses from punctuator, so some valid 
+//    uses of '/' (divide) will instead parse as regexes if they form 
+//    a valid regex token. Whitespace should be used to disambiguate uses 
+//    of '/' (divide) where necessary.
+//
+//  - We don't support spaces in regular expression literals. They must 
+//    be escaped instead.
+//
+//  - No support for semicolon insertion is provided, since it's too 
+//    pointless and complicated to implement anyway, and it requires full
+//    syntactic level contextualization.
+//
+//  - Only token text is recognized, no value processing or further static
+//    checking is performed.
+//
+//  - We don't define the reserved words here.
+//
+var ECMAScriptLexer = function (sourcename) {
+  TextGrammar.call(this, sourcename);
+  
+  this.init("enclosedBy", null);
+  this.init("indent", 0);
+  this.init("lineStart", 0);
+  
+  this.init("fragments", []);
+};
+ECMAScriptLexer.prototype = Object.create(TextGrammar.prototype);
+ECMAScriptLexer.prototype.constructor = ECMAScriptLexer;
+ECMAScriptLexer.name = "ECMAScriptLexer";
+module.exports = ECMAScriptLexer;
+
+
+
+ECMAScriptLexer.prototype.start = rule { allTokens }
+
+ECMAScriptLexer.prototype.allTokens = rule {
+  token*
+}
+
+
+ECMAScriptLexer.prototype.token = rule {
+  | input[ multilineComment         ]:text !["Whitespace",     "MultilineComment",  text, null]
+  | input[ singlelineComment        ]:text !["Whitespace",     "SinglelineComment", text, null]
+  | input[ spaces                   ]:text !["Whitespace",     "Spaces",            text, null]
+  | input[ newline                  ]:text !["Whitespace",     "Newline",           text, null]
+
+  | input[ templateStringComplete   ]:text !["TemplateString", "Complete",          text, null]
+  | input[ templateStringHead       ]:text !["TemplateString", "Head",              text, null]
+  | input[ templateStringMiddle     ]:text !["TemplateString", "Middle",            text, null]
+  | input[ templateStringTail       ]:text !["TemplateString", "Tail",              text, null]
+
+  | input[ regularExpressionLiteral ]:text !["Literal",        "RegularExpression", text, eval(text)]
+  | input[ stringLiteral            ]:text !["Literal",        "String",            text, eval(text)]
+  | input[ numberLiteral            ]:text !["Literal",        "Number",            text, eval(text)]
+  | input[ nullLiteral              ]:text !["Literal",        "Null",              text, eval(text)]
+  | input[ booleanLiteral           ]:text !["Literal",        "Boolean",           text, eval(text)]
+  | input[ punctuator               ]:text !["Punctuator",     text,                text, null]
+  | input[ identifierName           ]:text !["IdentifierName", "IdentifierName",    text, null]
+};
+
+
+
+ECMAScriptLexer.prototype.templateStringComplete = rule {
+  "`" templateCharacter* "`"
+};
+
+ECMAScriptLexer.prototype.templateStringHead = rule {
+  "`" templateCharacter* lbrace
+};
+
+ECMAScriptLexer.prototype.templateStringMiddle = rule {
+  rbrace templateCharacter* lbrace
+};
+
+ECMAScriptLexer.prototype.templateStringTail = rule {
+  rbrace templateCharacter* "`"
+};
+
+ECMAScriptLexer.prototype.lbrace = rule {
+  "${" push("enclosedBy", "${")
+};
+
+ECMAScriptLexer.prototype.rbrace = rule {
+  ?(this.get("enclosedBy") === "${") "}" pop("enclosedBy")
+};
+
+ECMAScriptLexer.prototype.templateCharacter = rule {
+| ~newline ~"$" ~"\\" char
+
+| "$" ~"{"
+| "\\" escapeSequence
+| newline
+| "\\" newline
+};
+
+
+
+ECMAScriptLexer.prototype.regularExpressionLiteral = rule {
+  "/" regularExpressionStart regularExpressionContinue* "/" regularExpressionFlag*
+};
+
+ECMAScriptLexer.prototype.regularExpressionStart = rule {
+  ~"*" regularExpressionContinue
+};
+
+ECMAScriptLexer.prototype.regularExpressionContinue = rule {
+| "\\" char
+| regularExpressionClass
+| ~"\\" ~"/" ~"[" ~newline ~space char
+};
+
+ECMAScriptLexer.prototype.regularExpressionClass = rule {
+| ~"]" ~"\\" ~newline char
+| "\\" char
+};
+
+ECMAScriptLexer.prototype.regularExpressionFlag = rule {
+  ~"\\" idContinue
+};
+
+
+
+ECMAScriptLexer.prototype.stringLiteral = rule {
+| "\"" stringCharacter["\""]* "\""
+| "\'" stringCharacter["\'"]* "\'"
+};
+
+ECMAScriptLexer.prototype.stringCharacter = rule (terminator) {
+| ~terminator ~newline ~"\\" char
+| "\\" escapeSequence
+| "\\" newline
+};
+
+ECMAScriptLexer.prototype.escapeSequence = rule {
+| "\'"
+| "\""
+| "\\"
+| "b"
+| "f"
+| "n"
+| "r"
+| "t"
+| "v"
+
+| "0" ~digit
+| "x" hex hex
+| "u" hex hex hex hex
+| "u" "{" hex+ "}"
+
+| ~"\\" ~newline ~char("\'\"\\bfnrtv") ~"x" ~"u" char
+};
+
+
+
+ECMAScriptLexer.prototype.numberLiteral = rule {
+| decimalLiteral       ~idContinue
+| binaryIntegerLiteral ~idContinue
+| octalIntegerLiteral  ~idContinue
+| hexIntegerLiteral    ~idContinue
+};
+
+ECMAScriptLexer.prototype.decimalLiteral = rule {
+| decimalIntegerLiteral ("." digit+)? exponent?
+| "." digit+ exponent?
+};
+
+ECMAScriptLexer.prototype.decimalIntegerLiteral = rule {
+| "0"
+| char(["1", "9"]) digit*
+};
+
+ECMAScriptLexer.prototype.exponent = rule {
+  ("e"|"E") ("+"|"-"| ) digit+
+};
+
+ECMAScriptLexer.prototype.binaryIntegerLiteral = rule {
+  ("0b"|"0B") ("0"|"1")+
+};
+
+ECMAScriptLexer.prototype.octalIntegerLiteral = rule {
+  ("0o"|"0O") octal+
+};
+
+ECMAScriptLexer.prototype.hexIntegerLiteral = rule {
+  ("0x"|"0X") hex+
+};
+
+
+
+ECMAScriptLexer.prototype.nullLiteral = rule {
+  "null"
+};
+
+
+
+ECMAScriptLexer.prototype.booleanLiteral = rule {
+| "true"
+| "false"
+};
+
+
+
+ECMAScriptLexer.prototype.punctuator = rule {
+| openPunctuator
+| closePunctuator
+| basicPunctuator
+};
+
+ECMAScriptLexer.prototype.openPunctuator = rule {
+| "{" push("enclosedBy", "{")
+| "(" push("enclosedBy", "(")
+| "[" push("enclosedBy", "[")
+};
+
+ECMAScriptLexer.prototype.closePunctuator = rule {
+| ?(this.get("enclosedBy") === "{") "}" pop("enclosedBy")
+| ?(this.get("enclosedBy") === "(") ")" pop("enclosedBy")
+| ?(this.get("enclosedBy") === "[") "]" pop("enclosedBy")
+};
+
+ECMAScriptLexer.prototype.basicPunctuator = rule {
+| "..."  | "."    | "?"    | ":"    | ";"    | ","
+
+| "<<="  | ">>="  | ">>>=" | "=>"
+
+| "==="  | "!=="  | "=="   | "!="   | "!"    | "="   | "~"
+| "<<"   | ">>"   | ">>>"  | "<="   | ">="   | "<"   | ">"
+
+// "/" and "/=" will accept all cases not _stolen_ by regex.
+| "++"   | "--"
+| "+="   | "-="   | "*="   | "/="   | "%="
+| "+"    | "-"    | "*"    | "/"    | "%"
+
+| "||"   | "&&"
+| "|="   | "^="   | "&="
+| "|"    | "^"    | "&"
+
+// Combe extensions
+| "#"    | "@@"   | "@"
+};
+
+
+
+ECMAScriptLexer.prototype.identifierName = rule {
+  idStart idContinue*
+};
+
+ECMAScriptLexer.prototype.idStart = rule {
+| char(["a", "z"], ["A", "Z"]) // Should be Unicode ID_Start+Other_ID_Start
+| "$"
+| "_"
+| "\\" "u" hex hex hex hex
+| "\\" "u" "{" hex+ "}"
+};
+
+ECMAScriptLexer.prototype.idContinue = rule {
+| char(["a", "z"], ["A", "Z"], ["0", "9"]) // Should be Unicode ID_Continue+Other_ID_Continue
+| "$"
+| "_"
+| "\\" "u" hex hex hex hex
+| "\\" "u" "{" hex+ "}"
+| "\u200c" // <zwnj>
+| "\u200d" // <zwj>
+};
+
+
+
+ECMAScriptLexer.prototype.multilineComment = rule {
+  "/*" (~"*/" char)* "*/"
+};
+
+ECMAScriptLexer.prototype.singlelineComment = rule {
+  "//" (~newline char)*
+};
+
+
+
+ECMAScriptLexer.prototype.spaces = rule { space+ }
+ECMAScriptLexer.prototype.space = rule {
+| "\u0009" // <tab>
+| "\u000b" // <vt>
+| "\u000c" // <ff>
+| "\u0020" // <sp>
+| "\u00a0" // <nbsp>
+| "\ufeff" // <zwnbsp/bom>
+| Zs       // Unicode space
+};
+ECMAScriptLexer.prototype.Zs = rule { fail }
+
+
+
+ECMAScriptLexer.prototype.newline = rule {
+  _newline set("lineStart", this.position)
+  &( whitespace set("indent", this.position - this.get("lineStart")) )
+};
+ECMAScriptLexer.prototype._newline = rule {
+| "\u000d\u000a" // <cr><lf>
+| "\u000a"       // <lf>
+| "\u000d"       // <cr>
+| "\u2028"       // <ls> (line separator)
+| "\u2029"       // <ps> (paragraph separator)
+};

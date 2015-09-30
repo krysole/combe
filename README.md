@@ -1,10 +1,10 @@
-Combe - Improved JavaScript with Pattern Matching
-=================================================
+Combe - A Parsing Extension for JavaScript
+==========================================
 
 LICENSE
 -------
 
-Copyright 2012 Lorenz Pretterhofer <krysole@alexicalmistake.com>
+Copyright 2015 Lorenz Pretterhofer <krysole@alexicalmistake.com>
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above

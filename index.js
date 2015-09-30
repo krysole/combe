@@ -1,8 +1,7 @@
-#!/usr/bin/env node
 //
-// Combe - Improved JavaScript with Pattern Matching
+// Combe - A Parsing Extension for JavaScript
 //
-// Copyright 2012 Lorenz Pretterhofer <krysole@alexicalmistake.com>
+// Copyright 2015 Lorenz Pretterhofer <krysole@alexicalmistake.com>
 //
 // Permission to use, copy, modify, and distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,20 +17,4 @@
 //
 "use strict";
 
-var path = require('path');
-
-require('../lib/Runtime');
-
-setTimeout(function () {
-  if (process.argv.length < 2 + 1) { // argv: node newcombe ...
-    console.error('Usage: combe filename');
-    return;
-  }
-  
-  var sourceFilename = path.resolve(process.argv[2]);
-  var ext = path.extname(sourceFilename);
-  if (ext === '.combe') {
-    sourceFilename += 'js'; // only load a .combejs file
-  }
-  require(sourceFilename);
-}, 0);
+module.exports = require("./lib/Combe.js");
