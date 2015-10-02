@@ -102,14 +102,8 @@ CombeParser.prototype.parameterList = rule {
 
 
 CombeParser.prototype.pattern = rule {
-  sequencePattern
+  choicePattern
 };
-
-
-
-// CombeParser.prototype.pattern = rule {
-//   choicePattern
-// };
 
 CombeParser.prototype.choicePattern = rule {
   ws?
@@ -120,7 +114,7 @@ CombeParser.prototype.choicePattern = rule {
 CombeParser.prototype.choiceBranch = rule { sequencePattern | emptyPattern };
 
 CombeParser.prototype.sequencePattern = rule {
-  delimited1[bindPattern, ( ws | ws? pn(',') ws? )]:ps
+  delimited1[bindPattern , ( ws | ws? pn(',') ws? )]:ps
   !( ps.length > 1 ? ["SequencePattern", ps] : ps[0] )
 };
 
@@ -150,10 +144,14 @@ CombeParser.prototype.callPattern = rule {
   primaryPattern:p 
   ( pn("(") ws? pn(")")                     !["CallPattern", p, []]:p
   | pn("(") ~( ws? pn(")") ) scan:f pn(")") !["JSCallPattern", p, f]:p
-  | pn("[") ws? delimited[bindPattern, ws? pn(',') ws?]:ps ws? pn(']')
+  | pn("[") ws? delimited[argumentSequencePattern, ws? pn(',') ws?]:ps ws? pn(']')
                                             !["CallPattern", p, ps]:p
+  | pn("[") pattern:pp pn("]")              !["CallPattern", p, [pp]]:p
   )*
   !p
+};
+CombeParser.prototype.argumentSequencePattern = rule {
+  delimited[bindPattern, ws]:ps !(ps.length > 1 ? ["SequencePattern", ps] : ps[0])
 };
 
 CombeParser.prototype.primaryPattern = rule {
@@ -247,19 +245,19 @@ CombeParser.prototype.inferredName = rule {
 };
 
 CombeParser.prototype.dotAssign = rule {
-  pn(".") ws? id:name ws? pn("=") !name
+  pn(".") ws? id:name ws? pn("=") ws? !name
 };
 
 CombeParser.prototype.propdeclAssign = rule {
-  ( id | st ):name ws? pn(":") !name
+  ( id | st ):name ws? pn(":") ws? !name
 };
 
 CombeParser.prototype.subscriptAssign = rule {
-  pn("[") ws? st:name ws? pn("]") ws? pn("=") !name
+  pn("[") ws? st:name ws? pn("]") ws? pn("=") ws? !name
 };
 
 CombeParser.prototype.variableAssign = rule {
-  id:name ws? pn("=") !name
+  id:name ws? pn("=") ws? !name
 };
 
 
