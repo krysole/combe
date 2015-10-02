@@ -43,18 +43,13 @@ var TextGrammar = require("../TextGrammar.js");
 //
 //  - We don't define the reserved words here.
 //
-var ECMAScriptLexer = function (sourcename) {
+function ECMAScriptLexer(sourcename) {
   TextGrammar.call(this, sourcename);
   
   this.init("enclosedBy", null);
-  this.init("indent", 0);
-  this.init("lineStart", 0);
-  
-  this.init("fragments", []);
 };
 ECMAScriptLexer.prototype = Object.create(TextGrammar.prototype);
 ECMAScriptLexer.prototype.constructor = ECMAScriptLexer;
-ECMAScriptLexer.name = "ECMAScriptLexer";
 module.exports = ECMAScriptLexer;
 
 
@@ -67,23 +62,23 @@ ECMAScriptLexer.prototype.allTokens = rule {
 
 
 ECMAScriptLexer.prototype.token = rule {
-  | input[ multilineComment         ]:text !["Whitespace",     "MultilineComment",  text, null]
-  | input[ singlelineComment        ]:text !["Whitespace",     "SinglelineComment", text, null]
-  | input[ spaces                   ]:text !["Whitespace",     "Spaces",            text, null]
-  | input[ newline                  ]:text !["Whitespace",     "Newline",           text, null]
-
-  | input[ templateStringComplete   ]:text !["TemplateString", "Complete",          text, null]
-  | input[ templateStringHead       ]:text !["TemplateString", "Head",              text, null]
-  | input[ templateStringMiddle     ]:text !["TemplateString", "Middle",            text, null]
-  | input[ templateStringTail       ]:text !["TemplateString", "Tail",              text, null]
-
-  | input[ regularExpressionLiteral ]:text !["Literal",        "RegularExpression", text, eval(text)]
-  | input[ stringLiteral            ]:text !["Literal",        "String",            text, eval(text)]
-  | input[ numberLiteral            ]:text !["Literal",        "Number",            text, eval(text)]
-  | input[ nullLiteral              ]:text !["Literal",        "Null",              text, eval(text)]
-  | input[ booleanLiteral           ]:text !["Literal",        "Boolean",           text, eval(text)]
-  | input[ punctuator               ]:text !["Punctuator",     text,                text, null]
-  | input[ identifierName           ]:text !["IdentifierName", "IdentifierName",    text, null]
+  | input[ multilineComment         ]:text  emit("MultilineComment",       null)
+  | input[ singlelineComment        ]:text  emit("SinglelineComment",      null)
+  | input[ spaces                   ]:text  emit("Spaces",                 null)
+  | input[ newline                  ]:text  emit("Newline",                null)
+  
+  | input[ templateStringComplete   ]:text  emit("TemplateStringComplete", null)
+  | input[ templateStringHead       ]:text  emit("TemplateStringHead",     null)
+  | input[ templateStringMiddle     ]:text  emit("TemplateStringMiddle",   null)
+  | input[ templateStringTail       ]:text  emit("TemplateStringTail",     null)
+  
+  | input[ regularExpressionLiteral ]:text  emit("RegularExpression",      eval(text))
+  | input[ stringLiteral            ]:text  emit("String",                 eval(text))
+  | input[ numberLiteral            ]:text  emit("Number",                 eval(text))
+  | input[ nullLiteral              ]:text  emit("Null",                   eval(text))
+  | input[ booleanLiteral           ]:text  emit("Boolean",                eval(text))
+  | input[ punctuator               ]:text  emit("Punctuator",             null)
+  | input[ identifierName           ]:text  emit("IdentifierName",         null)
 };
 
 
@@ -154,7 +149,7 @@ ECMAScriptLexer.prototype.stringLiteral = rule {
 };
 
 ECMAScriptLexer.prototype.stringCharacter = rule (terminator) {
-| ~terminator ~newline ~"\\" char
+| ~%terminator ~newline ~"\\" char
 | "\\" escapeSequence
 | "\\" newline
 };
@@ -270,7 +265,7 @@ ECMAScriptLexer.prototype.basicPunctuator = rule {
 
 
 ECMAScriptLexer.prototype.identifierName = rule {
-  idStart idContinue*
+  idStart:c idContinue*
 };
 
 ECMAScriptLexer.prototype.idStart = rule {
@@ -318,10 +313,6 @@ ECMAScriptLexer.prototype.Zs = rule { fail }
 
 
 ECMAScriptLexer.prototype.newline = rule {
-  _newline set("lineStart", this.position)
-  &( whitespace set("indent", this.position - this.get("lineStart")) )
-};
-ECMAScriptLexer.prototype._newline = rule {
 | "\u000d\u000a" // <cr><lf>
 | "\u000a"       // <lf>
 | "\u000d"       // <cr>

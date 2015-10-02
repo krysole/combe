@@ -21,12 +21,15 @@ var TokenGrammar = require("../TokenGrammar.js");
 
 
 
-var CombeParser = function (sourcename) {
+function CombeParser(sourcename) {
   TokenGrammar.call(this, sourcename);
+  
+  this.init("start", false);
+  this.init("enclosedBy", null);
+  this.init("fragments", null);
 };
 CombeParser.prototype = Object.create(TokenGrammar.prototype);
 CombeParser.prototype.constructor = CombeParser;
-CombeParser.name = "CombeParser";
 module.exports = CombeParser;
 
 
@@ -47,7 +50,7 @@ CombeParser.prototype.scan = rule (filter) {
     ( ?(this.get("enclosedBy") == null) ~~ifNotNull(filter)
     | ?(this.get("enclosedBy") != null)
     )
-    ( suppressors | triggers | fragment ) set("start", false)
+    ( suppressors | triggers | next ) set("start", false)
   ]:fs
   pop("enclosedBy")
   pop("start")
@@ -67,7 +70,7 @@ CombeParser.prototype.triggers = rule {
 | trigger("rule")
 };
 
-CombeParser.prototype.trigger = function (name) {
+CombeParser.prototype.trigger = rule (name) {
   ~~%this[name + "Trigger"]
   ( fragments[ %this[name + "Syntax"]:f ] !f
   | error("Triggered syntax invalid (" + name + ").")
@@ -201,8 +204,8 @@ CombeParser.prototype.semanticBody = rule {
 | scan[semanticBodyFilter]:f              !["ExpressionSemanticBody", f]
 };
 CombeParser.prototype.semanticBodyFilter = rule {
-| token("Literal", null)
-| token("IdentifierName", null)
+| "RegularExpression" | "String" | "Number" | "Null" | "Boolean"
+| "IdentifierName"
 | pn("@")
 | pn(".") | pn("(") | pn("[")
 };
@@ -244,28 +247,52 @@ CombeParser.prototype.variableAssign = rule {
 
 
 
-CombeParser.prototype.token = rule (type, subtype) {
-  :token
-  ?(type == null || token[0] === type)
-  ?(subtype == null || token[1] === subtype)
-  apush("fragments", ["Fragment", token[2]])
-  !token
-}
+CombeParser.prototype.next = rule {
+  %TokenGrammar.prototype.next:t
+  !{
+    if (t.type === "Punctuator") {
+      if      (t.text === "(") this.push("enclosedBy", "(");
+      else if (t.text === "{") this.push("enclosedBy", "{");
+      else if (t.text === "[") this.push("enclosedBy", "[");
+      else if (t.text === ")") {
+        if (this.get("enclosedBy") === "(") this.pop("enclosedBy");
+        else                                this.fail();
+      }
+      else if (t.text === "}") {
+        if (this.get("enclosedBy") === "{") this.pop("enclosedBy");
+        else                                this.fail();
+      }
+      else if (t.text === "]") {
+        if (this.get("enclosedBy") === "[") this.pop("enclosedBy");
+        else                                this.fail();
+      }
+    }
+  }
+  apush("fragments", ["Fragment", t.text])
+  !t
+};
 
 CombeParser.prototype.id = rule (expected) {
-  token("IdentifierName", null):token
-  ?(expected == null || token[2] === expected)
-  !token[2]
+  "IdentifierName":t ?(expected == null || t.text == expected) !t.text
 };
 
 CombeParser.prototype.pn = rule (expected) {
-  token("Punctuator", null):token !token[2]
+  "Punctuator":t ?(expected == null || t.text == expected) !t.text
 };
 
 CombeParser.prototype.string = rule {
-  token("Literal", "String"):token !token[3]
+  "String":t !t.value
 };
 
 CombeParser.prototype.ws = rule {
-  token("Whitespace", null):token !token[2]
+  ( "MultilineComment" | "SinglelineComment" | "Spaces" | newline )* !null
+};
+
+CombeParser.prototype.newline = rule {
+  "Newline":t ~~( ( "MutlilineComment" | "SinglelineComment" | "Spaces" )*:ts )
+  !{
+    if (ts.length > 0) this.set("indent", ts[ts.length - 1].end - t.start);
+    else               this.set("indent", 0);
+  }
+  !t
 };

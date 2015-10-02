@@ -18,13 +18,12 @@
 //
 "use strict";
 
-require("../lib/Runtime");
-
 var nopt = require("nopt");
 var path = require("path");
 var fs = require("fs");
 
-var Compiler = require("../lib/Compiler");
+var Combe = require("../index.js");
+var Compiler = Combe.Compiler;
 
 
 
@@ -35,14 +34,19 @@ var Usage = "Usage: combec [-o targetpath] sourcepath";
 var Options = {
   "output": path,
   
+  "version": Boolean,
+  "help": Boolean,
+  "lex": Boolean,
   "parse": Boolean,
   "analyse": Boolean,
   "compile": Boolean,
 };
 var OptionShorthands = {
   "o": ["--output"],
+  
+  "v": ["--version"],
+  "h": ["--help"],
 };
-var ExpectedRemainingArgumentsCount = 1;
 
 
 
@@ -50,29 +54,56 @@ var main = function () {
   var options = nopt(Options, OptionShorthands, process.argv, 2);
   var remaining = options.argv.remain;
   
-  checkExclusiveOptions(options, ["parse", "analyse", "compile"], "compile");
-  
-  if (remaining.length < ExpectedRemainingArgumentsCount) {
-    console.error("Too few arguments.");
-    console.error(Usage);
-    process.exit(1);
+  if (remaining.length === 0) {
+    checkExclusiveOptions(options, ["version", "help", "lex", "parse", "analyse", "compile"], "help");
   }
-  if (remaining.length > ExpectedRemainingArgumentsCount) {
-    console.error("Too many arguments.");
-    console.error(Usage);
-    process.exit(1);
+  else {
+    checkExclusiveOptions(options, ["version", "help", "lex", "parse", "analyse", "compile"], "compile");
   }
   
   
   
-  var sourcepath = remaining[0];
-  
-  if (!fs.existsSync(sourcepath)) {
-    console.error("sourcepath (" + sourcepath + ") does not exist.");
-    process.exit(1);
+  if (options["help"]) {
+    console.log("combec (" + require("../package.json").name + "-" + require("../package.json").version + ")");
+    console.log();
+    console.log("Usage: combec [-o targetpath] sourcepath");
+    console.log("  [--parse  ]: Produce pretty-printed AST");
+    console.log("  [--analyse]: Produce pretty-printed analysed AST");
+    console.log("  [--compile]: Compile js.combe to .js");
+    console.log();
   }
-  
-  if (options["parse"]) {
+  else if (options["version"]) {
+    console.log(require("../package.json").name + "-" + require("../package.json").version);
+  }
+  else if (options["lex"]) {
+    checkRemainingOptions(remaining, 1, 1);
+    
+    var sourcepath = remaining[0];
+    if (!fs.existsSync(sourcepath)) {
+      console.error("sourcepath (" + sourcepath + ") does not exist.");
+      process.exit(1);
+    }
+    
+    var source = fs.readFileSync(sourcepath, "utf8");
+    var tokens = Compiler.lex(source, sourcepath);
+    var output = tokens.map(function (t) { return t.toString(); }).join("\n");
+    
+    if (options["output"] != null) {
+      fs.writeFileSync(options["output"], output);
+    }
+    else {
+      console.log(output);
+    }
+  }
+  else if (options["parse"]) {
+    checkRemainingOptions(remaining, 1, 1);
+    
+    var sourcepath = remaining[0];
+    if (!fs.existsSync(sourcepath)) {
+      console.error("sourcepath (" + sourcepath + ") does not exist.");
+      process.exit(1);
+    }
+    
     var source = fs.readFileSync(sourcepath, "utf8");
     var ast = Compiler.parse(source, sourcepath);
     var output = Compiler.astToString(ast);
@@ -85,6 +116,14 @@ var main = function () {
     }
   }
   else if (options["analyse"]) {
+    checkRemainingOptions(remaining, 1, 1);
+    
+    var sourcepath = remaining[0];
+    if (!fs.existsSync(sourcepath)) {
+      console.error("sourcepath (" + sourcepath + ") does not exist.");
+      process.exit(1);
+    }
+    
     var source = fs.readFileSync(sourcepath, "uft8");
     var ast = Compiler.parse(source, sourcepath);
     var analysedAst = Compiler.analyse(ast);
@@ -98,6 +137,14 @@ var main = function () {
     }
   }
   else if (options["compile"]) {
+    checkRemainingOptions(remaining, 1, 1);
+    
+    var sourcepath = remaining[0];
+    if (!fs.existsSync(sourcepath)) {
+      console.error("sourcepath (" + sourcepath + ") does not exist.");
+      process.exit(1);
+    }
+    
     var source = fs.readFileSync(sourcepath, "utf8");
     var output = Compiler.compile(source, sourcepath);
     
@@ -108,7 +155,9 @@ var main = function () {
       console.log(output);
     }
   }
-  else assert(false);
+  else {
+    throw new Error();
+  }
 };
 
 
@@ -136,6 +185,16 @@ var checkExclusiveOptions = function (options, exclusiveOptionNames, _default) {
       console.error("Expected one of the options: " + exclusiveOptionNames.join(" ") + ".");
       process.exit(1);
     }
+  }
+};
+
+var checkRemainingOptions = function (remaining, min, max) {
+  if (min != null && remaining.length < min) {
+    console.error("Expected more than " + min + " trailing arguments.");
+    process.exit(1);
+  }
+  if (max != null && remaining.length > max) {
+    console.error("Expected more than " + max + " trailing arguments.");
   }
 };
 
