@@ -21,12 +21,17 @@ var TokenGrammar = require("../TokenGrammar.js");
 
 
 
-function CombeParser(sourcename) {
-  TokenGrammar.call(this, sourcename);
+function CombeParser(input, sourcename) {
+  TokenGrammar.call(this, input, sourcename);
   
   this.init("start", false);
   this.init("enclosedBy", null);
   this.init("fragments", null);
+  this.init("indent", 0);
+  
+  
+  // Todo (Remove this after)
+  this.push("fragments", []);
 };
 CombeParser.prototype = Object.create(TokenGrammar.prototype);
 CombeParser.prototype.constructor = CombeParser;
@@ -59,7 +64,7 @@ CombeParser.prototype.scan = rule (filter) {
 
 CombeParser.prototype.fragments = rule (pattern) {
   push("fragments", [])
-  %pattern
+  %pattern*
   pop("fragments"):fs
   !fs
 };
@@ -177,7 +182,7 @@ CombeParser.prototype.objectPattern = rule {
 };
 
 CombeParser.prototype.stringPattern = rule {
-  string:text !["StringPattern", text]
+  st:text !["StringPattern", text]
 };
 
 CombeParser.prototype.numberPattern = rule {
@@ -234,11 +239,11 @@ CombeParser.prototype.dotAssign = rule {
 };
 
 CombeParser.prototype.propdeclAssign = rule {
-  ( id | string ):name ws? pn(":") !name
+  ( id | st ):name ws? pn(":") !name
 };
 
 CombeParser.prototype.subscriptAssign = rule {
-  pn("[") ws? string:name ws? pn("]") ws? pn("=") !name
+  pn("[") ws? st:name ws? pn("]") ws? pn("=") !name
 };
 
 CombeParser.prototype.variableAssign = rule {
@@ -280,12 +285,12 @@ CombeParser.prototype.pn = rule (expected) {
   "Punctuator":t ?(expected == null || t.text == expected) !t.text
 };
 
-CombeParser.prototype.string = rule {
+CombeParser.prototype.st = rule {
   "String":t !t.value
 };
 
 CombeParser.prototype.ws = rule {
-  ( "MultilineComment" | "SinglelineComment" | "Spaces" | newline )* !null
+  ( "MultilineComment" | "SinglelineComment" | "Spaces" | newline )+ !null
 };
 
 CombeParser.prototype.newline = rule {
