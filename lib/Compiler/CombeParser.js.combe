@@ -48,14 +48,17 @@ CombeParser.prototype.scanFile = rule {
 }
 
 
+
 CombeParser.prototype.scan = rule (filter) {
   push("start", true)
   push("enclosedBy", null)
   fragments[
-    ( ?(this.get("enclosedBy") == null) ~~ifNotNull(filter)
-    | ?(this.get("enclosedBy") != null)
-    )
-    ( suppressors | triggers | next )* set("start", false)
+    (
+      ( ?(this.get("enclosedBy") == null) ~~ifNotNull(filter)
+      | ?(this.get("enclosedBy") != null)
+      )
+      ( suppressors | triggers | next ) set("start", false)
+    )*
   ]:fs
   pop("enclosedBy")
   pop("start")
@@ -73,6 +76,7 @@ CombeParser.prototype.fragments = rule (pattern) {
 
 CombeParser.prototype.triggers = rule {
 | trigger("rule")
+| trigger("astConstructor")
 };
 
 CombeParser.prototype.trigger = rule (name) {
@@ -163,7 +167,8 @@ CombeParser.prototype.primaryPattern = rule {
 | stringPattern
 | numberPattern
 | regularExpressionPattern
-| nestedInputPattern
+| nestedArrayPattern
+| nestedAstPattern
 | subpattern
 };
 
@@ -199,16 +204,30 @@ CombeParser.prototype.regularExpressionPattern = rule {
   "RegularExpression":t !["RegularExpressionPattern", t.text]
 };
 
-CombeParser.prototype.nestedInputPattern = rule {
-  pn("[") ws? pattern:p ws? pn("]") !["NestedPattern", p]
+CombeParser.prototype.nestedArrayPattern = rule {
+  pn("[") ~pn("^") pattern:p pn("]") !["NestedArrayPattern", p]
+};
+
+CombeParser.prototype.nestedAstPattern = rule {
+  pn("[") pn("^") pattern:p pn("]") !["NestedAstPattern", p]
 };
 
 CombeParser.prototype.subpattern = rule {
-  pn("(") ws? pattern:p ws? pn(")") !p
+  pn("(") pattern:p pn(")") !p
 };
 
 CombeParser.prototype.emptyPattern = rule {
   !["EmptyPattern"]
+};
+
+
+
+CombeParser.prototype.astConstructorTrigger = rule {
+  pn("[") pn("^")
+};
+
+CombeParser.prototype.astConstructorSyntax = rule {
+  pn("[") pn("^") scan[~pn("]")]:f pn("]") !["AstConstructor", f]
 };
 
 
@@ -222,7 +241,7 @@ CombeParser.prototype.semanticBodyFilter = rule {
 | "RegularExpression" | "String" | "Number" | "Null" | "Boolean"
 | "IdentifierName"
 | pn("@")
-| pn(".") | pn("(") | pn("[")
+| pn(".") | pn("(") | pn("[") | pn("{")
 };
 
 

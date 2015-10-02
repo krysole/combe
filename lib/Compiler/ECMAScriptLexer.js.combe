@@ -17,7 +17,7 @@
 //
 "use strict";
 
-var TextGrammar = require("../TextGrammar.js");
+var LexerGrammar = require("../LexerGrammar.js");
 
 
 
@@ -44,21 +44,14 @@ var TextGrammar = require("../TextGrammar.js");
 //  - We don't define the reserved words here.
 //
 function ECMAScriptLexer(source, sourcename, skipLength) {
-  TextGrammar.call(this, source, sourcename, skipLength);
+  LexerGrammar.call(this, source, sourcename, skipLength);
   
   this.init("enclosedBy", null);
 };
-ECMAScriptLexer.prototype = Object.create(TextGrammar.prototype);
+ECMAScriptLexer.prototype = Object.create(LexerGrammar.prototype);
 ECMAScriptLexer.prototype.constructor = ECMAScriptLexer;
 module.exports = ECMAScriptLexer;
 
-
-
-ECMAScriptLexer.prototype.start = rule { allTokens }
-
-ECMAScriptLexer.prototype.allTokens = rule {
-  token*
-}
 
 
 ECMAScriptLexer.prototype.token = rule {
