@@ -106,7 +106,7 @@ var main = function () {
     
     var source = fs.readFileSync(sourcepath, "utf8");
     var ast = Compiler.parse(source, sourcepath);
-    var output = Compiler.astToString(ast);
+    var output = Compiler.show(ast);
     
     if (options["output"] != null) {
       fs.writeFileSync(options["output"], output);
@@ -127,7 +127,7 @@ var main = function () {
     var source = fs.readFileSync(sourcepath, "uft8");
     var ast = Compiler.parse(source, sourcepath);
     var analysedAst = Compiler.analyse(ast);
-    var output = Compiler.astToString(ast);
+    var output = Compiler.show(ast);
     
     if (options["output"] != null) {
       fs.writeFileSync(options["output"], output);

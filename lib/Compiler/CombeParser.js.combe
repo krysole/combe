@@ -18,6 +18,7 @@
 "use strict";
 
 var TokenGrammar = require("../TokenGrammar.js");
+var Ast = require("../Ast.js");
 
 
 
@@ -28,10 +29,6 @@ function CombeParser(input, sourcename) {
   this.init("enclosedBy", null);
   this.init("fragments", null);
   this.init("indent", 0);
-  
-  
-  // Todo (Remove this after)
-  this.push("fragments", []);
 };
 CombeParser.prototype = Object.create(TokenGrammar.prototype);
 CombeParser.prototype.constructor = CombeParser;
@@ -62,7 +59,7 @@ CombeParser.prototype.scan = rule (filter) {
   ]:fs
   pop("enclosedBy")
   pop("start")
-  !["Composite", fs]
+  ![^"Composite", fs]
 }
 
 CombeParser.prototype.fragments = rule (pattern) {
@@ -96,7 +93,7 @@ CombeParser.prototype.ruleTrigger = rule {
 CombeParser.prototype.ruleSyntax = rule {
   fragments[inferredName?:iname]:inf id("rule") ws? id?:name ws? parameterList?:pf ws?
   pn('{') ws? pattern:b ws? pn('}')
-  !["Composite", [inf, ["Rule", this.get("indent"), name, iname, pf, b]]]
+  ![^"Composite", [inf, [^"Rule", this.get("indent"), name, iname, pf, b]]]
 };
 
 CombeParser.prototype.parameterList = rule {
@@ -113,49 +110,49 @@ CombeParser.prototype.choicePattern = rule {
   ws?
   pn("|")? ws? choiceBranch:i ws?
   ( pn('|') ws? choiceBranch:b ws? !b )*:r
-  !["Choice", [i].concat(r)]
+  ![^"Choice", [i].concat(r)]
 };
 CombeParser.prototype.choiceBranch = rule { sequencePattern | emptyPattern };
 
 CombeParser.prototype.sequencePattern = rule {
   delimited1[bindPattern , ( ws | ws? pn(',') ws? )]:ps
-  !( ps.length > 1 ? ["SequencePattern", ps] : ps[0] )
+  !( ps.length > 1 ? [^"SequencePattern", ps] : ps[0] )
 };
 
 CombeParser.prototype.bindPattern = rule {
-| operatorPattern:p pn(":") id:name !["BindPattern", name, p]
-|                   pn(":") id:name !["BindPattern", name, ["NextPattern"]]
-|                   pn(":")         !["NextPattern"]
+| operatorPattern:p pn(":") id:name ![^"BindPattern", name, p]
+|                   pn(":") id:name ![^"BindPattern", name, [^"NextPattern"]]
+|                   pn(":")         ![^"NextPattern"]
 | operatorPattern
 };
 
 CombeParser.prototype.operatorPattern = rule {
-| pn("&")         hashPattern:p         !["LookaheadPattern",    p]
-| pn("~") pn("~") hashPattern:p         !["DoubleNegatePattern", p]
-| pn("~")         hashPattern:p         !["NegatePattern",       p]
-|                 hashPattern:p pn("?") !["OptionalPattern",     p]
-|                 hashPattern:p pn("*") !["RepeatPattern",       p]
-|                 hashPattern:p pn("+") !["Repeat1Pattern",      p]
+| pn("&")         hashPattern:p         ![^"LookaheadPattern",    p]
+| pn("~") pn("~") hashPattern:p         ![^"DoubleNegatePattern", p]
+| pn("~")         hashPattern:p         ![^"NegatePattern",       p]
+|                 hashPattern:p pn("?") ![^"OptionalPattern",     p]
+|                 hashPattern:p pn("*") ![^"RepeatPattern",       p]
+|                 hashPattern:p pn("+") ![^"Repeat1Pattern",      p]
 |                 hashPattern
 };
 
 CombeParser.prototype.hashPattern = rule {
-| pn("#") callPattern:p !["HashPattern", p]
+| pn("#") callPattern:p ![^"HashPattern", p]
 | callPattern
 };
 
 CombeParser.prototype.callPattern = rule {
   primaryPattern:p 
-  ( pn("(") ws? pn(")")                     !["CallPattern", p, []]:p
-  | pn("(") ~( ws? pn(")") ) scan:f pn(")") !["JSCallPattern", p, f]:p
+  ( pn("(") ws? pn(")")                     ![^"CallPattern", p, []]:p
+  | pn("(") ~( ws? pn(")") ) scan:f pn(")") ![^"JSCallPattern", p, f]:p
   | pn("[") ws? delimited[argumentSequencePattern, ws? pn(',') ws?]:ps ws? pn(']')
-                                            !["CallPattern", p, ps]:p
-  | pn("[") pattern:pp pn("]")              !["CallPattern", p, [pp]]:p
+                                            ![^"CallPattern", p, ps]:p
+  | pn("[") pattern:pp pn("]")              ![^"CallPattern", p, [pp]]:p
   )*
   !p
 };
 CombeParser.prototype.argumentSequencePattern = rule {
-  delimited[bindPattern, ws]:ps !(ps.length > 1 ? ["SequencePattern", ps] : ps[0])
+  delimited[bindPattern, ws]:ps !(ps.length > 1 ? [^"SequencePattern", ps] : ps[0])
 };
 
 CombeParser.prototype.primaryPattern = rule {
@@ -173,43 +170,43 @@ CombeParser.prototype.primaryPattern = rule {
 };
 
 CombeParser.prototype.predicatePattern = rule {
-  pn("?") semanticBody:b !["PredicatePattern", b]
+  pn("?") semanticBody:b ![^"PredicatePattern", b]
 };
 
 CombeParser.prototype.actionPattern = rule {
-  pn("!") semanticBody:b !["ActionPattern", b]
+  pn("!") semanticBody:b ![^"ActionPattern", b]
 };
 
 CombeParser.prototype.immediatePattern = rule {
-  pn("%") semanticBody:b !["ImmediatePattern", b]
+  pn("%") semanticBody:b ![^"ImmediatePattern", b]
 };
 
 CombeParser.prototype.propertyPattern = rule {
-  id:name !["PropertyPattern", name]
+  id:name ![^"PropertyPattern", name]
 };
 
 CombeParser.prototype.objectPattern = rule {
-  pn("@") semanticBody:b !["ObjectPattern", b]
+  pn("@") semanticBody:b ![^"ObjectPattern", b]
 };
 
 CombeParser.prototype.stringPattern = rule {
-  "String":t !["StringPattern", t.text]
+  "String":t ![^"StringPattern", t.text]
 };
 
 CombeParser.prototype.numberPattern = rule {
-  "Number":t !["NumberPattern", t.text]
+  "Number":t ![^"NumberPattern", t.text]
 };
 
 CombeParser.prototype.regularExpressionPattern = rule {
-  "RegularExpression":t !["RegularExpressionPattern", t.text]
+  "RegularExpression":t ![^"RegularExpressionPattern", t.text]
 };
 
 CombeParser.prototype.nestedArrayPattern = rule {
-  pn("[") ~pn("^") pattern:p pn("]") !["NestedArrayPattern", p]
+  pn("[") ~pn("^") pattern:p pn("]") ![^"NestedArrayPattern", p]
 };
 
 CombeParser.prototype.nestedAstPattern = rule {
-  pn("[") pn("^") pattern:p pn("]") !["NestedAstPattern", p]
+  pn("[") pn("^") pattern:p pn("]") ![^"NestedAstPattern", p]
 };
 
 CombeParser.prototype.subpattern = rule {
@@ -217,7 +214,7 @@ CombeParser.prototype.subpattern = rule {
 };
 
 CombeParser.prototype.emptyPattern = rule {
-  !["EmptyPattern"]
+  ![^"EmptyPattern"]
 };
 
 
@@ -227,15 +224,15 @@ CombeParser.prototype.astConstructorTrigger = rule {
 };
 
 CombeParser.prototype.astConstructorSyntax = rule {
-  pn("[") pn("^") scan[~pn("]")]:f pn("]") !["AstConstructor", f]
+  pn("[") pn("^") scan[~pn("]")]:f pn("]") ![^"AstConstructor", f]
 };
 
 
 
 CombeParser.prototype.semanticBody = rule {
-| pn("(") ~( ws? pn(")") ) scan:f pn(")") !["ExpressionSemanticBody", f]
-| pn("{") scan:f pn("}")                  !["FunctionSemanticBody", f]
-| scan[semanticBodyFilter]:f              !["ExpressionSemanticBody", f]
+| pn("(") ~( ws? pn(")") ) scan:f pn(")") ![^"ExpressionSemanticBody", f]
+| pn("{") scan:f pn("}")                  ![^"FunctionSemanticBody", f]
+| scan[semanticBodyFilter]:f              ![^"ExpressionSemanticBody", f]
 };
 CombeParser.prototype.semanticBodyFilter = rule {
 | "RegularExpression" | "String" | "Number" | "Null" | "Boolean"
@@ -308,7 +305,7 @@ CombeParser.prototype.next = rule {
       }
     }
   }
-  emit(["Fragment", t.text])
+  emit([^"Fragment", t.text])
   !t
 };
 
