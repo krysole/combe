@@ -39,12 +39,11 @@ Optimizer.prototype.start = function (root) {
 
 Optimizer.prototype.process = rule {
   chain[
-    // ( elideSingleChoice   | identity ),
+    ( elideSingleChoice   | identity )
     // ( elideSingleSequence | identity ),
     // 
     // ( flattenChoice       | identity ),
     // ( flattenSequence     | identity )
-    identity
   ]
 };
 
