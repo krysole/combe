@@ -39,11 +39,11 @@ Optimizer.prototype.start = function (root) {
 
 Optimizer.prototype.process = rule {
   chain[
-    ( elideSingleChoice   | identity )
-    // ( elideSingleSequence | identity ),
-    // 
-    // ( flattenChoice       | identity ),
-    // ( flattenSequence     | identity )
+    ( elideSingleChoice   | identity ),
+    ( elideSingleSequence | identity ),
+    
+    ( flattenChoice       | identity ),
+    ( flattenSequence     | identity )
   ]
 };
 
@@ -51,7 +51,7 @@ Optimizer.prototype.process = rule {
 
 Optimizer.prototype.flattenSequence = rule {
   [^"Sequence", [ ( [^"Sequence", next*:xs] !xs
-                  | next:x                  !x
+                  | next:x                  ![x]
                   )*:xss
                 ]
   ]
@@ -65,7 +65,7 @@ Optimizer.prototype.elideSingleSequence = rule {
 
 Optimizer.prototype.flattenChoice = rule {
   [^"Choice", [ ( [^"Choice", next*:xs] !xs
-                | next:x
+                | next:x                ![x]
                 )*:xss
               ]
   ]
