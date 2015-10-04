@@ -1,4 +1,3 @@
-/*** Preprocessed by combe-0.8.0dev-bootstrap ***/
 //
 // Combe - A Parsing Extension for JavaScript
 //
@@ -18,14 +17,33 @@
 //
 "use strict";
 
-var ObjectGrammar = require("../ObjectGrammar.js");
-var Ast = require("../Ast.js");
+var Visitor = require("../Visitor.js");
 
 
 
 function AnalyseBindings(sourcename) {
-  ObjectGrammar.call(this, sourcename);
+  Visitor.call(this, sourcename);
+  
+  this.init("bindings", null);
 };
-AnalyseBindings.prototype = Object.create(ObjectGrammar.prototype);
+AnalyseBindings.prototype = Object.create(Visitor.prototype);
 AnalyseBindings.prototype.constructor = AnalyseBindings;
 module.exports = AnalyseBindings;
+
+
+
+AnalyseBindings.prototype.handleRule = function (indent, name, iname, parameters, body) {
+  this.push("bindings", []);
+  this.visitChildren();
+  var bindings = this.pop("bindings");
+  
+  return ["Rule", indent, name, iname, parameters, bindings, body];
+};
+
+
+
+AnalyseBindings.prototype.handleBindPattern = function (name, pattern) {
+  this.apushIfAbsent("bindings", name);
+  
+  return this.visitChildren();
+};

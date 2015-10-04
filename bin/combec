@@ -23,7 +23,6 @@ var path = require("path");
 var fs = require("fs");
 
 var Combe = require("../index.js");
-var Compiler = Combe.Compiler;
 
 
 
@@ -39,6 +38,7 @@ var Options = {
   "lex": Boolean,
   "parse": Boolean,
   "analyse": Boolean,
+  "optimize": Boolean,
   "compile": Boolean,
 };
 var OptionShorthands = {
@@ -85,7 +85,7 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var tokens = Compiler.lex(source, sourcepath);
+    var tokens = Combe.Compiler.lex(source, sourcepath);
     var output = tokens.map(function (t) { return t.toString(); }).join("\n");
     
     if (options["output"] != null) {
@@ -105,8 +105,8 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var ast = Compiler.parse(source, sourcepath);
-    var output = Compiler.show(ast);
+    var ast = Combe.Compiler.parse(source, sourcepath);
+    var output = Combe.show(ast);
     
     if (options["output"] != null) {
       fs.writeFileSync(options["output"], output);
@@ -124,10 +124,31 @@ var main = function () {
       process.exit(1);
     }
     
-    var source = fs.readFileSync(sourcepath, "uft8");
-    var ast = Compiler.parse(source, sourcepath);
-    var analysedAst = Compiler.analyse(ast);
-    var output = Compiler.show(ast);
+    var source = fs.readFileSync(sourcepath, "utf8");
+    var ast = Combe.Compiler.parse(source, sourcepath);
+    var analysedAst = Combe.Compiler.analyse(ast);
+    var output = Combe.show(analysedAst);
+    
+    if (options["output"] != null) {
+      fs.writeFileSync(options["output"], output);
+    }
+    else {
+      console.log(output);
+    }
+  }
+  else if (options["optimize"]) {
+    checkRemainingOptions(remaining, 1, 1);
+    
+    var sourcepath = remaining[0];
+    if (!fs.existsSync(sourcepath)) {
+      console.error("sourcepath (" + sourcepath + ") does not exist.");
+      process.exit(1);
+    }
+    
+    var source = fs.readFileSync(sourcepath, "utf8");
+    var ast = Combe.Compiler.parse(source, sourcepath);
+    var optimizedAst = Combe.Compiler.optimize(ast);
+    var output = Combe.show(optimizedAst);
     
     if (options["output"] != null) {
       fs.writeFileSync(options["output"], output);
@@ -146,7 +167,7 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var output = Compiler.compile(source, sourcepath);
+    var output = Combe.Compiler.compile(source, sourcepath);
     
     if (options["output"] != null) {
       fs.writeFileSync(options["output"], output);

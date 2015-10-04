@@ -18,7 +18,7 @@
 
 COMBEC ?= combec
 
-combe_source_files = $(shell find . -name '*.js.combe')
+combe_source_files = $(filter-out $(shell find . -name '~*'), $(shell find . -name '*.js.combe'))
 combe_output_files = $(patsubst %.js.combe,%.js, $(combe_source_files))
 
 default: compile

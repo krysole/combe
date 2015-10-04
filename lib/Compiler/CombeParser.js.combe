@@ -54,7 +54,7 @@ CombeParser.prototype.scan = rule (filter) {
       ( ?(this.get("enclosedBy") == null) ~~ifNotNull(filter)
       | ?(this.get("enclosedBy") != null)
       )
-      ( suppressors | triggers | next ) set("start", false)
+      nextFragment set("start", false)
     )*
   ]:fs
   pop("enclosedBy")
@@ -71,10 +71,19 @@ CombeParser.prototype.fragments = rule (pattern) {
 
 
 
-CombeParser.prototype.triggers = rule {
+CombeParser.prototype.nextFragment = rule {
+| suppressNameColon
+
 | trigger("rule")
+
+| suppressDotIdentifierName
+// | trigger("class") // For eventual basic ES6 support
+
 | trigger("astConstructor")
+| next
 };
+
+
 
 CombeParser.prototype.trigger = rule (name) {
   ~~%this[name + "Trigger"]
@@ -93,7 +102,7 @@ CombeParser.prototype.ruleTrigger = rule {
 CombeParser.prototype.ruleSyntax = rule {
   fragments[inferredName?:iname]:inf id("rule") ws? id?:name ws? parameterList?:pf ws?
   pn('{') ws? pattern:b ws? pn('}')
-  ![^"Composite", [inf, [^"Rule", this.get("indent"), name, iname, pf, b]]]
+  ![^"Composite", inf.concat([[^"Rule", this.get("indent"), name, iname, pf, b]])]
 };
 
 CombeParser.prototype.parameterList = rule {
@@ -243,12 +252,14 @@ CombeParser.prototype.semanticBodyFilter = rule {
 
 
 
-CombeParser.prototype.suppressors = rule {
-| suppressDotIdentifierName
+CombeParser.prototype.suppressNameColon = rule {
+  id pn(":")
 };
 
+
+
 CombeParser.prototype.suppressDotIdentifierName = rule {
-  pn(".") ws? id ~( ws? pn("=") )
+  pn(".") ws? id
 };
 
 
