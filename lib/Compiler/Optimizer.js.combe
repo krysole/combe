@@ -31,25 +31,6 @@ module.exports = Optimizer;
 
 
 
-Optimizer.prototype.match = function (root, startRule) {
-  if (startRule == null) startRule = "start";
-  var args = Array.from(arguments).slice(1);
-  
-  try {
-    return this[startRule].apply(this, [root].concat(args));
-  }
-  catch (e) {
-    if (e === this.Backtrack) {
-      throw new Error("Failed to match input.");
-    }
-    else {
-      throw e;
-    }
-  }
-};
-
-
-
 Optimizer.prototype.start = function (root) {
   return this.visitPostOrder(root, this.process);
 };
@@ -95,56 +76,4 @@ Optimizer.prototype.flattenChoice = rule {
 Optimizer.prototype.elideSingleChoice = rule {
   [^"Choice", [next:x]]
   !x
-};
-
-Optimizer.prototype.identity = rule {
-  next:x !x
-};
-
-
-
-Optimizer.prototype.into = function (pattern) {
-  return pattern.call(this, this.next());
-};
-
-Optimizer.prototype.chain = function () {
-  var r = this.next();
-  for (var i = 0; i < arguments.length; i++) {
-    r = this.on(r, arguments[i]);
-  }
-  return r;
-};
-
-Optimizer.prototype.on = function (x, pattern) {
-  this.pushInput([x]);
-  var result = pattern.call(this);
-  this.end();
-  this.popInput();
-  return result;
-};
-
-
-
-Optimizer.prototype.visitPostOrder = function (x, pattern) {
-  if (x instanceof Ast)        return this.visitPostOrderAst(x, pattern);
-  else if (x instanceof Array) return this.visitPostOrderArray(x, pattern);
-  else                         return x;
-};
-
-Optimizer.prototype.visitPostOrderAst = function (ast, pattern) {
-  var type = ast.type();
-  var es = ast.rest();
-  var rs = [];
-  for (var i = 0; i < es.length; i++) {
-    rs.push(this.on(this.visitPostOrder(es[i], pattern), pattern));
-  }
-  return new Ast(type).concat(rs);
-};
-
-Optimizer.prototype.visitPostOrderArray = function (array, pattern) {
-  var rs = [];
-  for (var i = 0; i < array.length; i++) {
-    rs.push(this.on(this.visitPostOrder(array[i], pattern), pattern));
-  }
-  return rs;
 };
