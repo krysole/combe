@@ -17,6 +17,8 @@
 //
 "use strict";
 
+var crypto = require('crypto');
+
 var Show = require("../Show.js");
 var Ast = require("../Ast.js");
 var ObjectGrammar = require("../ObjectGrammar.js");
@@ -41,49 +43,81 @@ Translator.prototype.start = rule (r) {
 
 
 
+Translator.prototype.hash = function (r) {
+  var text = Show.show(r);
+  var hash = crypto.createHash("md5");
+  hash.update(text);
+  return hash.digest("base64").slice(0, -2); // Without base64 suffix
+};
+
+Translator.prototype.memoname = function (name, iname, hash) {
+  if (name != null) iname = name;
+  if (iname == null) iname = "*unnamed";
+  return iname + "_" + hash;
+};
+
+
+
 Translator.prototype.rewrite = rule {
   
-| [^"Rule", :indent, :name, :iname, :pf, :bs, :p]
-  ![^"Indent", indent, 
-    [^"Function", pf, [
-      [^"VarDecl*", bs],
-      [^"ExprStmt", [^"ThisCall", [^"ThisProperty", "ignore"], []]],
-      [^"ExprStmt", [^"ThisCall", [^"ThisProperty", "pushStartPosition"], []]],
-      [^"VarDecl", "__result", [^"ThisCall", p, []]],
-      [^"ExprStmt", [^"ThisCall", [^"ThisProperty", "popStartPosition"], []]],
-      [^"Return", [^"Var", "__result"]]
-    ]]
-  ]
+| [^"Rule", :indent, :name, :iname, :pf, :bs, :p]:r
+  hash(r):h memoname(name, iname, h):memoname
+  ![
+    [^"VarDecl*", bs],
+    [^"ExprStmt", [^"ThisCall", [^"ThisProperty", "ignore"], []]],
+    [^"ExprStmt", [^"ThisCall", [^"ThisProperty", "pushStartPosition"], []]],
+    [^"VarDecl", "__result", [^"ThisCall", p, []]],
+    [^"ExprStmt", [^"ThisCall", [^"ThisProperty", "popStartPosition"], []]],
+    [^"Return", [^"Var", "__result"]]
+  ]:stmts
   
-| [^"ChoicePattern",      :as] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "choice"      ], as ]]]]
-| [^"SequencePattern",    :as] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "sequence"    ], as ]]]]
-| [^"BindPattern",  :name, :p] ![^"Function", null, [[^"Return", [^"Assign", [^"Var", name], [^"ThisCall", p, []]    ]]]]
-| [^"LookaheadPattern",    :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "lookahead"   ], [p]]]]]
-| [^"DoubleNegatePattern", :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "doubleNegate"], [p]]]]]
-| [^"NegatePattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "negate"      ], [p]]]]]
-| [^"OptionalPattern",     :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "optional"    ], [p]]]]]
-| [^"RepeatPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "repeat"      ], [p]]]]]
-| [^"Repeat1Pattern",      :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "repeat1"     ], [p]]]]]
-| [^"JSCallPattern",  :p, :af] ![^"Function", null, [[^"Return", [^"ThisCall", p, af]]]]
-| [^"CallPattern",    :p, :as] ![^"Function", null, [[^"Return", [^"ThisCall", p, as]]]]
-| [^"PredicatePattern",    :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "predicate"   ], [p]]]]]
-| [^"ActionPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "action"      ], [p]]]]]
+  ( on[%pf, ( [] | nou )]
+    ![^"Indent", indent,
+      [^"Function", name, null, [
+        [^"Return", [^"ThisCall", [^"ThisProperty", "memoize"], 
+                                  [[^"Fragment", memoname.quote()],
+                                   [^"Function", null, null, stmts]
+                                  ]
+                    ]
+        ]
+      ]]
+    ]
+  | ![^"Indent", indent,
+      [^"Function", name, pf, stmts]
+    ]
+  )
+  
+  
+  
+| [^"ChoicePattern",      :as] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "choice"      ], as ]]]]
+| [^"SequencePattern",    :as] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "sequence"    ], as ]]]]
+| [^"BindPattern",  :name, :p] ![^"Function", null, null, [[^"Return", [^"Assign", [^"Var", name], [^"ThisCall", p, []]    ]]]]
+| [^"LookaheadPattern",    :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "lookahead"   ], [p]]]]]
+| [^"DoubleNegatePattern", :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "doubleNegate"], [p]]]]]
+| [^"NegatePattern",       :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "negate"      ], [p]]]]]
+| [^"OptionalPattern",     :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "optional"    ], [p]]]]]
+| [^"RepeatPattern",       :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "repeat"      ], [p]]]]]
+| [^"Repeat1Pattern",      :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "repeat1"     ], [p]]]]]
+| [^"JSCallPattern",  :p, :af] ![^"Function", null, null, [[^"Return", [^"ThisCall", p, af]]]]
+| [^"CallPattern",    :p, :as] ![^"Function", null, null, [[^"Return", [^"ThisCall", p, as]]]]
+| [^"PredicatePattern",    :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "predicate"   ], [p]]]]]
+| [^"ActionPattern",       :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "action"      ], [p]]]]]
 | [^"ImmediatePattern",    :p] ![^"ThisCall", p, []]
 | [^"PropertyPattern",  :name] ![^"ThisProperty", name]
-| [^"ObjectPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "object"      ],      [[^"ThisCall", p, []]]]]]]
-| [^"StringPattern",       :f] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "string"      ],      [[^"Fragment", f    ]]]]]]
-| [^"NumberPattern",       :f] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "number"      ],      [[^"Fragment", f    ]]]]]]
-| [^"RegularExpression",   :f] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "regularExpression"], [[^"Fragment", f    ]]]]]]
-| [^"NestedArrayPattern",  :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "nestedArray" ], [p]]]]]
-| [^"NestedAstPattern",    :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "nestedAst"   ], [p]]]]]
+| [^"ObjectPattern",       :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "object"      ],      [[^"ThisCall", p, []]]]]]]
+| [^"StringPattern",       :f] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "string"      ],      [[^"Fragment", f    ]]]]]]
+| [^"NumberPattern",       :f] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "number"      ],      [[^"Fragment", f    ]]]]]]
+| [^"RegularExpression",   :f] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "regularExpression"], [[^"Fragment", f    ]]]]]]
+| [^"NestedArrayPattern",  :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "nestedArray" ], [p]]]]]
+| [^"NestedAstPattern",    :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "nestedAst"   ], [p]]]]]
 | [^"EmptyPattern"           ] ![^"ThisProperty", "pass"]
 | [^"NextPattern"            ] ![^"ThisProperty", "next"]
 
 | [^"AstConstructor",      :f] ![^"New", [^"Var", "Ast"], [f]]
 
-| [^"ExpressionSemanticBody", :f] ![^"Function", null, [[^"Return", [^"Subexpression", f]]]]
-| [^"FunctionSemanticBody",   :f] ![^"Function", null, [f]]
-| [^"ImmediateSemanticBody",  :f] ![^"Function", null, [[^"Return", f]]]
+| [^"ExpressionSemanticBody", :f] ![^"Function", null, null, [[^"Return", [^"Subexpression", f]]]]
+| [^"FunctionSemanticBody",   :f] ![^"Function", null, null, [f]]
+| [^"ImmediateSemanticBody",  :f] ![^"Function", null, null, [[^"Return", f]]]
 
 | :
 
@@ -109,12 +143,12 @@ Translator.prototype.simplify = rule {
   
   
 
-| [^"Call", [^"Function", ( [] | nou ), [[^"Return", :expr]]],
+| [^"Call", [^"Function", nou, ( [] | nou ), [[^"Return", :expr]]],
             ( [] | nou )
   ]
   !expr
   
-| [^"Call", [^"Lookup", [^"Function", ( [] | nou ), [[^"Return", :expr]]],
+| [^"Call", [^"Lookup", [^"Function", nou, ( [] | nou ), [[^"Return", :expr]]],
                         "call"
             ],
             [[^"This"]]
@@ -146,14 +180,15 @@ Translator.prototype.translate = rule (i) {
 
   // Functions
   
-| [^"Function", :ps, [translate(i + 2)*:stmts]]
+| [^"Function", :name, :ps, [translate(i + 2)*:stmts]]
   on[%ps, ( [next*:ps]          !ps.join(", ")
           | nou                 !""
           | translate(i):pf     !pf
           )
   ]:ps
+  !( name != null ? name : "" ):name
   !(
-    "function (" + ps + ") {\n" +
+    "function " + name + "(" + ps + ") {\n" +
       stmts.join("") +
     " ".repeat(i) + "}"
   )
