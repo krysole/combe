@@ -204,14 +204,14 @@ ECMAScriptLexer.prototype.hexIntegerLiteral = rule {
 
 
 ECMAScriptLexer.prototype.nullLiteral = rule {
-  "null"
+  "null" ~idContinue
 };
 
 
 
 ECMAScriptLexer.prototype.booleanLiteral = rule {
-| "true"
-| "false"
+| "true"  ~idContinue
+| "false" ~idContinue
 };
 
 
