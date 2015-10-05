@@ -68,19 +68,22 @@ Translator.prototype.rewrite = rule {
 | [^"CallPattern",    :p, :as] ![^"Function", null, [[^"Return", [^"ThisCall", p, as]]]]
 | [^"PredicatePattern",    :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "predicate"   ], [p]]]]]
 | [^"ActionPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "action"      ], [p]]]]]
-| [^"ImmediatePattern",    :p] !p
+| [^"ImmediatePattern",    :p] ![^"ThisCall", p, []]
 | [^"PropertyPattern",  :name] ![^"ThisProperty", name]
-| [^"ObjectPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "object"      ], [[^"ThisCall", p, []]]]]]]
-| [^"StringPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "string"      ], [p]]]]]
-| [^"NumberPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "number"      ], [p]]]]]
-| [^"RegularExpression",   :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "regularExpression"], [p]]]]]
+| [^"ObjectPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "object"      ],      [[^"ThisCall", p, []]]]]]]
+| [^"StringPattern",       :f] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "string"      ],      [[^"Fragment", f    ]]]]]]
+| [^"NumberPattern",       :f] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "number"      ],      [[^"Fragment", f    ]]]]]]
+| [^"RegularExpression",   :f] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "regularExpression"], [[^"Fragment", f    ]]]]]]
 | [^"NestedArrayPattern",  :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "nestedArray" ], [p]]]]]
 | [^"NestedAstPattern",    :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "nestedAst"   ], [p]]]]]
 | [^"EmptyPattern"           ] ![^"ThisProperty", "pass"]
 | [^"NextPattern"            ] ![^"ThisProperty", "next"]
 
+| [^"AstConstructor",      :f] ![^"New", [^"Var", "Ast"], [f]]
+
 | [^"ExpressionSemanticBody", :f] ![^"Function", null, [[^"Return", [^"Subexpression", f]]]]
 | [^"FunctionSemanticBody",   :f] ![^"Function", null, [f]]
+| [^"ImmediateSemanticBody",  :f] ![^"Function", null, [[^"Return", f]]]
 
 | :
 
@@ -98,6 +101,11 @@ Translator.prototype.simplify = rule {
   
 | [^"ThisCall", :fn, :f]
   ![^"Call", [^"Lookup", fn, "call"], [[^"This"], f]]
+  
+  
+  
+| [^"ThisProperty", :name]
+  ![^"Lookup", [^"This"], name]
   
   
 
@@ -121,12 +129,6 @@ Translator.prototype.simplify = rule {
 
 
 
-Translator.prototype.fnparams = rule (i) {
-| [next*:ps]          !ps.join(", ")
-| nou                 !""
-| translate(i):pf     !pf
-};
-
 Translator.prototype.translate = rule (i) {
   
 | [^"Indent", :k, translate(k):x]
@@ -144,7 +146,12 @@ Translator.prototype.translate = rule (i) {
 
   // Functions
   
-| [^"Function", fnparams:ps, [translate(i + 2)*:stmts]]
+| [^"Function", :ps, [translate(i + 2)*:stmts]]
+  on[%ps, ( [next*:ps]          !ps.join(", ")
+          | nou                 !""
+          | translate(i):pf     !pf
+          )
+  ]:ps
   !(
     "function (" + ps + ") {\n" +
       stmts.join("") +
@@ -156,9 +163,14 @@ Translator.prototype.translate = rule (i) {
   // Statements
   
 | [^"VarDecl*", :names]
-  !(
-    " ".repeat(i) + "var " + names.join(", ") + ";\n"
-  )
+  !{
+    if (names.length > 0) {
+      return " ".repeat(i) + "var " + names.join(", ") + ";\n";
+    }
+    else {
+      return "";
+    }
+  }
   
 | [^"VarDecl", :name, translate(i)?:expr]
   !{
@@ -189,19 +201,48 @@ Translator.prototype.translate = rule (i) {
     lvalue + " = " + rvalue
   )
   
-| [^"Call", translate(i):fn, [translate(i)*:as]]
+| [^"Call", translate(i + 2):fn, [[^"This"]]]
   !(
-    fn + "(" + as.join(", ") + ")"
+    fn + "(this)"
+  )
+  
+| [^"Call", translate(i + 2):fn, [[^"This"], translate(i + 2)*:as]]
+  !{
+    if (as.join(", ").isSingleline()) {
+      return fn + "(this, " + as.join(", ") + ")";
+    }
+    else {
+      return (
+        fn + "(this,\n" + 
+          " ".repeat(i + 2) + as.join(",\n" + " ".repeat(i + 2)) + "\n" +
+        " ".repeat(i) + ")"
+      );
+    }
+  }
+  
+| [^"Call", translate(i + 2):fn, [translate(i + 2)*:as]]
+  !{
+    if (as.join(", ").isSingleline()) {
+      return fn + "(" + as.join(", ") + ")";
+    }
+    else {
+      return (
+        fn + "(\n" +
+          " ".repeat(i + 2) + as.join(",\n" + " ".repeat(i + 2)) + "\n" +
+        " ".repeat(i) + ")"
+      );
+    }
+  }
+  
+| [^"New", translate(i):fn, [translate(i)*:as]]
+  !(
+    "new " + fn + "(" + as.join(", ") + ")"
   )
   
 | [^"Lookup", translate(i):o, :name]
   !{
-    if (name.isIdentifierName()) {
-      return o + "." + name;
-    }
-    else {
-      return o + "[" + name.quote() + "]";
-    }
+    if (name.isIdentifierName()) return o + "." + name;
+    else                         return o + "[" + name.quote() + "]";
   }
   
 | [^"Var", :name]

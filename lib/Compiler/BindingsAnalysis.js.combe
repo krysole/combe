@@ -47,7 +47,7 @@ BindingsAnalysis.prototype.analyse = rule {
   ![^"Rule", indent, name, iname, pf, bs, p]
   
 | [^"BindPattern", :name, :p]
-  apush("bindings", name) on[%p, analyse]:p
+  apushIfAbsent("bindings", name) on[%p, analyse]:p
   ![^"BindPattern", name, p]
   
 | :x recurse[%x, analyse]

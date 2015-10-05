@@ -241,7 +241,7 @@ CombeParser.prototype.astConstructorSyntax = rule {
 CombeParser.prototype.semanticBody = rule {
 | pn("(") ~( ws? pn(")") ) scan:f pn(")") ![^"ExpressionSemanticBody", f]
 | pn("{") scan:f pn("}")                  ![^"FunctionSemanticBody", f]
-| scan[semanticBodyFilter]:f              ![^"ExpressionSemanticBody", f]
+| scan[semanticBodyFilter]:f              ![^"ImmediateSemanticBody", f]
 };
 CombeParser.prototype.semanticBodyFilter = rule {
 | "RegularExpression" | "String" | "Number" | "Null" | "Boolean"
