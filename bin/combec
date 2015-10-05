@@ -26,10 +26,6 @@ var Combe = require("../index.js");
 
 
 
-var Usage = "Usage: combec [-o targetpath] sourcepath";
-  // "Options: --some-option: does some stuff\n" +
-  // "         --another-option: does some other stuff";
-
 var Options = {
   "output": path,
   
@@ -70,9 +66,15 @@ var main = function () {
     console.log("combec (" + require("../package.json").name + "-" + require("../package.json").version + ")");
     console.log();
     console.log("Usage: combec [-o targetpath] sourcepath");
-    console.log("  [--parse  ]: Produce pretty-printed AST");
-    console.log("  [--analyse]: Produce pretty-printed analysed AST");
-    console.log("  [--compile]: Compile js.combe to .js");
+    console.log("  [--compile        ]: (default with sourcepath) Produce compiled output.");
+    console.log("  [--version        ]: Print \"project-version\" output.");
+    console.log("  [--help           ]: (default without sourcepath) Print this message.");
+    console.log()
+    console.log("  [--debug-lex      ]: Produce lexer output.");
+    console.log("  [--debug-parse    ]: Produce parser output.");
+    console.log("  [--debug-analyse  ]: Produce analysed parser output.");
+    console.log("  [--debug-optimize ]: Produce optimized parser output.");
+    console.log("  [--debug-translate]: Produce translator output.");
     console.log();
   }
   else if (options["version"]) {
@@ -88,7 +90,8 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var tokens = Combe.Compiler.lex(source, sourcepath);
+    var hashbang = Combe.Compiler.hashbang(source);
+    var tokens = Combe.Compiler.lex(source, sourcepath, hashbang.length);
     var output = tokens.map(function (t) { return t.toString(); }).join("\n");
     
     if (options["output"] != null) {
@@ -108,7 +111,8 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var ast = Combe.Compiler.parse(source, sourcepath);
+    var hashbang = Combe.Compiler.hashbang(source);
+    var ast = Combe.Compiler.parse(source, sourcepath, hashbang.length);
     var output = Combe.show(ast);
     
     if (options["output"] != null) {
@@ -128,7 +132,8 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var ast = Combe.Compiler.parse(source, sourcepath);
+    var hashbang = Combe.Compiler.hashbang(source);
+    var ast = Combe.Compiler.parse(source, sourcepath, hashbang.length);
     var analysedAst = Combe.Compiler.analyse(ast);
     var output = Combe.show(analysedAst);
     
@@ -149,7 +154,8 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var ast = Combe.Compiler.parse(source, sourcepath);
+    var hashbang = Combe.Compiler.hashbang(source);
+    var ast = Combe.Compiler.parse(source, sourcepath, hashbang.length);
     var analysedAst = Combe.Compiler.analyse(ast);
     var optimizedAst = Combe.Compiler.optimize(analysedAst);
     var output = Combe.show(optimizedAst);
@@ -171,7 +177,8 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var ast = Combe.Compiler.parse(source, sourcepath);
+    var hashbang = Combe.Compiler.hashbang(source);
+    var ast = Combe.Compiler.parse(source, sourcepath, hashbang.length);
     var analysedAst = Combe.Compiler.analyse(ast);
     var optimizedAst = Combe.Compiler.optimize(analysedAst);
     var translatorOutput = Combe.Compiler.translate(optimizedAst);

@@ -35,7 +35,7 @@ module.exports = Translator;
 Translator.prototype.start = rule (r) {
   postorderTransform[%r, rewrite]:r
   postorderTransform[%r, simplify]:r
-  // on[%r, translate]:r
+  on[%r, translate(0)]:r
   !r
 };
 
@@ -112,12 +112,6 @@ Translator.prototype.simplify = rule {
             [[^"This"]]
   ]
   !expr
-  
-  
-  
-| [^"Call", [^"Lookup", :object, :name], :as]:x
-  log("Call object = " + Show.synopsis(object) + "; name = " + Show.synopsis(name) + "; as = " + Show.synopsis(as))
-  !x
 
 
   
@@ -129,8 +123,8 @@ Translator.prototype.simplify = rule {
 
 Translator.prototype.fnparams = rule (i) {
 | [next*:ps]          !ps.join(", ")
-| translate(i):pf     !pf
 | nou                 !""
+| translate(i):pf     !pf
 };
 
 Translator.prototype.translate = rule (i) {
@@ -152,16 +146,9 @@ Translator.prototype.translate = rule (i) {
   
 | [^"Function", fnparams:ps, [translate(i + 2)*:stmts]]
   !(
-    "function (" + ps.join(", ") + ") {\n" +
+    "function (" + ps + ") {\n" +
       stmts.join("") +
-    "}"
-  )
-  
-| [^"Function", translate(i + 2):pf, [translate(i + 2)*:stmts]]
-  !(
-    "function (" + pf + ") {\n" +
-      stmts.join("") +
-    "}"
+    " ".repeat(i) + "}"
   )
   
   
@@ -197,7 +184,7 @@ Translator.prototype.translate = rule (i) {
   
   // Expressions
   
-| [^"Assign", translate(i):lvalue, (i):rvalue]
+| [^"Assign", translate(i):lvalue, translate(i):rvalue]
   !(
     lvalue + " = " + rvalue
   )
