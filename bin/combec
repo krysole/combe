@@ -35,10 +35,13 @@ var Options = {
   
   "version": Boolean,
   "help": Boolean,
-  "lex": Boolean,
-  "parse": Boolean,
-  "analyse": Boolean,
-  "optimize": Boolean,
+  
+  "debug-lex": Boolean,
+  "debug-parse": Boolean,
+  "debug-analyse": Boolean,
+  "debug-optimize": Boolean,
+  "debug-translate": Boolean,
+  
   "compile": Boolean,
 };
 var OptionShorthands = {
@@ -55,10 +58,10 @@ var main = function () {
   var remaining = options.argv.remain;
   
   if (remaining.length === 0) {
-    checkExclusiveOptions(options, ["version", "help", "lex", "parse", "analyse", "compile"], "help");
+    checkExclusiveOptions(options, ["version", "help", "debug-lex", "debug-parse", "debug-analyse", "debug-optimize", "debug-translate", "compile"], "help");
   }
   else {
-    checkExclusiveOptions(options, ["version", "help", "lex", "parse", "analyse", "compile"], "compile");
+    checkExclusiveOptions(options, ["version", "help", "debug-lex", "debug-parse", "debug-analyse", "debug-optimize", "debug-translate", "compile"], "compile");
   }
   
   
@@ -75,7 +78,7 @@ var main = function () {
   else if (options["version"]) {
     console.log(require("../package.json").name + "-" + require("../package.json").version);
   }
-  else if (options["lex"]) {
+  else if (options["debug-lex"]) {
     checkRemainingOptions(remaining, 1, 1);
     
     var sourcepath = remaining[0];
@@ -95,7 +98,7 @@ var main = function () {
       console.log(output);
     }
   }
-  else if (options["parse"]) {
+  else if (options["debug-parse"]) {
     checkRemainingOptions(remaining, 1, 1);
     
     var sourcepath = remaining[0];
@@ -115,7 +118,7 @@ var main = function () {
       console.log(output);
     }
   }
-  else if (options["analyse"]) {
+  else if (options["debug-analyse"]) {
     checkRemainingOptions(remaining, 1, 1);
     
     var sourcepath = remaining[0];
@@ -136,7 +139,7 @@ var main = function () {
       console.log(output);
     }
   }
-  else if (options["optimize"]) {
+  else if (options["debug-optimize"]) {
     checkRemainingOptions(remaining, 1, 1);
     
     var sourcepath = remaining[0];
@@ -147,8 +150,32 @@ var main = function () {
     
     var source = fs.readFileSync(sourcepath, "utf8");
     var ast = Combe.Compiler.parse(source, sourcepath);
-    var optimizedAst = Combe.Compiler.optimize(ast);
+    var analysedAst = Combe.Compiler.analyse(ast);
+    var optimizedAst = Combe.Compiler.optimize(analysedAst);
     var output = Combe.show(optimizedAst);
+    
+    if (options["output"] != null) {
+      fs.writeFileSync(options["output"], output);
+    }
+    else {
+      console.log(output);
+    }
+  }
+  else if (options["debug-translate"]) {
+    checkRemainingOptions(remaining, 1, 1);
+    
+    var sourcepath = remaining[0];
+    if (!fs.existsSync(sourcepath)) {
+      console.error("sourcepath (" + sourcepath + ") does not exist.");
+      process.exit(1);
+    }
+    
+    var source = fs.readFileSync(sourcepath, "utf8");
+    var ast = Combe.Compiler.parse(source, sourcepath);
+    var analysedAst = Combe.Compiler.analyse(ast);
+    var optimizedAst = Combe.Compiler.optimize(analysedAst);
+    var translatorOutput = Combe.Compiler.translate(optimizedAst);
+    var output = Combe.show(translatorOutput);
     
     if (options["output"] != null) {
       fs.writeFileSync(options["output"], output);

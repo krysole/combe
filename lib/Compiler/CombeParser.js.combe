@@ -119,7 +119,7 @@ CombeParser.prototype.choicePattern = rule {
   ws?
   pn("|")? ws? choiceBranch:i ws?
   ( pn('|') ws? choiceBranch:b ws? !b )*:r
-  ![^"Choice", [i].concat(r)]
+  ![^"ChoicePattern", [i].concat(r)]
 };
 CombeParser.prototype.choiceBranch = rule { sequencePattern | emptyPattern };
 

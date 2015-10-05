@@ -1,0 +1,74 @@
+//
+// Combe - A Parsing Extension for JavaScript
+//
+// Copyright 2015 Lorenz Pretterhofer <krysole@alexicalmistake.com>
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+//
+"use strict";
+
+var ObjectGrammar = require("../ObjectGrammar.js");
+var Ast = require("../Ast.js");
+
+
+
+function BindingsAnalysis(sourcename) {
+  ObjectGrammar.call(this, sourcename);
+  
+  this.init("bindings", null);
+};
+BindingsAnalysis.prototype = Object.create(ObjectGrammar.prototype);
+BindingsAnalysis.prototype.constructor = BindingsAnalysis;
+module.exports = BindingsAnalysis;
+
+
+
+BindingsAnalysis.prototype.start = rule (root) {
+  on[%root, analyse]
+};
+
+
+
+BindingsAnalysis.prototype.analyse = rule {
+| [^"Rule", :indent, :name, :iname, :pf, :p]
+  push("bindings", [])
+  on[%p, analyse]:p
+  pop("bindings"):bs
+  ![^"Rule", indent, name, iname, pf, bs, p]
+  
+| [^"BindPattern", :name, :p]
+  apush("bindings", name) on[%p, analyse]:p
+  ![^"BindPattern", name, p]
+  
+| :x recurse[%x, analyse]
+};
+
+
+
+BindingsAnalysis.prototype.recurse = function (x, pattern) {
+  if (x instanceof Ast)        return this.recurseAst(x, pattern);
+  else if (x instanceof Array) return this.recurseArray(x, pattern);
+  else                         return x;
+};
+
+BindingsAnalysis.prototype.recurseAst = function (ast, pattern) {
+  var _this = this;
+  var type = ast.type();
+  var es = ast.rest().map(function (e) { return _this.on(e, pattern); });
+  return new Ast(type).concat(es);
+};
+
+BindingsAnalysis.prototype.recurseArray = function (array, pattern) {
+  var _this = this;
+  return array.map(function (e) { return _this.on(e, pattern); });
+};

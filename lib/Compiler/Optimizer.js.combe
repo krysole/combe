@@ -31,48 +31,42 @@ module.exports = Optimizer;
 
 
 
-Optimizer.prototype.start = function (root) {
-  return this.visitPostOrder(root, this.process);
+Optimizer.prototype.start = rule (root) {
+  postorderTransform[%root, optimize]
 };
 
 
 
-Optimizer.prototype.process = rule {
-  chain[
-    ( elideSingleChoice   | identity ),
-    ( elideSingleSequence | identity ),
-    
-    ( flattenChoice       | identity ),
-    ( flattenSequence     | identity )
+Optimizer.prototype.optimize = rule {
+  
+| [^"SequencePattern", [ ( [^"SequencePattern", :xs] !xs
+                         | :x                        ![x]
+                         )*:xss
+                       ]
   ]
-};
+  ![^"SequencePattern", xss.flatten1()]
+  
+  
 
-
-
-Optimizer.prototype.flattenSequence = rule {
-  [^"Sequence", [ ( [^"Sequence", next*:xs] !xs
-                  | next:x                  ![x]
-                  )*:xss
-                ]
-  ]
-  ![^"Sequence"].concat(xss.flatten1())
-};
-
-Optimizer.prototype.elideSingleSequence = rule {
-  [^"Sequence", [next:x]]
+| [^"SequencePattern", [:x]]
   !x
-};
 
-Optimizer.prototype.flattenChoice = rule {
-  [^"Choice", [ ( [^"Choice", next*:xs] !xs
-                | next:x                ![x]
-                )*:xss
-              ]
+
+
+| [^"ChoicePattern", [ ( [^"ChoicePattern", :xs] !xs
+                       | :x                      ![x]
+                       )*:xss
+                     ]
   ]
-  ![^"Choice"].concat(xss.flatten1())
-};
-
-Optimizer.prototype.elideSingleChoice = rule {
-  [^"Choice", [next:x]]
+  ![^"ChoicePattern", xss.flatten1()]
+  
+  
+  
+| [^"ChoicePattern", [:x]]
   !x
+  
+  
+  
+| :
+
 };

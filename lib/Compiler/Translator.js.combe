@@ -1,0 +1,237 @@
+//
+// Combe - A Parsing Extension for JavaScript
+//
+// Copyright 2015 Lorenz Pretterhofer <krysole@alexicalmistake.com>
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+//
+"use strict";
+
+var Show = require("../Show.js");
+var Ast = require("../Ast.js");
+var ObjectGrammar = require("../ObjectGrammar.js");
+
+
+
+function Translator() {
+  ObjectGrammar.call(this);
+};
+Translator.prototype = Object.create(ObjectGrammar.prototype);
+Translator.prototype.constructor = Translator;
+module.exports = Translator;
+
+
+
+Translator.prototype.start = rule (r) {
+  postorderTransform[%r, rewrite]:r
+  postorderTransform[%r, simplify]:r
+  // on[%r, translate]:r
+  !r
+};
+
+
+
+Translator.prototype.rewrite = rule {
+  
+| [^"Rule", :indent, :name, :iname, :pf, :bs, :p]
+  ![^"Indent", indent, 
+    [^"Function", pf, [
+      [^"VarDecl*", bs],
+      [^"ExprStmt", [^"ThisCall", [^"ThisProperty", "ignore"], []]],
+      [^"ExprStmt", [^"ThisCall", [^"ThisProperty", "pushStartPosition"], []]],
+      [^"VarDecl", "__result", [^"ThisCall", p, []]],
+      [^"ExprStmt", [^"ThisCall", [^"ThisProperty", "popStartPosition"], []]],
+      [^"Return", [^"Var", "__result"]]
+    ]]
+  ]
+  
+| [^"ChoicePattern",      :as] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "choice"      ], as ]]]]
+| [^"SequencePattern",    :as] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "sequence"    ], as ]]]]
+| [^"BindPattern",  :name, :p] ![^"Function", null, [[^"Return", [^"Assign", [^"Var", name], [^"ThisCall", p, []]    ]]]]
+| [^"LookaheadPattern",    :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "lookahead"   ], [p]]]]]
+| [^"DoubleNegatePattern", :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "doubleNegate"], [p]]]]]
+| [^"NegatePattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "negate"      ], [p]]]]]
+| [^"OptionalPattern",     :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "optional"    ], [p]]]]]
+| [^"RepeatPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "repeat"      ], [p]]]]]
+| [^"Repeat1Pattern",      :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "repeat1"     ], [p]]]]]
+| [^"JSCallPattern",  :p, :af] ![^"Function", null, [[^"Return", [^"ThisCall", p, af]]]]
+| [^"CallPattern",    :p, :as] ![^"Function", null, [[^"Return", [^"ThisCall", p, as]]]]
+| [^"PredicatePattern",    :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "predicate"   ], [p]]]]]
+| [^"ActionPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "action"      ], [p]]]]]
+| [^"ImmediatePattern",    :p] !p
+| [^"PropertyPattern",  :name] ![^"ThisProperty", name]
+| [^"ObjectPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "object"      ], [[^"ThisCall", p, []]]]]]]
+| [^"StringPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "string"      ], [p]]]]]
+| [^"NumberPattern",       :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "number"      ], [p]]]]]
+| [^"RegularExpression",   :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "regularExpression"], [p]]]]]
+| [^"NestedArrayPattern",  :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "nestedArray" ], [p]]]]]
+| [^"NestedAstPattern",    :p] ![^"Function", null, [[^"Return", [^"ThisCall", [^"ThisProperty", "nestedAst"   ], [p]]]]]
+| [^"EmptyPattern"           ] ![^"ThisProperty", "pass"]
+| [^"NextPattern"            ] ![^"ThisProperty", "next"]
+
+| [^"ExpressionSemanticBody", :f] ![^"Function", null, [[^"Return", [^"Subexpression", f]]]]
+| [^"FunctionSemanticBody",   :f] ![^"Function", null, [f]]
+
+| :
+
+};
+
+
+
+Translator.prototype.simplify = rule {
+  
+| [^"ThisCall", [^"ThisProperty", :name], :as_or_f]
+  ![^"Call", [^"Lookup", [^"This"], name], as_or_f]
+  
+| [^"ThisCall", :fn, [next*:as]]
+  ![^"Call", [^"Lookup", fn, "call"], [[^"This"]].concat(as)]
+  
+| [^"ThisCall", :fn, :f]
+  ![^"Call", [^"Lookup", fn, "call"], [[^"This"], f]]
+  
+  
+
+| [^"Call", [^"Function", ( [] | nou ), [[^"Return", :expr]]],
+            ( [] | nou )
+  ]
+  !expr
+  
+| [^"Call", [^"Lookup", [^"Function", ( [] | nou ), [[^"Return", :expr]]],
+                        "call"
+            ],
+            [[^"This"]]
+  ]
+  !expr
+  
+  
+  
+| [^"Call", [^"Lookup", :object, :name], :as]:x
+  log("Call object = " + Show.synopsis(object) + "; name = " + Show.synopsis(name) + "; as = " + Show.synopsis(as))
+  !x
+
+
+  
+| :
+  
+};
+
+
+
+Translator.prototype.fnparams = rule (i) {
+| [next*:ps]          !ps.join(", ")
+| translate(i):pf     !pf
+| nou                 !""
+};
+
+Translator.prototype.translate = rule (i) {
+  
+| [^"Indent", :k, translate(k):x]
+  !x
+  
+  
+  
+| [^"Composite", [translate(i)*:fs]]
+  !fs.join("")
+
+| [^"Fragment", :f]
+  !f
+
+
+
+  // Functions
+  
+| [^"Function", fnparams:ps, [translate(i + 2)*:stmts]]
+  !(
+    "function (" + ps.join(", ") + ") {\n" +
+      stmts.join("") +
+    "}"
+  )
+  
+| [^"Function", translate(i + 2):pf, [translate(i + 2)*:stmts]]
+  !(
+    "function (" + pf + ") {\n" +
+      stmts.join("") +
+    "}"
+  )
+  
+  
+  
+  // Statements
+  
+| [^"VarDecl*", :names]
+  !(
+    " ".repeat(i) + "var " + names.join(", ") + ";\n"
+  )
+  
+| [^"VarDecl", :name, translate(i)?:expr]
+  !{
+    if (expr != null) {
+      return " ".repeat(i) + "var " + name + " = " + expr + ";\n";
+    }
+    else {
+      return " ".repeat(i) + "var " + name + ";\n";
+    }
+  }
+  
+| [^"ExprStmt", translate(i):expr]
+  !(
+    " ".repeat(i) + expr + ";\n"
+  )
+  
+| [^"Return", translate(i):expr]
+  !(
+    " ".repeat(i) + "return " + expr + ";\n"
+  )
+  
+  
+  
+  // Expressions
+  
+| [^"Assign", translate(i):lvalue, (i):rvalue]
+  !(
+    lvalue + " = " + rvalue
+  )
+  
+| [^"Call", translate(i):fn, [translate(i)*:as]]
+  !(
+    fn + "(" + as.join(", ") + ")"
+  )
+  
+| [^"Lookup", translate(i):o, :name]
+  !{
+    if (name.isIdentifierName()) {
+      return o + "." + name;
+    }
+    else {
+      return o + "[" + name.quote() + "]";
+    }
+  }
+  
+| [^"Var", :name]
+  !name
+  
+| [^"This"]
+  !"this"
+  
+| [^"Subexpression", translate(i):expr]
+  !(
+    "(" + expr + ")"
+  )
+  
+  
+  
+  // Unexpected form
+  
+| :x error("Unexpected translator jsast " + Show.synopsis(x))
+  
+};
