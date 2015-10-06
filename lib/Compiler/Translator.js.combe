@@ -19,6 +19,7 @@
 
 var crypto = require('crypto');
 
+var Util = require("../Util.js");
 var Show = require("../Show.js");
 var Ast = require("../Ast.js");
 var ObjectGrammar = require("../ObjectGrammar.js");
@@ -243,7 +244,7 @@ Translator.prototype.translate = rule (i) {
   
 | [^"Call", translate(i + 2):fn, [[^"This"], translate(i + 2)*:as]]
   !{
-    if (as.join(", ").isSingleline()) {
+    if (Util.isSingleline(as.join(", "))) {
       return fn + "(this, " + as.join(", ") + ")";
     }
     else {
@@ -257,7 +258,7 @@ Translator.prototype.translate = rule (i) {
   
 | [^"Call", translate(i + 2):fn, [translate(i + 2)*:as]]
   !{
-    if (as.join(", ").isSingleline()) {
+    if (Util.isSingleline(as.join(", "))) {
       return fn + "(" + as.join(", ") + ")";
     }
     else {
@@ -276,8 +277,8 @@ Translator.prototype.translate = rule (i) {
   
 | [^"Lookup", translate(i):o, :name]
   !{
-    if (name.isIdentifierName()) return o + "." + name;
-    else                         return o + "[" + name.quote() + "]";
+    if (Util.isIdentifierName(name)) return o + "." + name;
+    else                             return o + "[" + name.quote() + "]";
   }
   
 | [^"Var", :name]
