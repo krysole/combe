@@ -72,7 +72,8 @@ Translator.prototype.rewrite = rule {
     [^"Return", [^"Var", "__result"]]
   ]:stmts
   
-  ( on[%pf, ( [] | nou )]
+  // ( on[%pf, nou]
+  ( !pf::nou
     ![^"Indent", indent,
       [^"Function", name, null, [
         [^"Return", [^"ThisCall", [^"ThisProperty", "memoize"], 
@@ -90,9 +91,10 @@ Translator.prototype.rewrite = rule {
   
   
   
-| [^"ChoicePattern",      :as] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "choice"      ], as ]]]]
-| [^"SequencePattern",    :as] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "sequence"    ], as ]]]]
+| [^"ChoicePattern",      :ps] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "choice"      ], ps ]]]]
+| [^"SequencePattern",    :ps] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "sequence"    ], ps ]]]]
 | [^"BindPattern",  :name, :p] ![^"Function", null, null, [[^"Return", [^"Assign", [^"Var", name], [^"ThisCall", p, []]    ]]]]
+| [^"ChainPattern",       :ps] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "chain"       ], ps ]]]]
 | [^"LookaheadPattern",    :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "lookahead"   ], [p]]]]]
 | [^"DoubleNegatePattern", :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "doubleNegate"], [p]]]]]
 | [^"NegatePattern",       :p] ![^"Function", null, null, [[^"Return", [^"ThisCall", [^"ThisProperty", "negate"      ], [p]]]]]
@@ -128,8 +130,8 @@ Translator.prototype.rewrite = rule {
 
 Translator.prototype.simplify = rule {
   
-| [^"ThisCall", [^"ThisProperty", :name], :as_or_f]
-  ![^"Call", [^"Lookup", [^"This"], name], as_or_f]
+| [^"ThisCall", [^"ThisProperty", :name], :aof]
+  ![^"Call", [^"Lookup", [^"This"], name], aof]
   
 | [^"ThisCall", :fn, [next*:as]]
   ![^"Call", [^"Lookup", fn, "call"], [[^"This"]].concat(as)]

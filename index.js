@@ -17,4 +17,4 @@
 //
 "use strict";
 
-module.exports = require("./lib/Combe.js");
+module.exports = require("./lib/combe.js");

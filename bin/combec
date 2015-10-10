@@ -22,7 +22,7 @@ var nopt = require("nopt");
 var path = require("path");
 var fs = require("fs");
 
-var Combe = require("../index.js");
+var combe = require("../index.js");
 
 
 
@@ -90,8 +90,8 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var hashbang = Combe.Compiler.hashbang(source);
-    var tokens = Combe.Compiler.lex(source, sourcepath, hashbang.length);
+    var hashbang = combe.Compiler.hashbang(source);
+    var tokens = combe.Compiler.lex(source, sourcepath, hashbang.length);
     var output = tokens.map(function (t) { return t.toString(); }).join("\n");
     
     if (options["output"] != null) {
@@ -111,9 +111,9 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var hashbang = Combe.Compiler.hashbang(source);
-    var ast = Combe.Compiler.parse(source, sourcepath, hashbang.length);
-    var output = Combe.show(ast);
+    var hashbang = combe.Compiler.hashbang(source);
+    var ast = combe.Compiler.parse(source, sourcepath, hashbang.length);
+    var output = combe.show(ast);
     
     if (options["output"] != null) {
       fs.writeFileSync(options["output"], output);
@@ -132,10 +132,10 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var hashbang = Combe.Compiler.hashbang(source);
-    var ast = Combe.Compiler.parse(source, sourcepath, hashbang.length);
-    var analysedAst = Combe.Compiler.analyse(ast);
-    var output = Combe.show(analysedAst);
+    var hashbang = combe.Compiler.hashbang(source);
+    var ast = combe.Compiler.parse(source, sourcepath, hashbang.length);
+    var analysedAst = combe.Compiler.analyse(ast);
+    var output = combe.show(analysedAst);
     
     if (options["output"] != null) {
       fs.writeFileSync(options["output"], output);
@@ -154,11 +154,11 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var hashbang = Combe.Compiler.hashbang(source);
-    var ast = Combe.Compiler.parse(source, sourcepath, hashbang.length);
-    var analysedAst = Combe.Compiler.analyse(ast);
-    var optimizedAst = Combe.Compiler.optimize(analysedAst);
-    var output = Combe.show(optimizedAst);
+    var hashbang = combe.Compiler.hashbang(source);
+    var ast = combe.Compiler.parse(source, sourcepath, hashbang.length);
+    var analysedAst = combe.Compiler.analyse(ast);
+    var optimizedAst = combe.Compiler.optimize(analysedAst);
+    var output = combe.show(optimizedAst);
     
     if (options["output"] != null) {
       fs.writeFileSync(options["output"], output);
@@ -177,12 +177,12 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var hashbang = Combe.Compiler.hashbang(source);
-    var ast = Combe.Compiler.parse(source, sourcepath, hashbang.length);
-    var analysedAst = Combe.Compiler.analyse(ast);
-    var optimizedAst = Combe.Compiler.optimize(analysedAst);
-    var translatorOutput = Combe.Compiler.translate(optimizedAst);
-    var output = Combe.show(translatorOutput);
+    var hashbang = combe.Compiler.hashbang(source);
+    var ast = combe.Compiler.parse(source, sourcepath, hashbang.length);
+    var analysedAst = combe.Compiler.analyse(ast);
+    var optimizedAst = combe.Compiler.optimize(analysedAst);
+    var translatorOutput = combe.Compiler.translate(optimizedAst);
+    var output = combe.show(translatorOutput);
     
     if (options["output"] != null) {
       fs.writeFileSync(options["output"], output);
@@ -201,7 +201,7 @@ var main = function () {
     }
     
     var source = fs.readFileSync(sourcepath, "utf8");
-    var output = Combe.Compiler.compile(source, sourcepath);
+    var output = combe.Compiler.compile(source, sourcepath);
     
     if (options["output"] != null) {
       fs.writeFileSync(options["output"], output);

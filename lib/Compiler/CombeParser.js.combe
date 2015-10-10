@@ -106,7 +106,8 @@ CombeParser.prototype.ruleSyntax = rule {
 };
 
 CombeParser.prototype.parameterList = rule {
-  pn("(") scan:f pn(")") !f
+| pn("(") ws? pn(")")    !null
+| pn("(") scan:f pn(")") !f
 };
 
 
@@ -129,9 +130,15 @@ CombeParser.prototype.sequencePattern = rule {
 };
 
 CombeParser.prototype.bindPattern = rule {
-| operatorPattern:p pn(":") id:name ![^"BindPattern", name, p]
-|                   pn(":") id:name ![^"BindPattern", name, [^"NextPattern"]]
-|                   pn(":")         ![^"NextPattern"]
+| chainPattern:p pn(":") id:name ![^"BindPattern", name, p]
+|                pn(":") id:name ![^"BindPattern", name, [^"NextPattern"]]
+|                pn(":")         ![^"NextPattern"]
+| chainPattern
+};
+
+CombeParser.prototype.chainPattern = rule {
+| operatorPattern:l ( pn(":") pn(":") operatorPattern )*:rs
+  ![^"ChainPattern", [l].concat(rs)]
 | operatorPattern
 };
 
@@ -247,13 +254,13 @@ CombeParser.prototype.semanticBodyFilter = rule {
 | "RegularExpression" | "String" | "Number" | "Null" | "Boolean"
 | "IdentifierName"
 | pn("@")
-| pn(".") | pn("(") | pn("[") | pn("{")
+| pn(".") | pn("(") | pn("[") | pn("{") | pn("-")
 };
 
 
 
 CombeParser.prototype.suppressNameColon = rule {
-  id pn(":")
+  id &pn(":")
 };
 
 

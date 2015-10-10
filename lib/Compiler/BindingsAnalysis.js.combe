@@ -22,8 +22,8 @@ var Ast = require("../Ast.js");
 
 
 
-function BindingsAnalysis(sourcename) {
-  ObjectGrammar.call(this, sourcename);
+function BindingsAnalysis() {
+  ObjectGrammar.call(this);
   
   this.init("bindings", null);
 };
@@ -51,24 +51,4 @@ BindingsAnalysis.prototype.analyse = rule {
   ![^"BindPattern", name, p]
   
 | :x recurse[%x, analyse]
-};
-
-
-
-BindingsAnalysis.prototype.recurse = function (x, pattern) {
-  if (x instanceof Ast)        return this.recurseAst(x, pattern);
-  else if (x instanceof Array) return this.recurseArray(x, pattern);
-  else                         return x;
-};
-
-BindingsAnalysis.prototype.recurseAst = function (ast, pattern) {
-  var _this = this;
-  var type = ast.type();
-  var es = ast.rest().map(function (e) { return _this.on(e, pattern); });
-  return new Ast(type).concat(es);
-};
-
-BindingsAnalysis.prototype.recurseArray = function (array, pattern) {
-  var _this = this;
-  return array.map(function (e) { return _this.on(e, pattern); });
 };
