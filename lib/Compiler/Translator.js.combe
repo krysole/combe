@@ -72,7 +72,6 @@ Translator.prototype.rewrite = rule {
     [^"Return", [^"Var", "__result"]]
   ]:stmts
   
-  // ( on[%pf, nou]
   ( !pf::nou
     ![^"Indent", indent,
       [^"Function", name, null, [

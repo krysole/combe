@@ -137,7 +137,7 @@ CombeParser.prototype.bindPattern = rule {
 };
 
 CombeParser.prototype.chainPattern = rule {
-| operatorPattern:l ( pn(":") pn(":") operatorPattern )*:rs
+| operatorPattern:l ( pn(":") pn(":") operatorPattern )+:rs
   ![^"ChainPattern", [l].concat(rs)]
 | operatorPattern
 };
@@ -260,7 +260,7 @@ CombeParser.prototype.semanticBodyFilter = rule {
 
 
 CombeParser.prototype.suppressNameColon = rule {
-  id &pn(":")
+  id ~~pn(":")
 };
 
 
