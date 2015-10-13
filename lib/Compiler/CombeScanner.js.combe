@@ -239,14 +239,13 @@ CombeScanner.prototype.emptyPattern = rule {
 CombeScanner.prototype.semanticBody = rule {
 | .pn("(") ~( .ws? .pn(")") ) .scan:f .pn(")") !Ast("ExpressionSemanticBody", f)
 | .pn("{") .scan:f .pn("}")                    !Ast("FunctionSemanticBody", f)
-| .pn("["):f1 .scan:f2 .pn("]"):f3             !Ast("ExpressionSemanticBody", Ast("Composite", [f1, f2, f3]))
 | .scan{semanticBodyFilter}:f                  !Ast("ExpressionSemanticBody", f)
 };
 CombeScanner.prototype.semanticBodyFilter = rule {
 | .regularExpressionLiteral | .stringLiteral | .numberLiteral
 | .nullLiteral | .booleanLiteral
 | .identifierName
-| .pn("-") .numberLiteral
+| .pn("-") | .pn(".") | .pn("(") | .pn("[") | .pn("{")
 };
 
 
