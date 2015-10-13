@@ -1,0 +1,325 @@
+//
+// Combe - A Parsing Extension for JavaScript
+//
+// Copyright 2015 Lorenz Pretterhofer <krysole@alexicalmistake.com>
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+//
+"use strict";
+
+var Grammar = require("../Grammar.js");
+var Ast = require("./CombeAst.js");
+
+
+
+function CombeScanner(input, sourcename) {
+  Grammar.call(this, input, sourcename);
+  
+  this.init("start", false);
+  this.init("enclosedBy", null);
+  this.init("fragments", null);
+  this.init("indent", 0);
+};
+CombeScanner.prototype = Object.create(Grammar.prototype);
+CombeScanner.prototype.constructor = CombeScanner;
+module.exports = CombeScanner;
+
+
+
+CombeScanner.prototype.start = rule { [.scanFile:f] !f }
+
+
+
+CombeScanner.prototype.scanFile = rule {
+  .hashbang:h
+  .scan:f
+  !Ast("Composite", [Ast("Fragment", h), f])
+}
+
+
+
+CombeScanner.prototype.scan = rule (filter) {
+  .push("start", true)
+  .push("enclosedBy", null)
+  (
+    ( ?(this.get("enclosedBy") == null) ~~.ifNotNull(filter)
+    | ?(this.get("enclosedBy") != null)
+    )
+    .fragment:f .set("start", false) !f
+  )*:fs
+  .pop("enclosedBy")
+  .pop("start")
+  !Ast("Composite", fs)
+};
+
+
+
+CombeScanner.prototype.fragment = rule {
+| .suppressNameColon
+
+| .trigger("rule")
+
+| .suppressDotIdentifierName
+// | .trigger("class") // For eventual basic ES6 support
+
+| %ECMAScriptScanner.prototype.fragment
+};
+
+
+
+CombeScanner.prototype.trigger = rule (name) {
+  ~~%this[name + "Trigger"]
+  ( %this[name + "Syntax"]
+  | .error("Triggered syntax invalid (" + name + ").")
+  )
+}
+
+
+
+CombeScanner.prototype.ruleTrigger = rule {
+| .id("rule")
+| .inferredName .ws? .id("rule")
+};
+
+CombeScanner.prototype.ruleSyntax = rule {
+  .inferredName:inf .id("rule") .ws? .id?:name .ws? .parameterList?:pf .ws?
+  .pn('{') .pattern:b .pn('}')
+  !Ast("Composite", [
+    inf.fragments,
+    Ast("Rule", this.get("indent"), name, inf.name, pf, b)
+  ])
+};
+
+CombeScanner.prototype.parameterList = rule {
+| .pn("(") .ws? .pn(")")    !null
+| .pn("(") .scan:f .pn(")") !f
+};
+
+
+
+CombeScanner.prototype.pattern = rule {
+  .choicePattern
+};
+
+CombeScanner.prototype.choicePattern = rule {
+  .ws?
+  .pn("|")? .ws? .choiceBranch:i .ws?
+  ( .pn('|') .ws? .choiceBranch:b .ws? !b )*:r
+  !Ast("ChoicePattern", [i].concat(r))
+};
+CombeScanner.prototype.choiceBranch = rule { .sequencePattern | .emptyPattern };
+
+CombeScanner.prototype.sequencePattern = rule {
+  .delimited1{bindPattern}{ ws | ws? pn(',') ws? }:ps
+  !( ps.length > 1 ? Ast("SequencePattern", ps) : ps[0] )
+};
+
+CombeScanner.prototype.chainPattern = rule {
+  .operatorPattern:p
+  ( .pn(":") .id:name            !Ast("BindPattern", p, name):p
+  | .pn(":") .operatorPattern:cp !Ast("ChainPattern", p, cp):p
+  )*
+  !p
+};
+
+CombeScanner.prototype.operatorPattern = rule {
+| .pn("&")          .secondaryPattern:p          !Ast("LookaheadPattern",    p)
+| .pn("~") .pn("~") .secondaryPattern:p          !Ast("DoubleNegatePattern", p)
+| .pn("~")          .secondaryPattern:p          !Ast("NegatePattern",       p)
+|                   .secondaryPattern:p .pn("?") !Ast("OptionalPattern",     p)
+|                   .secondaryPattern:p .pn("*") !Ast("RepeatPattern",       p)
+|                   .secondaryPattern:p .pn("+") !Ast("Repeat1Pattern",      p)
+|                   .secondaryPattern:p .pn("|") semanticBody:b
+                                                 !Ast("ChoicePattern", [p, Ast("ActionPattern", b)])
+|                   .secondaryPattern
+};
+
+CombeScanner.prototype.secondaryPattern = rule {
+  .primaryPattern:p
+  (
+  | .pn(".") .id:name .pn("(") .scan:af .pn(")") !Ast("DotMethodCallPattern", p, name, [af]):p
+  | .pn(".") .id:name                            !Ast("DotPattern", p, name):p
+  
+  | .pn("(") .ws? .pn(")")                       !Ast("CallPattern", p, []):p
+  | .pn("(") ~( .ws? .pn(")") ) .scan:f .pn(")") !Ast("CallPattern", p, [f]):p
+  
+  | .pn("[") .scan:nf .pn("]") .pn("(") .scan:af .pn(")")
+                                                 !Ast("SubscriptMethodCallPattern", p, nf, [af]):p
+  | .pn("[") .scan:nf .pn("]")                   !Ast("SubscriptPattern", p, nf):p
+  
+  | .pn("{") pattern:ap .pn("}")                 !Ast("CallPattern", p, [ap]):p
+  )*
+  !p
+};
+
+CombeScanner.prototype.primaryPattern = rule {
+| .bindPattern
+| .predicatePattern
+| .actionPattern
+| .immediatePattern
+| .propertyPattern
+| .objectPattern
+| .hashPattern
+| .stringPattern
+| .numberPattern
+| .regularExpressionPattern
+| .nestedArrayPattern
+| .dotPattern
+| .subpattern
+};
+
+CombeScanner.prototype.bindPattern = rule {
+  .id:name !Ast("BindPattern", Ast("NextPattern"), name)
+};
+
+CombeScanner.prototype.predicatePattern = rule {
+  .pn("?") .semanticBody:b !Ast("PredicatePattern", b)
+};
+
+CombeScanner.prototype.actionPattern = rule {
+  .pn("!") .semanticBody:b !Ast("ActionPattern", b)
+};
+
+CombeScanner.prototype.immediatePattern = rule {
+  .pn("%") .semanticBody:b !Ast("ImmediatePattern", b)
+};
+
+CombeScanner.prototype.propertyPattern = rule {
+  .pn(".") .id:name !Ast("PropertyPattern", name)
+};
+
+CombeScanner.prototype.objectPattern = rule {
+  .pn("@") .semanticBody:b !Ast("ObjectPattern", b)
+};
+
+CombeScanner.prototype.hashPattern = rule {
+  .pn("#") .semanticBody:b !Ast("HashPattern", b)
+};
+
+CombeScanner.prototype.stringPattern = rule {
+  .st:text !Ast("StringPattern", text)
+};
+
+CombeScanner.prototype.numberPattern = rule {
+  .num:text !Ast("NumberPattern", text)
+};
+
+CombeScanner.prototype.regularExpressionPattern = rule {
+  .regex:text !Ast("RegularExpressionPattern", text)
+};
+
+CombeScanner.prototype.nestedArrayPattern = rule {
+  .pn("[") .pattern:p .pn("]") !Ast("NestedArrayPattern", p)
+};
+
+CombeScanner.prototype.dotPattern = rule {
+  .pn(".") !Ast("NextPattern")
+};
+
+CombeScanner.prototype.subpattern = rule {
+  .pn("(") .pattern:p .pn(")") !p
+};
+
+CombeScanner.prototype.emptyPattern = rule {
+  !Ast("EmptyPattern")
+};
+
+
+
+CombeScanner.prototype.semanticBody = rule {
+| .pn("(") ~( .ws? .pn(")") ) .scan:f .pn(")") !Ast("ExpressionSemanticBody", f)
+| .pn("{") .scan:f .pn("}")                    !Ast("FunctionSemanticBody", f)
+| .pn("["):f1 .scan:f2 .pn("]"):f3             !Ast("ExpressionSemanticBody", Ast("Composite", [f1, f2, f3]))
+| .scan{semanticBodyFilter}:f                  !Ast("ExpressionSemanticBody", f)
+};
+CombeScanner.prototype.semanticBodyFilter = rule {
+| .regularExpressionLiteral | .stringLiteral | .numberLiteral
+| .nullLiteral | .booleanLiteral
+| .identifierName
+| .pn("-") .numberLiteral
+};
+
+
+
+CombeScanner.prototype.suppressNameColon = rule {
+  .id:f1 ~~.pn(":")
+  !f1
+};
+
+
+
+CombeScanner.prototype.suppressDotIdentifierName = rule {
+  .pn("."):f1 .ws?:f2 .id:f3
+  !Ast("Composite", [f1, f2, f3])
+};
+
+
+
+CombeScanner.prototype.inferredName = rule {
+| .dotAssign
+| .propdeclAssign
+| .subscriptAssign
+| .variableAssign
+};
+
+CombeScanner.prototype.dotAssign = rule {
+  .pn("."):f1 .ws?:f2 .id:f3 .ws?:f4 .pn("="):f5 .ws?:f6
+  !{ name: f3, fragments: Ast("Composite", [f1, f2, f3, f4, f5, f6]) }
+};
+
+CombeScanner.prototype.propdeclAssign = rule {
+  ( .id:f1 | .st:f1 !eval(f1) ):name .ws?:f2 .pn(":"):f3 .ws?:f4
+  !{ name: name, fragments: Ast("Composite", [f1, f2, f3, f4]) }
+};
+
+CombeScanner.prototype.subscriptAssign = rule {
+  .pn("["):f1 .ws?:f2 .st:f3 .ws?:f4 .pn("]"):f5 .ws?:f6 .pn("="):f7 .ws?:f8
+  !{ name: eval(f3), fragments: Ast("Composite", [f1, f2, f3, f4, f5, f6, f7, f8]) }
+};
+
+CombeScanner.prototype.variableAssign = rule {
+  .id:f1 .ws?:f2 .pn("="):f3 .ws?:f4
+  !{ name: f1, fragments: Ast("Composite", [f1, f2, f3, f4]) }
+};
+
+
+
+CombeScanner.prototype.id = rule (expected) {
+  .slice{.identifierName}:text ?(expected == null || text == expected) !text
+};
+
+CombeScanner.prototype.pn = rule (expected) {
+  .slice{.punctuator}:text ?(expected == null || text == expected) !text
+};
+
+CombeScanner.prototype.st = rule {
+  .slice{.stringLiteral}
+};
+
+CombeScanner.prototype.num = rule {
+  .slice{.numberLiteral}
+};
+
+CombeScanner.prototype.regex = rule {
+  .slice{.regularExpressionLiteral}
+};
+
+CombeScanner.prototype.ws = rule {
+  .slice{ ( .multilineComment | .singlelineComment | .spaces | .newline )+ }
+};
+
+CombeScanner.prototype.newline = rule {
+  .slice{ %ECMAScriptScanner.prototype.newline }:text
+  .getPosition():start ~~( .spaces .getPosition():end ) .set("indent", end - start)
+  !text
+};
