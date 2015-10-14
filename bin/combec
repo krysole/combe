@@ -32,10 +32,8 @@ var Options = {
   "version": Boolean,
   "help": Boolean,
   
-  "debug-lex": Boolean,
-  "debug-parse": Boolean,
+  "debug-scan": Boolean,
   "debug-analyse": Boolean,
-  "debug-optimize": Boolean,
   "debug-translate": Boolean,
   
   "compile": Boolean,
@@ -54,10 +52,10 @@ var main = function () {
   var remaining = options.argv.remain;
   
   if (remaining.length === 0) {
-    checkExclusiveOptions(options, ["version", "help", "debug-lex", "debug-parse", "debug-analyse", "debug-optimize", "debug-translate", "compile"], "help");
+    checkExclusiveOptions(options, ["version", "help", "debug-scan", "debug-analyse", "debug-translate", "compile"], "help");
   }
   else {
-    checkExclusiveOptions(options, ["version", "help", "debug-lex", "debug-parse", "debug-analyse", "debug-optimize", "debug-translate", "compile"], "compile");
+    checkExclusiveOptions(options, ["version", "help", "debug-scan", "debug-analyse", "debug-translate", "compile"], "compile");
   }
   
   
@@ -70,17 +68,15 @@ var main = function () {
     console.log("  [--version        ]: Print \"project-version\" output.");
     console.log("  [--help           ]: (default without sourcepath) Print this message.");
     console.log()
-    console.log("  [--debug-lex      ]: Produce lexer output.");
-    console.log("  [--debug-parse    ]: Produce parser output.");
-    console.log("  [--debug-analyse  ]: Produce analysed parser output.");
-    console.log("  [--debug-optimize ]: Produce optimized parser output.");
-    console.log("  [--debug-translate]: Produce translator output.");
+    console.log("  [--debug-scan     ]: Produce scanner output.");
+    console.log("  [--debug-analyse  ]: Produce analysed ast output.");
+    console.log("  [--debug-translate]: Produce translated output.");
     console.log();
   }
   else if (options["version"]) {
     console.log(require("../package.json").name + "-" + require("../package.json").version);
   }
-  else if (options["debug-lex"]) {
+  else if (options["debug-scan"]) {
     checkRemainingOptions(remaining, 1, 1);
     
     var sourcepath = remaining[0];
@@ -91,28 +87,7 @@ var main = function () {
     
     var source = fs.readFileSync(sourcepath, "utf8");
     var hashbang = combe.Compiler.hashbang(source);
-    var tokens = combe.Compiler.lex(source, sourcepath, hashbang.length);
-    var output = tokens.map(function (t) { return t.toString(); }).join("\n");
-    
-    if (options["output"] != null) {
-      fs.writeFileSync(options["output"], output);
-    }
-    else {
-      console.log(output);
-    }
-  }
-  else if (options["debug-parse"]) {
-    checkRemainingOptions(remaining, 1, 1);
-    
-    var sourcepath = remaining[0];
-    if (!fs.existsSync(sourcepath)) {
-      console.error("sourcepath (" + sourcepath + ") does not exist.");
-      process.exit(1);
-    }
-    
-    var source = fs.readFileSync(sourcepath, "utf8");
-    var hashbang = combe.Compiler.hashbang(source);
-    var ast = combe.Compiler.parse(source, sourcepath, hashbang.length);
+    var ast = combe.Compiler.scan(source, sourcepath, hashbang.length);
     var output = combe.show(ast);
     
     if (options["output"] != null) {
@@ -133,32 +108,9 @@ var main = function () {
     
     var source = fs.readFileSync(sourcepath, "utf8");
     var hashbang = combe.Compiler.hashbang(source);
-    var ast = combe.Compiler.parse(source, sourcepath, hashbang.length);
+    var ast = combe.Compiler.scan(source, sourcepath, hashbang.length);
     var analysedAst = combe.Compiler.analyse(ast);
     var output = combe.show(analysedAst);
-    
-    if (options["output"] != null) {
-      fs.writeFileSync(options["output"], output);
-    }
-    else {
-      console.log(output);
-    }
-  }
-  else if (options["debug-optimize"]) {
-    checkRemainingOptions(remaining, 1, 1);
-    
-    var sourcepath = remaining[0];
-    if (!fs.existsSync(sourcepath)) {
-      console.error("sourcepath (" + sourcepath + ") does not exist.");
-      process.exit(1);
-    }
-    
-    var source = fs.readFileSync(sourcepath, "utf8");
-    var hashbang = combe.Compiler.hashbang(source);
-    var ast = combe.Compiler.parse(source, sourcepath, hashbang.length);
-    var analysedAst = combe.Compiler.analyse(ast);
-    var optimizedAst = combe.Compiler.optimize(analysedAst);
-    var output = combe.show(optimizedAst);
     
     if (options["output"] != null) {
       fs.writeFileSync(options["output"], output);
@@ -178,10 +130,9 @@ var main = function () {
     
     var source = fs.readFileSync(sourcepath, "utf8");
     var hashbang = combe.Compiler.hashbang(source);
-    var ast = combe.Compiler.parse(source, sourcepath, hashbang.length);
+    var ast = combe.Compiler.scan(source, sourcepath, hashbang.length);
     var analysedAst = combe.Compiler.analyse(ast);
-    var optimizedAst = combe.Compiler.optimize(analysedAst);
-    var translatorOutput = combe.Compiler.translate(optimizedAst);
+    var translatorOutput = combe.Compiler.translate(analysedAst);
     var output = combe.show(translatorOutput);
     
     if (options["output"] != null) {

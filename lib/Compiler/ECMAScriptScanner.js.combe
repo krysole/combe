@@ -17,7 +17,7 @@
 //
 "use strict";
 
-var Grammar = require("../Grammar.js");
+var TextGrammar = require("../TextGrammar.js");
 
 
 
@@ -43,49 +43,41 @@ var Grammar = require("../Grammar.js");
 //
 //  - We don't define the reserved words here.
 //
-function ECMAScriptScanner(root, sourcename) {
-  Grammar.call(this, root, sourcename);
+function ECMAScriptScanner(source, sourcename, skipLength) {
+  TextGrammar.call(this, source, sourcename, skipLength);
   
   this.init("enclosedBy", null);
 };
-ECMAScriptScanner.prototype = Object.create(Grammar.prototype);
+ECMAScriptScanner.prototype = Object.create(TextGrammar.prototype);
 ECMAScriptScanner.prototype.constructor = ECMAScriptScanner;
 module.exports = ECMAScriptScanner;
 
 
 
-ECMAScriptScanner.prototype.start = rule { [.allTokens:ts] !ts };
+ECMAScriptScanner.prototype.start = rule { .fragment* };
 
-ECMAScriptScanner.prototype.allFragments = rule {
-  .hashbang:hf
-  .fragment*:fs
-  ![hf].concat(fs)
-};
 
-ECMAScriptScanner.prototype.hashbang = rule {
-  .slice{ #"#!" ( ~.newline . )* .newline }
-};
 
 ECMAScriptScanner.prototype.fragment = rule {
-| .slice{ .multilineComment         }
-| .slice{ .singlelineComment        }
-| .slice{ .spaces                   }
-| .slice{ .newline                  }
+| .slice[ .multilineComment         ]
+| .slice[ .singlelineComment        ]
+| .slice[ .spaces                   ]
+| .slice[ .newline                  ]
 
-| .slice{ .templateStringComplete   }
-| .slice{ .templateStringHead       }
-| .slice{ .templateStringMiddle     }
-| .slice{ .templateStringTail       }
+| .slice[ .templateStringComplete   ]
+| .slice[ .templateStringHead       ]
+| .slice[ .templateStringMiddle     ]
+| .slice[ .templateStringTail       ]
 
-| .slice{ .regularExpressionLiteral }
-| .slice{ .stringLiteral            }
-| .slice{ .numberLiteral            }
-| .slice{ .nullLiteral              }
-| .slice{ .booleanLiteral           }
+| .slice[ .regularExpressionLiteral ]
+| .slice[ .stringLiteral            ]
+| .slice[ .numberLiteral            ]
+| .slice[ .nullLiteral              ]
+| .slice[ .booleanLiteral           ]
 
-| .slice{ .punctuator               }
+| .slice[ .punctuator               ]
 
-| .slice{ .identifierName           }
+| .slice[ .identifierName           ]
 };
 
 
@@ -107,7 +99,7 @@ ECMAScriptScanner.prototype.templateStringTail = rule {
 };
 
 ECMAScriptScanner.prototype.lbrace = rule {
-  #"${" .push("enclosedBy", "${")
+  "${" .push("enclosedBy", "${")
 };
 
 ECMAScriptScanner.prototype.rbrace = rule {
@@ -151,8 +143,8 @@ ECMAScriptScanner.prototype.regularExpressionFlag = rule {
 
 
 ECMAScriptScanner.prototype.stringLiteral = rule {
-| "\"" .stringCharacter{"\""}* "\""
-| "\'" .stringCharacter{"\'"}* "\'"
+| "\"" .stringCharacter["\""]* "\""
+| "\'" .stringCharacter["\'"]* "\'"
 };
 
 ECMAScriptScanner.prototype.stringCharacter = rule (terminator) {
@@ -218,14 +210,14 @@ ECMAScriptScanner.prototype.hexIntegerLiteral = rule {
 
 
 ECMAScriptScanner.prototype.nullLiteral = rule {
-  #"null" ~.idContinue
+  "null" ~.idContinue
 };
 
 
 
 ECMAScriptScanner.prototype.booleanLiteral = rule {
-| #"true"  ~.idContinue
-| #"false" ~.idContinue
+| "true"  ~.idContinue
+| "false" ~.idContinue
 };
 
 
@@ -249,24 +241,24 @@ ECMAScriptScanner.prototype.closePunctuator = rule {
 };
 
 ECMAScriptScanner.prototype.basicPunctuator = rule {
-| #"..."  | #"."    | #"?"    | #":"    | #";"    | #","
+| "..."  | "."    | "?"    | ":"    | ";"    | ","
 
-| #"<<="  | #">>="  | #">>>=" | #"=>"
+| "<<="  | ">>="  | ">>>=" | "=>"
 
-| #"==="  | #"!=="  | #"=="   | #"!="   | #"!"    | #"="   | #"~"
-| #"<<"   | #">>"   | #">>>"  | #"<="   | #">="   | #"<"   | #">"
+| "==="  | "!=="  | "=="   | "!="   | "!"    | "="   | "~"
+| "<<"   | ">>"   | ">>>"  | "<="   | ">="   | "<"   | ">"
 
 // "/" and "/=" will accept all cases not _stolen_ by regex.
-| #"++"   | #"--"
-| #"+="   | #"-="   | #"*="   | #"/="   | #"%="
-| #"+"    | #"-"    | #"*"    | #"/"    | #"%"
+| "++"   | "--"
+| "+="   | "-="   | "*="   | "/="   | "%="
+| "+"    | "-"    | "*"    | "/"    | "%"
 
-| #"||"   | #"&&"
-| #"|="   | #"^="   | #"&="
-| #"|"    | #"^"    | #"&"
+| "||"   | "&&"
+| "|="   | "^="   | "&="
+| "|"    | "^"    | "&"
 
 // Combe extensions
-| #"#"    | #"@"
+| "#"    | "@"
 };
 
 
@@ -313,7 +305,7 @@ ECMAScriptScanner.prototype.space = rule {
 | "\u0020" // <sp>
 | "\u00a0" // <nbsp>
 | "\ufeff" // <zwnbsp/bom>
-| Zs       // Unicode space
+| .Zs       // Unicode space
 };
 ECMAScriptScanner.prototype.Zs = rule { .fail }
 
