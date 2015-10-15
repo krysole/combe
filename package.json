@@ -1,7 +1,7 @@
 {
   "name": "combe",
   "description": "A Parsing Extension for JavaScript",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "homepage": "http://github.com/krysole/combe",
   "maintainers": [
     {
