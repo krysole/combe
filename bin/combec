@@ -33,6 +33,7 @@ var Options = {
   "help": Boolean,
   
   "debug-scan": Boolean,
+  "debug-simplify": Boolean,
   "debug-analyse": Boolean,
   "debug-translate": Boolean,
   
@@ -52,10 +53,10 @@ var main = function () {
   var remaining = options.argv.remain;
   
   if (remaining.length === 0) {
-    checkExclusiveOptions(options, ["version", "help", "debug-scan", "debug-analyse", "debug-translate", "compile"], "help");
+    checkExclusiveOptions(options, ["version", "help", "debug-scan", "debug-simplify", "debug-analyse", "debug-translate", "compile"], "help");
   }
   else {
-    checkExclusiveOptions(options, ["version", "help", "debug-scan", "debug-analyse", "debug-translate", "compile"], "compile");
+    checkExclusiveOptions(options, ["version", "help", "debug-scan", "debug-simplify", "debug-analyse", "debug-translate", "compile"], "compile");
   }
   
   
@@ -69,6 +70,7 @@ var main = function () {
     console.log("  [--help           ]: (default without sourcepath) Print this message.");
     console.log()
     console.log("  [--debug-scan     ]: Produce scanner output.");
+    console.log("  [--debug-simplify ]: Produce simplified ast output.");
     console.log("  [--debug-analyse  ]: Produce analysed ast output.");
     console.log("  [--debug-translate]: Produce translated output.");
     console.log();
@@ -97,6 +99,28 @@ var main = function () {
       console.log(output);
     }
   }
+  else if (options["debug-simplify"]) {
+    checkRemainingOptions(remaining, 1, 1);
+    
+    var sourcepath = remaining[0];
+    if (!fs.existsSync(sourcepath)) {
+      console.error("sourcepath (" + sourcepath + ") does not exist.");
+      process.exit(1);
+    }
+    
+    var source = fs.readFileSync(sourcepath, "utf8");
+    var hashbang = combe.Compiler.hashbang(source);
+    var ast = combe.Compiler.scan(source, sourcepath, hashbang.length);
+    var simplifiedAst = combe.Compiler.simplify(ast);
+    var output = combe.show(simplifiedAst);
+    
+    if (options["output"] != null) {
+      fs.writeFileSync(options["output"], output);
+    }
+    else {
+      console.log(output);
+    }
+  }
   else if (options["debug-analyse"]) {
     checkRemainingOptions(remaining, 1, 1);
     
@@ -109,7 +133,8 @@ var main = function () {
     var source = fs.readFileSync(sourcepath, "utf8");
     var hashbang = combe.Compiler.hashbang(source);
     var ast = combe.Compiler.scan(source, sourcepath, hashbang.length);
-    var analysedAst = combe.Compiler.analyse(ast);
+    var simplifiedAst = combe.Compiler.simplify(ast);
+    var analysedAst = combe.Compiler.analyse(simplifiedAst);
     var output = combe.show(analysedAst);
     
     if (options["output"] != null) {
@@ -131,7 +156,8 @@ var main = function () {
     var source = fs.readFileSync(sourcepath, "utf8");
     var hashbang = combe.Compiler.hashbang(source);
     var ast = combe.Compiler.scan(source, sourcepath, hashbang.length);
-    var analysedAst = combe.Compiler.analyse(ast);
+    var simplifiedAst = combe.Compiler.simplify(ast);
+    var analysedAst = combe.Compiler.analyse(simplifiedAst);
     var translatorOutput = combe.Compiler.translate(analysedAst);
     var output = combe.show(translatorOutput);
     
