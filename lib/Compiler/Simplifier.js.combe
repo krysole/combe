@@ -36,20 +36,20 @@ module.exports = Simplifier;
 
 
 Simplifier.prototype.start = rule {
-  preorderTransform[simplify]
+  postorderTransform[simplify]
 };
 
 
 
 Simplifier.prototype.simplify = rule {
+
+| Ast("ChoicePattern")::{ patterns: [ :p ] } !p
+
+| Ast("SequencePattern")::{ patterns: [ :p ] } !p
   
-| Ast("Choice")::choicePatterns:ps !Ast("Choice", ps)
+| Ast("ChoicePattern")::choicePatterns:ps !Ast("ChoicePattern", ps)
 
-| Ast("Sequence")::sequencePatterns:ps !Ast("Sequence", ps)
-
-| Ast("Choice")::{ patterns: [ :p ] } !p
-
-| Ast("Sequence")::{ patterns: [ :p ] } !p
+| Ast("SequencePattern")::sequencePatterns:ps !Ast("SequencePattern", ps)
 
 | :
 
@@ -58,11 +58,11 @@ Simplifier.prototype.simplify = rule {
 
 
 Simplifier.prototype.choicePatterns = rule {
-| Ast("Choice")::{ patterns: [ choicePatterns*:ps ] } !ps.flatten1()
-| :p                                                  ![p]
+| Ast("ChoicePattern")::{ patterns: [ choicePatterns*:ps ] } !ps.flatten1()
+| :p                                                         ![p]
 };
 
 Simplifier.prototype.sequencePatterns = rule {
-| Ast("Sequence")::{ patterns: [ sequencePatterns*:ps ] } !ps.flatten1()
-| :p                                                      ![p]
+| Ast("SequencePattern")::{ patterns: [ sequencePatterns*:ps ] } !ps.flatten1()
+| :p                                                             ![p]
 };
