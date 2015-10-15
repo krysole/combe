@@ -174,20 +174,20 @@ CombeScanner.prototype.actionPattern = rule {
 };
 
 CombeScanner.prototype.callRulePattern = rule {
-  pn(".") id:name
-  ( pn("(") ws? pn(")")                              !Ast("CallRulePattern", name, [])
+  id:name
+  ( pn("(") ws? pn(")")                            !Ast("CallRulePattern", name, [])
   | pn("(") ~( ws? pn(")") ) scan:f pn(")")        !Ast("CallRulePattern", name, [f])
   | pn("[") delimited[pattern; pn(";")]:as pn("]") !Ast("CallRulePattern", name, as)
-  |                                                     !Ast("CallRulePattern", name, [])
+  |                                                !Ast("CallRulePattern", name, [])
   )
 };
 
 CombeScanner.prototype.callImmediatePattern = rule {
   pn("%") semanticBody:b
-  ( pn("(") ws? pn(")")                               !Ast("CallImmediatePattern", b, [])
+  ( pn("(") ws? pn(")")                            !Ast("CallImmediatePattern", b, [])
   | pn("(") ~( ws? pn(")") ) scan:f pn(")")        !Ast("CallImmediatePattern", b, [f])
   | pn("[") delimited[pattern; pn(";")]:as pn("]") !Ast("CallImmediatePattern", b, as)
-  |                                                     !Ast("CallImmediatePattern", b, [])
+  |                                                !Ast("CallImmediatePattern", b, [])
   )
 };
 
