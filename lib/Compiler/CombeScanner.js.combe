@@ -121,8 +121,8 @@ CombeScanner.prototype.sequencePattern = rule {
 
 CombeScanner.prototype.chainPattern = rule {
   operatorPattern:p
-  ( pn(":") id:name            !Ast("BindPattern", p, name):p
-  | pn(":") operatorPattern:cp !Ast("ChainPattern", p, cp):p
+  ( pn(":") id:name                    !Ast("BindPattern", p, name):p
+  | pn(":") pn(":") operatorPattern:cp !Ast("ChainPattern", p, cp):p
   )*
   !p
 };
@@ -216,8 +216,8 @@ CombeScanner.prototype.nestedArrayPattern = rule {
 };
 
 CombeScanner.prototype.nestedObjectPattern = rule {
-  pn("{") delimited[propertyPattern; ws? pn(",") ws?] pn("}")
-  !Ast("NestedObjectPattern", p)
+  pn("{") ws? delimited[propertyPattern; ws? pn(",") ws?]:ps ws? pn("}")
+  !Ast("NestedObjectPattern", ps)
 };
 
 CombeScanner.prototype.subpattern = rule {
