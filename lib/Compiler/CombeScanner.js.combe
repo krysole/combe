@@ -35,33 +35,33 @@ module.exports = CombeScanner;
 
 
 
-CombeScanner.prototype.start = rule { .scan?[] }
+CombeScanner.prototype.start = rule { scan?[] }
 
 
 
 CombeScanner.prototype.scan = rule (filter) {
-  .push("start", true)
-  .push("enclosedBy", null)
+  push("start", true)
+  push("enclosedBy", null)
   (
-    ( ?(this.get("enclosedBy") == null) ~~.ifNotNull(filter)
+    ( ?(this.get("enclosedBy") == null) ~~ifNotNull(filter)
     | ?(this.get("enclosedBy") != null)
     )
-    .fragment:f .set("start", false) !f
+    fragment:f set("start", false) !f
   )+:fs
-  .pop("enclosedBy")
-  .pop("start")
+  pop("enclosedBy")
+  pop("start")
   !Ast("Composite", fs)
 };
 
 
 
 CombeScanner.prototype.fragment = rule {
-| .suppressNameColon
+| suppressNameColon
 
-| .trigger("rule")
+| trigger("rule")
 
-| .suppressDotIdentifierName
-// | .trigger("class") // For eventual basic ES6 support
+| suppressDotIdentifierName
+// | trigger("class") // For eventual basic ES6 support
 
 | %ECMAScriptScanner.prototype.fragment:text !Ast("Fragment", text)
 };
@@ -71,21 +71,21 @@ CombeScanner.prototype.fragment = rule {
 CombeScanner.prototype.trigger = rule (name) {
   ~~%this[name + "Trigger"]
   ( %this[name + "Syntax"]
-  | .error("Triggered syntax invalid (" + name + ").")
+  | error("Triggered syntax invalid (" + name + ").")
   )
 };
 
 
 
 CombeScanner.prototype.ruleTrigger = rule {
-| .id("rule")
-| .inferredName .ws? .id("rule")
+| id("rule")
+| inferredName ws? id("rule")
 };
 
 CombeScanner.prototype.ruleSyntax = rule {
-  .inferredName?({ fragments: null, name: null }):inf
-  .id("rule") .ws? .id?:name .ws? .parameterList?:pf .ws?
-  .pn('{') .pattern:b .pn('}')
+  inferredName?({ fragments: null, name: null }):inf
+  id("rule") ws? id?:name ws? parameterList?:pf ws?
+  pn('{') pattern:b pn('}')
   !Ast("Composite", [
     inf.fragments,
     Ast("Rule", this.get("indent"), name, inf.name, pf, b)
@@ -93,224 +93,239 @@ CombeScanner.prototype.ruleSyntax = rule {
 };
 
 CombeScanner.prototype.parameterList = rule {
-| .pn("(") .ws? .pn(")")    !null
-| .pn("(") .scan:f .pn(")") !f
+| pn("(") ws? pn(")")    !null
+| pn("(") scan:f pn(")") !f
 };
 
 
 
 CombeScanner.prototype.pattern = rule {
-  .choicePattern
+  choicePattern
 };
 
 CombeScanner.prototype.choicePattern = rule {
-  ( .ws? .pn("|") .ws? | .ws? ) .choiceBranch:i
-  ( .ws? .pn("|") .ws? .choiceBranch )*:r
-  .ws?
+  ( ws? pn("|") ws? | ws? ) choiceBranch:i
+  ( ws? pn("|") ws? choiceBranch )*:r
+  ws?
   !Ast("ChoicePattern", [i].concat(r))
 };
 CombeScanner.prototype.choiceBranch = rule {
-| .sequencePattern
-| .emptyPattern
+| sequencePattern
+| emptyPattern
 };
 
 CombeScanner.prototype.sequencePattern = rule {
-  .delimited1[.chainPattern; .ws | .ws? .pn(',') .ws? ]:ps
+  delimited1[chainPattern; ws | ws? pn(',') ws? ]:ps
   !( ps.length > 1 ? Ast("SequencePattern", ps) : ps[0] )
 };
 
 CombeScanner.prototype.chainPattern = rule {
-  .operatorPattern:p
-  ( .pn(":") .id:name            !Ast("BindPattern", p, name):p
-  | .pn(":") .operatorPattern:cp !Ast("ChainPattern", p, cp):p
+  operatorPattern:p
+  ( pn(":") id:name            !Ast("BindPattern", p, name):p
+  | pn(":") operatorPattern:cp !Ast("ChainPattern", p, cp):p
   )*
   !p
 };
 
 CombeScanner.prototype.operatorPattern = rule {
-| .pn("&")          .hashPattern:p          !Ast("LookaheadPattern",    p)
-| .pn("~") .pn("~") .hashPattern:p          !Ast("DoubleNegatePattern", p)
-| .pn("~")          .hashPattern:p          !Ast("NegatePattern",       p)
-|                   .hashPattern:p .pn("?") .semanticBody:b
-                                            !Ast("ChoicePattern", [p, Ast("ActionPattern", b)])
-|                   .hashPattern:p .pn("?") !Ast("OptionalPattern",     p)
-|                   .hashPattern:p .pn("*") !Ast("RepeatPattern",       p)
-|                   .hashPattern:p .pn("+") !Ast("Repeat1Pattern",      p)
-|                   .hashPattern
+| pn("&")         hashPattern:p         !Ast("LookaheadPattern",    p)
+| pn("~") pn("~") hashPattern:p         !Ast("DoubleNegatePattern", p)
+| pn("~")         hashPattern:p         !Ast("NegatePattern",       p)
+|                 hashPattern:p pn("?") semanticBody:b
+                                        !Ast("ChoicePattern", [p, Ast("ActionPattern", b)])
+|                 hashPattern:p pn("?") !Ast("OptionalPattern",     p)
+|                 hashPattern:p pn("*") !Ast("RepeatPattern",       p)
+|                 hashPattern:p pn("+") !Ast("Repeat1Pattern",      p)
+|                 hashPattern
 };
 
 CombeScanner.prototype.hashPattern = rule {
-| .pn("#") .primaryPattern:p !Ast("HashPattern", p)
-| .primaryPattern
+| pn("#") primaryPattern:p !Ast("HashPattern", p)
+| primaryPattern
 };
 
 CombeScanner.prototype.primaryPattern = rule {
-| .bindPattern
-| .predicatePattern
-| .actionPattern
-| .callRulePattern
-| .callImmediatePattern
-| .objectPattern
-| .eachPattern
-| .stringPattern
-| .numberPattern
-| .regularExpressionPattern
-| .nestedArrayPattern
-| .dotPattern
-| .subpattern
+| bindPattern
+| predicatePattern
+| actionPattern
+| callRulePattern
+| callImmediatePattern
+| objectPattern
+| eachPattern
+| stringPattern
+| numberPattern
+| regularExpressionPattern
+| nestedArrayPattern
+| nestedObjectPattern
+| subpattern
+| nextPattern
 };
 
 CombeScanner.prototype.bindPattern = rule {
-  .id:name !Ast("BindPattern", Ast("NextPattern"), name)
+  pn(":") id:name !Ast("BindPattern", Ast("NextPattern"), name)
 };
 
 CombeScanner.prototype.predicatePattern = rule {
-  .pn("?") .semanticBody:b !Ast("PredicatePattern", b)
+  pn("?") semanticBody:b !Ast("PredicatePattern", b)
 };
 
 CombeScanner.prototype.actionPattern = rule {
-  .pn("!") .semanticBody:b !Ast("ActionPattern", b)
+  pn("!") semanticBody:b !Ast("ActionPattern", b)
 };
 
 CombeScanner.prototype.callRulePattern = rule {
-  .pn(".") .id:name
-  ( .pn("(") .ws? .pn(")")                              !Ast("CallRulePattern", name, [])
-  | .pn("(") ~( .ws? .pn(")") ) .scan:f .pn(")")        !Ast("CallRulePattern", name, [f])
-  | .pn("[") .delimited[.pattern; .pn(";")]:as .pn("]") !Ast("CallRulePattern", name, as)
+  pn(".") id:name
+  ( pn("(") ws? pn(")")                              !Ast("CallRulePattern", name, [])
+  | pn("(") ~( ws? pn(")") ) scan:f pn(")")        !Ast("CallRulePattern", name, [f])
+  | pn("[") delimited[pattern; pn(";")]:as pn("]") !Ast("CallRulePattern", name, as)
   |                                                     !Ast("CallRulePattern", name, [])
   )
 };
 
 CombeScanner.prototype.callImmediatePattern = rule {
-  .pn("%") .semanticBody:b
-  ( .pn("(") .ws? .pn(")")                               !Ast("CallImmediatePattern", b, [])
-  | .pn("(") ~( .ws? .pn(")") ) .scan:f .pn(")")        !Ast("CallImmediatePattern", b, [f])
-  | .pn("[") .delimited[.pattern; .pn(";")]:as .pn("]") !Ast("CallImmediatePattern", b, as)
+  pn("%") semanticBody:b
+  ( pn("(") ws? pn(")")                               !Ast("CallImmediatePattern", b, [])
+  | pn("(") ~( ws? pn(")") ) scan:f pn(")")        !Ast("CallImmediatePattern", b, [f])
+  | pn("[") delimited[pattern; pn(";")]:as pn("]") !Ast("CallImmediatePattern", b, as)
   |                                                     !Ast("CallImmediatePattern", b, [])
   )
 };
 
 CombeScanner.prototype.objectPattern = rule {
-  .pn("@") .semanticBody:b !Ast("ObjectPattern", b)
+  pn("@") semanticBody:b !Ast("ObjectPattern", b)
 };
 
 CombeScanner.prototype.eachPattern = rule {
-  .pn("*") .semanticBody:b !Ast("EachPattern", b)
+  pn("*") semanticBody:b !Ast("EachPattern", b)
 };
 
 CombeScanner.prototype.stringPattern = rule {
-  .st:text !Ast("StringPattern", text)
+  st:text !Ast("StringPattern", text)
 };
 
 CombeScanner.prototype.numberPattern = rule {
-  .num:text !Ast("NumberPattern", text)
+  num:text !Ast("NumberPattern", text)
 };
 
 CombeScanner.prototype.regularExpressionPattern = rule {
-  .regex:text !Ast("RegularExpressionPattern", text)
+  regex:text !Ast("RegularExpressionPattern", text)
 };
 
 CombeScanner.prototype.nestedArrayPattern = rule {
-  .pn("[") .pattern:p .pn("]") !Ast("NestedArrayPattern", p)
+  pn("[") pattern:p pn("]") !Ast("NestedArrayPattern", p)
 };
 
-CombeScanner.prototype.dotPattern = rule {
-  .pn(".") !Ast("NextPattern")
+CombeScanner.prototype.nestedObjectPattern = rule {
+  pn("{") delimited[propertyPattern; ws? pn(",") ws?] pn("}")
+  !Ast("NestedObjectPattern", p)
 };
 
 CombeScanner.prototype.subpattern = rule {
-  .pn("(") .pattern:p .pn(")") !p
+  pn("(") pattern:p pn(")") !p
+};
+
+CombeScanner.prototype.nextPattern = rule {
+  pn(":") ~id !Ast("NextPattern")
 };
 
 CombeScanner.prototype.emptyPattern = rule {
   !Ast("EmptyPattern")
 };
 
+CombeScanner.prototype.propertyPattern = rule {
+| id:name pn(":") ws chainPattern:p
+  !Ast("PropertyPattern", Ast("ExpressionSemanticBody", Ast("Fragment", name.quote())), p)
+| st:name pn(":") ws chainPattern:p
+  !Ast("PropertyPattern", Ast("ExpressionSemanticBody", Ast("Fragment", name)), p)
+| pn("(") ~( ws pn(")") ) scan:f pn(")") pn(":") ws chainPattern:p
+  !Ast("PropertyPattern", Ast("ExpressionSemanticBody", f), p)
+};
+
 
 
 CombeScanner.prototype.semanticBody = rule {
-| .pn("(") ~( .ws? .pn(")") ) .scan:f .pn(")") !Ast("ExpressionSemanticBody", f)
-| .pn("{") .scan:f .pn("}")                    !Ast("FunctionSemanticBody", f)
-| .scan[.semanticBodyFilter]:f                 !Ast("ExpressionSemanticBody", f)
+| pn("(") ~( ws? pn(")") ) scan:f pn(")") !Ast("ExpressionSemanticBody", f)
+| pn("{") scan:f pn("}")                  !Ast("FunctionSemanticBody", f)
+| scan[semanticBodyFilter]:f              !Ast("ExpressionSemanticBody", f)
 };
 CombeScanner.prototype.semanticBodyFilter = rule {
-| .regularExpressionLiteral | .stringLiteral | .numberLiteral
-| .nullLiteral | .booleanLiteral
-| .identifierName
-| .pn("-") | .pn(".") | .pn("(") | .pn("[") | .pn("{")
+| regularExpressionLiteral | stringLiteral | numberLiteral
+| nullLiteral | booleanLiteral
+| identifierName
+| pn("-") | pn(".") | pn("(") | pn("[") | pn("{")
 };
 
 
 
 CombeScanner.prototype.suppressNameColon = rule {
-  .id:f1 ~~.pn(":")
+  id:f1 ~~pn(":")
   !f1
 };
 
 
 
 CombeScanner.prototype.suppressDotIdentifierName = rule {
-  .pn("."):f1 .ws?:f2 .id:f3
+  pn("."):f1 ws?:f2 id:f3
   !Ast("Composite", [f1, f2, f3])
 };
 
 
 
 CombeScanner.prototype.inferredName = rule {
-| .dotAssign
-| .propdeclAssign
-| .subscriptAssign
-| .variableAssign
+| dotAssign
+| propdeclAssign
+| subscriptAssign
+| variableAssign
 };
 
 CombeScanner.prototype.dotAssign = rule {
-  .pn("."):f1 .ws?:f2 .id:f3 .ws?:f4 .pn("="):f5 .ws?:f6
+  pn("."):f1 ws?:f2 id:f3 ws?:f4 pn("="):f5 ws?:f6
   !({ name: f3, fragments: Ast("Composite", [f1, f2, f3, f4, f5, f6]) })
 };
 
 CombeScanner.prototype.propdeclAssign = rule {
-  ( .id:f1 | .st:f1 !eval(f1) ):name .ws?:f2 .pn(":"):f3 .ws?:f4
+  ( id:f1 | st:f1 !eval(f1) ):name ws?:f2 pn(":"):f3 ws?:f4
   !({ name: name, fragments: Ast("Composite", [f1, f2, f3, f4]) })
 };
 
 CombeScanner.prototype.subscriptAssign = rule {
-  .pn("["):f1 .ws?:f2 .st:f3 .ws?:f4 .pn("]"):f5 .ws?:f6 .pn("="):f7 .ws?:f8
+  pn("["):f1 ws?:f2 st:f3 ws?:f4 pn("]"):f5 ws?:f6 pn("="):f7 ws?:f8
   !({ name: eval(f3), fragments: Ast("Composite", [f1, f2, f3, f4, f5, f6, f7, f8]) })
 };
 
 CombeScanner.prototype.variableAssign = rule {
-  .id:f1 .ws?:f2 .pn("="):f3 .ws?:f4
+  id:f1 ws?:f2 pn("="):f3 ws?:f4
   !({ name: f1, fragments: Ast("Composite", [f1, f2, f3, f4]) })
 };
 
 
 
 CombeScanner.prototype.id = rule (expected) {
-  .slice[.identifierName]:text ?(expected == null || text == expected) !text
+  slice[identifierName]:text ?(expected == null || text == expected) !text
 };
 
 CombeScanner.prototype.pn = rule (expected) {
-  .slice[.punctuator]:text ?(expected == null || text == expected) !text
+  slice[punctuator]:text ?(expected == null || text == expected) !text
 };
 
 CombeScanner.prototype.st = rule {
-  .slice[.stringLiteral]
+  slice[stringLiteral]
 };
 
 CombeScanner.prototype.num = rule {
-  .slice[.numberLiteral]
+  slice[numberLiteral]
 };
 
 CombeScanner.prototype.regex = rule {
-  .slice[.regularExpressionLiteral]
+  slice[regularExpressionLiteral]
 };
 
 CombeScanner.prototype.ws = rule {
-  .slice[ ( .multilineComment | .singlelineComment | .spaces | .newline )+ ]
+  slice[ ( multilineComment | singlelineComment | spaces | newline )+ ]
 };
 
 CombeScanner.prototype.newline = rule {
-  .slice[ %ECMAScriptScanner.prototype.newline ]:text
-  .getPosition():start &( .spaces? .getPosition():end ) .set("indent", end - start)
+  slice[ %ECMAScriptScanner.prototype.newline ]:text
+  getPosition():start &( spaces? getPosition():end ) set("indent", end - start)
   !text
 };

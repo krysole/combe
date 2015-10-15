@@ -54,103 +54,102 @@ module.exports = ECMAScriptScanner;
 
 
 
-ECMAScriptScanner.prototype.start = rule { .fragment* };
+ECMAScriptScanner.prototype.start = rule { fragment* };
 
 
 
 ECMAScriptScanner.prototype.fragment = rule {
-| .slice[ .multilineComment         ]
-| .slice[ .singlelineComment        ]
-| .slice[ .spaces                   ]
-| .slice[ .newline                  ]
+| slice[ multilineComment         ]
+| slice[ singlelineComment        ]
+| slice[ spaces                   ]
+| slice[ newline                  ]
 
-| .slice[ .templateStringComplete   ]
-| .slice[ .templateStringHead       ]
-| .slice[ .templateStringMiddle     ]
-| .slice[ .templateStringTail       ]
+| slice[ templateStringComplete   ]
+| slice[ templateStringHead       ]
+| slice[ templateStringMiddle     ]
+| slice[ templateStringTail       ]
 
-| .slice[ .regularExpressionLiteral ]
-| .slice[ .stringLiteral            ]
-| .slice[ .numberLiteral            ]
-| .slice[ .nullLiteral              ]
-| .slice[ .booleanLiteral           ]
+| slice[ regularExpressionLiteral ]
+| slice[ stringLiteral            ]
+| slice[ numberLiteral            ]
+| slice[ nullLiteral              ]
+| slice[ booleanLiteral           ]
 
-| .slice[ .punctuator               ]
+| slice[ punctuator               ]
 
-| .slice[ .identifierName           ]
+| slice[ identifierName           ]
 };
 
 
 
 ECMAScriptScanner.prototype.templateStringComplete = rule {
-  "`" .templateCharacter* "`"
+  "`" templateCharacter* "`"
 };
 
 ECMAScriptScanner.prototype.templateStringHead = rule {
-  "`" .templateCharacter* .lbrace
+  "`" templateCharacter* lbrace
 };
 
 ECMAScriptScanner.prototype.templateStringMiddle = rule {
-  .rbrace .templateCharacter* .lbrace
+  rbrace templateCharacter* lbrace
 };
 
 ECMAScriptScanner.prototype.templateStringTail = rule {
-  .rbrace .templateCharacter* "`"
+  rbrace templateCharacter* "`"
 };
 
 ECMAScriptScanner.prototype.lbrace = rule {
-  "${" .push("enclosedBy", "${")
+  "${" push("enclosedBy", "${")
 };
 
 ECMAScriptScanner.prototype.rbrace = rule {
-  ?(this.get("enclosedBy") === "${") "}" .pop("enclosedBy")
+  ?(this.get("enclosedBy") === "${") "}" pop("enclosedBy")
 };
 
 ECMAScriptScanner.prototype.templateCharacter = rule {
-| ~.newline ~"$" ~"\\" .
-
+| ~newline ~"$" ~"\\" char
 | "$" ~"{"
-| "\\" .escapeSequence
-| .newline
-| "\\" .newline
+| "\\" escapeSequence
+| newline
+| "\\" newline
 };
 
 
 
 ECMAScriptScanner.prototype.regularExpressionLiteral = rule {
-  "/" .regularExpressionStart .regularExpressionContinue* "/" .regularExpressionFlag*
+  "/" regularExpressionStart regularExpressionContinue* "/" regularExpressionFlag*
 };
 
 ECMAScriptScanner.prototype.regularExpressionStart = rule {
-  ~"*" .regularExpressionContinue
+  ~"*" regularExpressionContinue
 };
 
 ECMAScriptScanner.prototype.regularExpressionContinue = rule {
-| "\\" .
-| .regularExpressionClass
-| ~"\\" ~"/" ~"[" ~.newline ~.space .
+| "\\" char
+| regularExpressionClass
+| ~"\\" ~"/" ~"[" ~newline ~space char
 };
 
 ECMAScriptScanner.prototype.regularExpressionClass = rule {
-| ~"]" ~"\\" ~.newline .
-| "\\" .
+| ~"]" ~"\\" ~newline char
+| "\\" char
 };
 
 ECMAScriptScanner.prototype.regularExpressionFlag = rule {
-  ~"\\" .idContinue
+  ~"\\" idContinue
 };
 
 
 
 ECMAScriptScanner.prototype.stringLiteral = rule {
-| "\"" .stringCharacter["\""]* "\""
-| "\'" .stringCharacter["\'"]* "\'"
+| "\"" stringCharacter["\""]* "\""
+| "\'" stringCharacter["\'"]* "\'"
 };
 
 ECMAScriptScanner.prototype.stringCharacter = rule (terminator) {
-| ~%terminator ~.newline ~"\\" .
-| "\\" .escapeSequence
-| "\\" .newline
+| ~%terminator ~newline ~"\\" char
+| "\\" escapeSequence
+| "\\" newline
 };
 
 ECMAScriptScanner.prototype.escapeSequence = rule {
@@ -164,35 +163,35 @@ ECMAScriptScanner.prototype.escapeSequence = rule {
 | "t"
 | "v"
 
-| "0" ~.digit
-| "x" .hex .hex
-| "u" .hex .hex .hex .hex
-| "u" "{" .hex+ "}"
+| "0" ~digit
+| "x" hex hex
+| "u" hex hex hex hex
+| "u" "{" hex+ "}"
 
-| ~"\\" ~.newline ~.char("\'\"\\bfnrtv") ~"x" ~"u" .
+| ~"\\" ~newline ~char("\'\"\\bfnrtv") ~"x" ~"u" char
 };
 
 
 
 ECMAScriptScanner.prototype.numberLiteral = rule {
-| .decimalLiteral       ~.idContinue
-| .binaryIntegerLiteral ~.idContinue
-| .octalIntegerLiteral  ~.idContinue
-| .hexIntegerLiteral    ~.idContinue
+| decimalLiteral       ~idContinue
+| binaryIntegerLiteral ~idContinue
+| octalIntegerLiteral  ~idContinue
+| hexIntegerLiteral    ~idContinue
 };
 
 ECMAScriptScanner.prototype.decimalLiteral = rule {
-| .decimalIntegerLiteral ("." .digit+)? .exponent?
-| "." .digit+ .exponent?
+| decimalIntegerLiteral ("." digit+)? exponent?
+| "." digit+ exponent?
 };
 
 ECMAScriptScanner.prototype.decimalIntegerLiteral = rule {
 | "0"
-| .char(["1", "9"]) .digit*
+| char(["1", "9"]) digit*
 };
 
 ECMAScriptScanner.prototype.exponent = rule {
-  ("e"|"E") ("+"|"-"| ) .digit+
+  ("e"|"E") ("+"|"-"| ) digit+
 };
 
 ECMAScriptScanner.prototype.binaryIntegerLiteral = rule {
@@ -200,44 +199,44 @@ ECMAScriptScanner.prototype.binaryIntegerLiteral = rule {
 };
 
 ECMAScriptScanner.prototype.octalIntegerLiteral = rule {
-  "0" ("o"|"O") .octal+
+  "0" ("o"|"O") octal+
 };
 
 ECMAScriptScanner.prototype.hexIntegerLiteral = rule {
-  "0" ("x"|"X") .hex+
+  "0" ("x"|"X") hex+
 };
 
 
 
 ECMAScriptScanner.prototype.nullLiteral = rule {
-  "null" ~.idContinue
+  "null" ~idContinue
 };
 
 
 
 ECMAScriptScanner.prototype.booleanLiteral = rule {
-| "true"  ~.idContinue
-| "false" ~.idContinue
+| "true"  ~idContinue
+| "false" ~idContinue
 };
 
 
 
 ECMAScriptScanner.prototype.punctuator = rule {
-| .openPunctuator
-| .closePunctuator
-| .basicPunctuator
+| openPunctuator
+| closePunctuator
+| basicPunctuator
 };
 
 ECMAScriptScanner.prototype.openPunctuator = rule {
-| "{" .push("enclosedBy", "{")
-| "(" .push("enclosedBy", "(")
-| "[" .push("enclosedBy", "[")
+| "{" push("enclosedBy", "{")
+| "(" push("enclosedBy", "(")
+| "[" push("enclosedBy", "[")
 };
 
 ECMAScriptScanner.prototype.closePunctuator = rule {
-| ?(this.get("enclosedBy") === "{") "}" .pop("enclosedBy")
-| ?(this.get("enclosedBy") === "(") ")" .pop("enclosedBy")
-| ?(this.get("enclosedBy") === "[") "]" .pop("enclosedBy")
+| ?(this.get("enclosedBy") === "{") "}" pop("enclosedBy")
+| ?(this.get("enclosedBy") === "(") ")" pop("enclosedBy")
+| ?(this.get("enclosedBy") === "[") "]" pop("enclosedBy")
 };
 
 ECMAScriptScanner.prototype.basicPunctuator = rule {
@@ -264,23 +263,23 @@ ECMAScriptScanner.prototype.basicPunctuator = rule {
 
 
 ECMAScriptScanner.prototype.identifierName = rule {
-  .idStart:c .idContinue*
+  idStart:c idContinue*
 };
 
 ECMAScriptScanner.prototype.idStart = rule {
-| .char(["a", "z"], ["A", "Z"]) // Should be Unicode ID_Start+Other_ID_Start
+| char(["a", "z"], ["A", "Z"]) // Should be Unicode ID_Start+Other_ID_Start
 | "$"
 | "_"
-| "\\" "u" .hex .hex .hex .hex
-| "\\" "u" "{" .hex+ "}"
+| "\\" "u" hex hex hex hex
+| "\\" "u" "{" hex+ "}"
 };
 
 ECMAScriptScanner.prototype.idContinue = rule {
-| .char(["a", "z"], ["A", "Z"], ["0", "9"]) // Should be Unicode ID_Continue+Other_ID_Continue
+| char(["a", "z"], ["A", "Z"], ["0", "9"]) // Should be Unicode ID_Continue+Other_ID_Continue
 | "$"
 | "_"
-| "\\" "u" .hex .hex .hex .hex
-| "\\" "u" "{" .hex+ "}"
+| "\\" "u" hex hex hex hex
+| "\\" "u" "{" hex+ "}"
 | "\u200c" // <zwnj>
 | "\u200d" // <zwj>
 };
@@ -288,16 +287,16 @@ ECMAScriptScanner.prototype.idContinue = rule {
 
 
 ECMAScriptScanner.prototype.multilineComment = rule {
-  "/*" (~"*/" .)* "*/"
+  "/*" (~"*/" char)* "*/"
 };
 
 ECMAScriptScanner.prototype.singlelineComment = rule {
-  "//" (~.newline .)*
+  "//" (~newline char)*
 };
 
 
 
-ECMAScriptScanner.prototype.spaces = rule { .space+ }
+ECMAScriptScanner.prototype.spaces = rule { space+ }
 ECMAScriptScanner.prototype.space = rule {
 | "\u0009" // <tab>
 | "\u000b" // <vt>
@@ -305,9 +304,9 @@ ECMAScriptScanner.prototype.space = rule {
 | "\u0020" // <sp>
 | "\u00a0" // <nbsp>
 | "\ufeff" // <zwnbsp/bom>
-| .Zs       // Unicode space
+| Zs       // Unicode space
 };
-ECMAScriptScanner.prototype.Zs = rule { .fail }
+ECMAScriptScanner.prototype.Zs = rule { fail }
 
 
 
